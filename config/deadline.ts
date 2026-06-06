@@ -1,0 +1,2 @@
+export const REGISTRATION_DEADLINE =
+  "May 1, 2026 23:59:59";
