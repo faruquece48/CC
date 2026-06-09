@@ -17,7 +17,7 @@ export type SiteConfig = {
 
 export const siteConfig: SiteConfig = {
   name: "Construct Carnival",
-  serial: "1.0",
+  serial: "2.0",
   description:
     "Construct Carnival 1.0 is a nationwide festival for students studying Civil Engineering, Building Engineering and Construction Management, Urban and Regional Planning, and Architecture.",
   origin: "https://constructcarnival.com",
