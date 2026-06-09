@@ -19,8 +19,9 @@ export const siteConfig: SiteConfig = {
   name: "Construct Carnival",
   serial: "2.0",
   description:
-    "Construct Carnival 1.0 is a nationwide festival for students studying Civil Engineering, Building Engineering and Construction Management, Urban and Regional Planning, and Architecture.",
+    "Construct Carnival is a nationwide festival for students studying Civil Engineering, Building Engineering & Construction Management, Urban and Regional Planning, and Architecture.",
   origin: "https://constructcarnival.com",
+
   navItems: [
     {
       label: "Home",
@@ -55,6 +56,7 @@ export const siteConfig: SiteConfig = {
       href: "/contact",
     },
   ],
+
   navMenuItems: [
     {
       label: "Home",
@@ -89,6 +91,7 @@ export const siteConfig: SiteConfig = {
       href: "/contact",
     },
   ],
+
   links: {
     github: "https://github.com/nextui-org/nextui",
     twitter: "https://twitter.com/getnextui",
