@@ -82,7 +82,7 @@ export default function RootLayout({
         </Providers>
 
         {/* Controlled Adsterra Popunder */}
-        <PopunderAd />
+        {/* <PopunderAd /> */}
       </body>
     </html>
   );
