@@ -14,19 +14,21 @@ import { Timer } from "@/components/timer";
 
 import Marquee from "react-fast-marquee";
 
-import { REGISTRATION_DEADLINE } from "@/config/deadline";
+import { getRegistrationPhase } from "@/config/deadline";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
 
 export default function Page() {
 
-    // REGISTRATION DEADLINE
-    const registrationEndDate =
-        new Date(REGISTRATION_DEADLINE);
+    const registrationPhase = getRegistrationPhase();
+    const isRegistrationClosed = registrationPhase === "closed";
 
-    // CHECK REGISTRATION STATUS
-    const isRegistrationClosed =
-        new Date() > registrationEndDate;
+    const registrationMessage =
+        registrationPhase === 2
+            ? "The registration deadline has been extended in response to students’ requests."
+            : registrationPhase === 3
+                ? "The registration deadline has been extended once again to allow students additional time to complete their registration."
+                : "Registration is Live Now!";
 
     // FORM SUBMISSION
     const handleSubmission = async (
@@ -126,6 +128,14 @@ export default function Page() {
 
                     member_2,
 
+                    member_2_email,
+
+                    member_2_phonenumber,
+
+                    member_2_department,
+
+                    member_2_university,
+
                     email,
 
                     phonenumber,
@@ -156,6 +166,14 @@ export default function Page() {
 
                     ${formData.member2 || ""},
 
+                    ${formData.member2Email || ""},
+
+                    ${formData.member2PhoneNumber || ""},
+
+                    ${formData.member2Department || ""},
+
+                    ${formData.member2University || ""},
+
                     ${formData.email},
 
                     ${formData.phoneNumber},
@@ -183,7 +201,8 @@ export default function Page() {
             // SSL PAYMENT
             const {
                 status,
-                data
+                data,
+                message
             } = await paymentBySSL({
 
                 userId: userId,
@@ -224,13 +243,32 @@ export default function Page() {
                 data
             );
 
+            return {
+                status: 500,
+                message: message || "Payment initialization failed",
+                url: ""
+            };
+
         } catch (error) {
 
             console.error(
-                "SQL / PAYMENT ERROR:"
+                "SQL / PAYMENT ERROR:",
+                error
             );
 
-            console.log(error);
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Unknown registration error";
+
+            return {
+                status: 500,
+                message:
+                    process.env.NODE_ENV === "development"
+                        ? errorMessage
+                        : "Internal Server Error",
+                url: ""
+            };
         }
 
         return {
@@ -275,7 +313,7 @@ export default function Page() {
 
                             <p className="text-2xl font-bold text-center text-rose-600">
 
-                                Registration is Live Now!
+                                {registrationMessage}
 
                             </p>
 

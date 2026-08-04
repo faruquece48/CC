@@ -28,17 +28,6 @@ export default function AboutPage() {
         </p>
       </div>
 
-      {/* Video Section */}
-      <div className="w-full overflow-hidden rounded-[30px] shadow-lg mb-10">
-        <iframe
-          src="https://www.youtube.com/embed/hBKRd4PfOwc"
-          title="Message from Head"
-          className="w-full h-[300px] sm:h-[370px] md:h-[420px] lg:h-[500px] xl:h-[600px]"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-
       {/* Message Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         {/* Left Side - Head Profile */}
@@ -47,7 +36,7 @@ export default function AboutPage() {
           <div className="w-full max-w-[280px] overflow-hidden rounded-[24px] mb-6 shadow-md bg-white">
             <Image
               src="/gallery/head.jpg"
-              alt="Prof. Dr. Md. Robiul Awall"
+              alt="Shayla Sharmin"
               width={700}
               height={900}
               className="w-full h-auto object-cover"
@@ -58,7 +47,7 @@ export default function AboutPage() {
           {/* Name & Designation */}
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-[#0b4d44] leading-snug">
-              Prof. Dr. Md. Robiul Awall
+              Shayla Sharmin
             </h2>
 
             <p className="text-gray-500 font-medium text-lg">

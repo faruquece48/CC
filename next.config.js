@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'www.ruet.ac.bd',
+        pathname: '/public/storage/**',
+      },
+    ],
+  },
   async headers() {
     return [
       {

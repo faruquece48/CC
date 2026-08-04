@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import ImageSlideShow from "@/components/slideshow";
 import Timeline from "@/components/timeline";
+import { getRegistrationPhase } from "@/config/deadline";
 
 import Marquee from "react-fast-marquee";
 
@@ -15,6 +16,15 @@ import {
 } from "react-icons/md";
 
 export default function Home() {
+  const registrationPhase = getRegistrationPhase();
+  const isRegistrationOpen = registrationPhase !== "closed";
+  const extensionMessage =
+    registrationPhase === 2
+      ? "The registration deadline has been extended in response to students’ requests."
+      : registrationPhase === 3
+        ? "The registration deadline has been extended once again to allow students additional time to complete their registration."
+        : null;
+
   const images = [
     "/gallery/image_11.JPG",
     "/gallery/image_12.JPG",
@@ -326,24 +336,49 @@ export default function Home() {
               speed={55}
               gradient={false}
               pauseOnHover={true}
+              autoFill={true}
               className="py-3"
             >
               <div className="flex items-center">
+                {extensionMessage ? (
+                  <span className="text-white font-semibold text-sm lg:text-base mx-10">
+                    📢 {extensionMessage}
+                  </span>
+                ) : (
+                  <>
+                {isRegistrationOpen && (
+                  <>
+                    <span className="text-white font-semibold text-sm lg:text-base mx-10">
+                      🏗️ Welcome to Construct Carnival
+                    </span>
+
+                    <span className="text-white/70 text-xl">
+                      •
+                    </span>
+                  </>
+                )}
+
                 <span className="text-white font-semibold text-sm lg:text-base mx-10">
-                  📢 Registration will open soon
+                  {isRegistrationOpen
+                    ? "📢 Registration is Open Now!!!"
+                    : "📢 Registration will open soon"}
                 </span>
 
                 <span className="text-white/70 text-xl">
                   •
                 </span>
 
-                <span className="text-white font-semibold text-sm lg:text-base mx-10">
-                  ⏰ Please stay tuned for updates
-                </span>
+                {!isRegistrationOpen && (
+                  <>
+                    <span className="text-white font-semibold text-sm lg:text-base mx-10">
+                      ⏰ Please stay tuned for updates
+                    </span>
 
-                <span className="text-white/70 text-xl">
-                  •
-                </span>
+                    <span className="text-white/70 text-xl">
+                      •
+                    </span>
+                  </>
+                )}
 
                 <span className="text-white font-semibold text-sm lg:text-base mx-10">
                   🎯 Accept the challenge and prove your skills
@@ -356,6 +391,8 @@ export default function Home() {
                 <span className="text-white font-semibold text-sm lg:text-base mx-10">
                   🚀 Don’t miss this opportunity
                 </span>
+                  </>
+                )}
               </div>
             </Marquee>
           </div>
