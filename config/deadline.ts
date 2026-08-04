@@ -1,7 +1,7 @@
 export const REGISTRATION_DEADLINES = [
-  "August 2, 2026 23:59:59",
-  "August 3, 2026 23:59:59",
-  "August 4, 2026 23:59:59",
+  "August 2, 2025 23:59:59",
+  "August 3, 2025 23:59:59",
+  "August 4, 2025 23:59:59",
 ] as const;
 
 export type RegistrationPhase = 1 | 2 | 3 | "closed";
