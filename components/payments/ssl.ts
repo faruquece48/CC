@@ -85,7 +85,6 @@ export default async function paymentBySSL(formData: any) {
                 body,
 
                 {
-                    timeout: 20000,
                     headers: {
                         "Content-Type":
                             "application/x-www-form-urlencoded",
@@ -123,11 +122,7 @@ export default async function paymentBySSL(formData: any) {
             status: 500,
 
             message:
-                error.code === "ECONNABORTED"
-                    ? "The payment gateway timed out. Please try again."
-                    : "Payment initialization failed",
-
-            data: null,
+                "Payment initialization failed",
         };
     }
 }

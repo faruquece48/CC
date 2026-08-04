@@ -3,21 +3,10 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 
-const getRedis = () => {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  return url && token ? new Redis({ url, token }) : null;
-};
+const redis = Redis.fromEnv();
 
 export async function POST(req: Request) {
   try {
-    const redis = getRedis();
-
-    if (!redis) {
-      return NextResponse.json({ total: 0, todayCount: 0, current: 0 });
-    }
-
     const today = new Date().toISOString().slice(0, 10);
 
     const totalKey = "visitors:total";

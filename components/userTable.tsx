@@ -191,14 +191,10 @@ export default function UserDataTable({
             "Team Name": item.teamname,
             "Member 1": item.member_1,
             "Member 2": item.member_2,
-            "Member 1 Email": item.email,
-            "Member 1 Phone": item.phonenumber,
-            "Member 1 Department": item.department,
-            "Member 1 University": item.university,
-            "Member 2 Email": item.member_2_email,
-            "Member 2 Phone": item.member_2_phonenumber,
-            "Member 2 Department": item.member_2_department,
-            "Member 2 University": item.member_2_university,
+            Email: item.email,
+            Phone: item.phonenumber,
+            Department: item.department,
+            University: item.university,
             Events: formatCriteria(item.criteria),
             Fee: item.fee,
             Payment: item.ispaid
@@ -519,35 +515,19 @@ export default function UserDataTable({
                             </th>
 
                             <th className="border p-3 text-center">
-                                Member 1 Email
+                                Email
                             </th>
 
                             <th className="border p-3 text-center">
-                                Member 1 Phone
+                                Phone
                             </th>
 
                             <th className="border p-3 text-center">
-                                Member 1 Department
+                                Department
                             </th>
 
                             <th className="border p-3 text-center">
-                                Member 1 University
-                            </th>
-
-                            <th className="border p-3 text-center">
-                                Member 2 Email
-                            </th>
-
-                            <th className="border p-3 text-center">
-                                Member 2 Phone
-                            </th>
-
-                            <th className="border p-3 text-center">
-                                Member 2 Department
-                            </th>
-
-                            <th className="border p-3 text-center">
-                                Member 2 University
+                                University
                             </th>
 
                             <th className="border p-3 text-center">
@@ -613,22 +593,6 @@ export default function UserDataTable({
                                 {/* LEFT */}
                                 <td className="border p-3 text-left">
                                     {item.university}
-                                </td>
-
-                                <td className="border p-3 break-all text-left">
-                                    {item.member_2_email || "—"}
-                                </td>
-
-                                <td className="border p-3 text-center">
-                                    {item.member_2_phonenumber || "—"}
-                                </td>
-
-                                <td className="border p-3 text-left">
-                                    {item.member_2_department || "—"}
-                                </td>
-
-                                <td className="border p-3 text-left">
-                                    {item.member_2_university || "—"}
                                 </td>
 
                                 {/* LEFT */}

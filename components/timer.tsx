@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 
 import "@/styles/timer.css";
 
-import { getActiveRegistrationDeadline } from "@/config/deadline";
+import { REGISTRATION_DEADLINE } from "@/config/deadline";
 
 export const Timer = () => {
 
@@ -16,12 +16,12 @@ export const Timer = () => {
 
   const [seconds, setSeconds] = useState(0);
 
+  const deadline = REGISTRATION_DEADLINE;
+
   const getTime = () => {
 
-    const deadline = getActiveRegistrationDeadline();
-
     const time =
-      deadline ? Date.parse(deadline) - Date.now() : 0;
+      Date.parse(deadline) - Date.now();
 
     // STOP TIMER
     if (time <= 0) {
