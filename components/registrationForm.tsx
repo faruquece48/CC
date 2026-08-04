@@ -83,6 +83,18 @@ export default function RegistrationForm(
     const [member2, setMember2] =
         useState("");
 
+    const [member2Email, setMember2Email] =
+        useState("");
+
+    const [member2PhoneNumber, setMember2PhoneNumber] =
+        useState("");
+
+    const [member2Department, setMember2Department] =
+        useState("");
+
+    const [member2University, setMember2University] =
+        useState("");
+
     const [email, setEmail] =
         useState("");
 
@@ -101,6 +113,9 @@ export default function RegistrationForm(
     const [isLoading, setIsLoading] =
         useState(false);
 
+    const [submissionError, setSubmissionError] =
+        useState("Please try again later.");
+
     // DEFAULT EVENT FROM URL
 
     useEffect(() => {
@@ -109,6 +124,13 @@ export default function RegistrationForm(
             searchParams.get("selected");
 
         if (selected) {
+
+            if (selected === "truss") {
+
+                setType("team");
+
+                setIsTeamSelected(true);
+            }
 
             setCriteria([selected]);
 
@@ -134,27 +156,28 @@ export default function RegistrationForm(
 
             if (totalEvents === 1) {
 
-                fee = 10;
+                fee = 400;
 
             }
 
             else if (totalEvents === 2) {
 
-                fee = 15;
+                fee = 600;
 
             }
 
             else if (totalEvents === 3) {
 
-                fee = 20;
+                fee = 800;
 
             }
 
             else if (totalEvents > 3) {
 
                 fee =
-                    20 +
-                    (totalEvents - 3);
+                    totalEvents === 4
+                        ? 900
+                        : 1000;
             }
         }
 
@@ -228,6 +251,15 @@ export default function RegistrationForm(
                 !teamName ||
                 !member1 ||
                 !member2 ||
+                (
+                    filteredCriteria.includes("truss") &&
+                    (
+                        !member2Email ||
+                        !member2PhoneNumber ||
+                        !member2Department ||
+                        !member2University
+                    )
+                ) ||
                 !email ||
                 !phoneNumber ||
                 !department ||
@@ -272,6 +304,14 @@ export default function RegistrationForm(
 
                 member2,
 
+                member2Email,
+
+                member2PhoneNumber,
+
+                member2Department,
+
+                member2University,
+
                 email,
 
                 phoneNumber,
@@ -313,6 +353,10 @@ export default function RegistrationForm(
 
                 onClose();
 
+                setSubmissionError(
+                    res.message || "Please try again later."
+                );
+
                 onErrorOpen();
 
                 return;
@@ -353,31 +397,20 @@ export default function RegistrationForm(
 
                         handleRadioboxChange(value);
 
-                        if (value === "team") {
-
-                            if (
-                                criteria.includes("poster")
-                            ) {
-
-                                setCriteria(["poster"]);
-
-                                handleCheckboxChange(
-                                    ["poster"]
+                        const validCriteria =
+                            value === "team"
+                                ? criteria.filter((event) =>
+                                    ["truss", "poster"].includes(event)
+                                )
+                                : criteria.filter((event) =>
+                                    event !== "truss"
                                 );
 
-                            } else {
+                        setCriteria(validCriteria);
 
-                                setCriteria([]);
-
-                                setFee(0);
-                            }
-
-                        } else {
-
-                            handleCheckboxChange(criteria);
-                        }
+                        handleCheckboxChange(validCriteria);
                     }}
-                    defaultValue="individual"
+                    value={type}
                 >
 
                     <Radio value="individual">
@@ -447,7 +480,7 @@ export default function RegistrationForm(
                         <Input
                             isRequired
                             labelPlacement="outside"
-                            label="Member 2:"
+                            label="Member 2 Name:"
                             placeholder="Enter member 2 name"
                             classNames={{
                                 label: "text-lg",
@@ -462,12 +495,69 @@ export default function RegistrationForm(
                     )
                 }
 
+                {
+                    type === "team" && criteria.includes("truss") && (
+
+                        <>
+                            <Input
+                                isRequired
+                                type="email"
+                                labelPlacement="outside"
+                                label="Member 2 Email:"
+                                placeholder="Enter member 2 email"
+                                classNames={{ label: "text-lg" }}
+                                value={member2Email}
+                                onChange={(event) =>
+                                    setMember2Email(event.target.value)
+                                }
+                            />
+
+                            <Input
+                                isRequired
+                                type="tel"
+                                labelPlacement="outside"
+                                label="Member 2 Phone Number:"
+                                placeholder="Enter member 2 phone number"
+                                classNames={{ label: "text-lg" }}
+                                value={member2PhoneNumber}
+                                onChange={(event) =>
+                                    setMember2PhoneNumber(event.target.value)
+                                }
+                            />
+
+                            <Input
+                                isRequired
+                                labelPlacement="outside"
+                                label="Member 2 Department:"
+                                placeholder="Enter member 2 department"
+                                classNames={{ label: "text-lg" }}
+                                value={member2Department}
+                                onChange={(event) =>
+                                    setMember2Department(event.target.value)
+                                }
+                            />
+
+                            <Input
+                                isRequired
+                                labelPlacement="outside"
+                                label="Member 2 University:"
+                                placeholder="Enter member 2 university"
+                                classNames={{ label: "text-lg" }}
+                                value={member2University}
+                                onChange={(event) =>
+                                    setMember2University(event.target.value)
+                                }
+                            />
+                        </>
+                    )
+                }
+
                 {/* EMAIL */}
 
                 <Input
                     isRequired
                     labelPlacement="outside"
-                    label="Email:"
+                    label={type === "team" ? "Member 1 Email:" : "Email:"}
                     placeholder="Enter your email"
                     classNames={{
                         label: "text-lg",
@@ -485,7 +575,7 @@ export default function RegistrationForm(
                 <Input
                     isRequired
                     labelPlacement="outside"
-                    label="Phone Number:"
+                    label={type === "team" ? "Member 1 Phone Number:" : "Phone Number:"}
                     placeholder="Enter your phone number"
                     classNames={{
                         label: "text-lg",
@@ -503,7 +593,7 @@ export default function RegistrationForm(
                 <Input
                     isRequired
                     labelPlacement="outside"
-                    label="Department:"
+                    label={type === "team" ? "Member 1 Department:" : "Department:"}
                     placeholder="Enter your department name"
                     classNames={{
                         label: "text-lg",
@@ -521,7 +611,7 @@ export default function RegistrationForm(
                 <Input
                     isRequired
                     labelPlacement="outside"
-                    label="University:"
+                    label={type === "team" ? "Member 1 University:" : "University:"}
                     placeholder="Enter your university name"
                     classNames={{
                         label: "text-lg",
@@ -569,10 +659,6 @@ export default function RegistrationForm(
                                     Mechamind
                                 </Checkbox>
 
-                                <Checkbox value="truss">
-                                    Truss Combat
-                                </Checkbox>
-
                                 <Checkbox value="management">
                                     Management Maestro
                                 </Checkbox>
@@ -587,9 +673,15 @@ export default function RegistrationForm(
                     {
                         type === "team" && (
 
-                            <Checkbox value="poster">
-                                Poster Presentation
-                            </Checkbox>
+                            <>
+                                <Checkbox value="truss">
+                                    Truss Combat
+                                </Checkbox>
+
+                                <Checkbox value="poster">
+                                    Poster Presentation
+                                </Checkbox>
+                            </>
                         )
                     }
 
@@ -716,7 +808,7 @@ export default function RegistrationForm(
 
                             <ModalBody>
 
-                                Please try again later.
+                                {submissionError}
 
                             </ModalBody>
 
