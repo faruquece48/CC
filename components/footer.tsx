@@ -381,7 +381,7 @@ function FooterSection() {
                     { name: "Workshop", href: "/workshop" },
                     { name: "Events", href: "/events" },
                     { name: "Registration", href: "/registration" },
-                    { name: "Schedule", href: "/important_dates" },
+                    { name: "Schedule", href: "/schedule" },
                     { name: "Sponsors", href: "/sponsors" },
                     { name: "Archive", href: "/archive" },
                     { name: "Contact", href: "/contact" },

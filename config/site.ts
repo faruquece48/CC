@@ -41,7 +41,7 @@ export const siteConfig: SiteConfig = {
     },
     {
       label: "Schedule",
-      href: "/important_dates",
+      href: "/schedule",
     },
     {
       label: "Sponsors",
@@ -76,7 +76,7 @@ export const siteConfig: SiteConfig = {
     },
     {
       label: "Schedule",
-      href: "/important_dates",
+      href: "/schedule",
     },
     {
       label: "Sponsors",
