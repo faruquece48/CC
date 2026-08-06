@@ -4,6 +4,9 @@ import React from "react";
 
 export default function WorkshopPage() {
 
+  // Set this to true when the speakers and presentation titles are finalized.
+  const showSpeakerSection = false;
+
   const workshops = [
     {
       speaker: "Prof. Dr. Engr. Md. Jahangir Alam",
@@ -214,7 +217,38 @@ export default function WorkshopPage() {
 
       </div>
 
-      {/* SPEAKER SECTION */}
+      {/* WORKSHOP ANNOUNCEMENT / SPEAKER SECTION */}
+      {!showSpeakerSection ? (
+        <section className="max-w-6xl mx-auto px-4 lg:px-8 py-20">
+          <div className="relative overflow-hidden rounded-[40px] border border-orange-100 bg-white px-6 py-16 text-center shadow-lg md:px-12 md:py-20">
+            <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-orange-100/70 blur-3xl" />
+            <div className="absolute -bottom-20 -right-16 h-56 w-56 rounded-full bg-orange-200/50 blur-3xl" />
+
+            <div className="relative">
+              <p className="text-sm font-semibold uppercase tracking-[6px] text-orange-500">
+                Upcoming Workshop
+              </p>
+
+              <h2 className="mt-5 text-4xl font-light leading-tight text-gray-800 md:text-6xl">
+                Our workshop will be on
+                <span className="mt-2 block font-semibold text-orange-500">
+                  Smart Construction
+                </span>
+              </h2>
+
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <div className="h-[2px] w-20 bg-orange-300 md:w-28" />
+                <div className="h-3 w-3 rounded-full bg-orange-400" />
+                <div className="h-[2px] w-20 bg-orange-300 md:w-28" />
+              </div>
+
+              <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-gray-600">
+                Speaker details and presentation titles will be announced soon.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : (
       <div className="max-w-6xl mx-auto px-4 lg:px-8 py-20">
 
         {/* HEADING */}
@@ -315,6 +349,7 @@ export default function WorkshopPage() {
         </div>
 
       </div>
+      )}
 
     </div>
   );
