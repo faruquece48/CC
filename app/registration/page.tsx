@@ -18,8 +18,6 @@ import {
     getRegistrationStartRemainingMessage
 } from "@/config/deadline";
 
-import AdsterraBanner from "@/components/AdsterraBanner";
-
 export const dynamic = "force-dynamic";
 
 export default function Page() {
@@ -435,15 +433,6 @@ export default function Page() {
                         <RegistrationForm
                             handleSubmission={handleSubmission}
                         />
-
-                        {/* AD BANNER */}
-                        <div className="mt-14 flex justify-center">
-                            <AdsterraBanner
-                                adKey="23cf8dbb69977b0d73645731506658fb"
-                                width={728}
-                                height={90}
-                            />
-                        </div>
 
                     </>
 
