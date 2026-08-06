@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 
-import UserDataTable from "@/components/userTable";
-import AlumniDataTable from "@/components/alumniTable";
+import EventRegistrationTables from "@/components/eventRegistrationTables";
 
 export default function RegistrationDataPage() {
 
@@ -37,6 +36,8 @@ export default function RegistrationDataPage() {
                 }
             );
 
+            const result = await response.json();
+
             if (response.ok) {
 
                 setAuthentic(true);
@@ -47,7 +48,9 @@ export default function RegistrationDataPage() {
                 setAuthentic(false);
 
                 setError(
-                    "Incorrect Password"
+                    response.status === 401
+                        ? "Incorrect Password"
+                        : result.message || "Unable to load registration data"
                 );
             }
 
@@ -106,11 +109,7 @@ export default function RegistrationDataPage() {
 
         <div className="p-10">
 
-            <UserDataTable
-                password={inputPassword}
-            />
-
-            <AlumniDataTable
+            <EventRegistrationTables
                 password={inputPassword}
             />
 

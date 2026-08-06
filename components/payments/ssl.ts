@@ -15,6 +15,14 @@ export default async function paymentBySSL(formData: any) {
 
     try {
 
+        if (!store_id || !store_passwd) {
+            return {
+                status: 500,
+                message: "SSLCommerz credentials are not configured",
+                data: null,
+            };
+        }
+
         const data = {
 
             store_id,
@@ -98,12 +106,20 @@ export default async function paymentBySSL(formData: any) {
             response.data
         );
 
+        if (!response.data?.GatewayPageURL) {
+            return {
+                status: 502,
+                message:
+                    response.data?.failedreason ||
+                    response.data?.message ||
+                    "SSLCommerz did not return a payment URL",
+                data: response.data,
+            };
+        }
+
         return {
-
             status: 200,
-
             message: "Success",
-
             data: response.data,
         };
 

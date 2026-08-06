@@ -4,7 +4,11 @@ import React, { useState, useEffect } from "react";
 
 import "@/styles/timer.css";
 
-import { getActiveRegistrationDeadline } from "@/config/deadline";
+import {
+  getActiveRegistrationDeadline,
+  getRegistrationPhase,
+  REGISTRATION_START_DATE
+} from "@/config/deadline";
 
 export const Timer = () => {
 
@@ -16,9 +20,21 @@ export const Timer = () => {
 
   const [seconds, setSeconds] = useState(0);
 
+  const [timerTitle, setTimerTitle] = useState("Registration Ends In");
+
   const getTime = () => {
 
-    const deadline = getActiveRegistrationDeadline();
+    const phase = getRegistrationPhase();
+    const isWaitingToStart = phase === "not_started";
+    const deadline = isWaitingToStart
+      ? REGISTRATION_START_DATE
+      : getActiveRegistrationDeadline();
+
+    setTimerTitle(
+      isWaitingToStart
+        ? "Registration Starts In"
+        : "Registration Ends In"
+    );
 
     const time =
       deadline ? Date.parse(deadline) - Date.now() : 0;
@@ -84,14 +100,14 @@ export const Timer = () => {
   return (
 
     <div
-      className="timer border border-rose-600 rounded -mx-4 my-2 lg:m-10"
+      className="timer border border-rose-600 rounded"
       role="timer"
     >
 
       {/* TITLE */}
       <h1 className="text-center font-bold text-lg">
 
-        Registration Ends In
+        {timerTitle}
 
       </h1>
 

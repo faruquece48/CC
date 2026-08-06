@@ -1,8 +1,6 @@
-import { title } from "@/components/primitives";
-
 import { sql } from "@vercel/postgres";
 
-import RegistrationForm from "@/components/registrationForm";
+import RegistrationForm from "@/components/registrationFormV2";
 
 import paymentBySSL from "@/components/payments/ssl";
 
@@ -14,21 +12,22 @@ import { Timer } from "@/components/timer";
 
 import Marquee from "react-fast-marquee";
 
-import { getRegistrationPhase } from "@/config/deadline";
+import {
+    getRegistrationImpactMessage,
+    getRegistrationPhase,
+    getRegistrationStartRemainingMessage
+} from "@/config/deadline";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
+
+export const dynamic = "force-dynamic";
 
 export default function Page() {
 
     const registrationPhase = getRegistrationPhase();
-    const isRegistrationClosed = registrationPhase === "closed";
+    const isRegistrationVisible = registrationPhase !== "closed";
 
-    const registrationMessage =
-        registrationPhase === 2
-            ? "The registration deadline has been extended in response to students’ requests."
-            : registrationPhase === 3
-                ? "The registration deadline has been extended once again to allow students additional time to complete their registration."
-                : "Registration is Live Now!";
+    const registrationMessage = getRegistrationImpactMessage();
 
     // FORM SUBMISSION
     const handleSubmission = async (
@@ -38,13 +37,17 @@ export default function Page() {
         "use server";
 
         // BLOCK SUBMISSION AFTER DEADLINE
-        if (isRegistrationClosed) {
+        const submissionPhase = getRegistrationPhase();
+
+        if (typeof submissionPhase !== "number") {
 
             return {
 
                 status: 403,
 
-                message: "Registration Closed",
+                message: submissionPhase === "not_started"
+                    ? getRegistrationStartRemainingMessage()
+                    : "Registration Closed",
 
                 url: ""
 
@@ -54,6 +57,63 @@ export default function Page() {
         let lastId = 1000;
 
         let userId = lastId;
+
+        const individualRegistration = formData.individualRegistration;
+        const teamRegistrations = Array.isArray(formData.teamRegistrations)
+            ? formData.teamRegistrations
+            : [];
+        const validIndividualEvents = ["cad", "mechamind", "management"];
+        const validTeamEvents = ["truss", "poster"];
+        const isPersonComplete = (person: any) => person &&
+            ["name", "email", "phoneNumber", "department", "university"]
+                .every((field) => typeof person[field] === "string" && person[field].trim());
+
+        if (
+            (individualRegistration && (
+                !isPersonComplete(individualRegistration.participant) ||
+                !Array.isArray(individualRegistration.events) ||
+                individualRegistration.events.length === 0 ||
+                individualRegistration.events.some((event: string) => !validIndividualEvents.includes(event))
+            )) ||
+            teamRegistrations.some((team: any) =>
+                !validTeamEvents.includes(team.event) ||
+                typeof team.teamName !== "string" || !team.teamName.trim() ||
+                !Array.isArray(team.members) || team.members.length < 2 || team.members.length > 3 ||
+                team.members.some((member: any) => !isPersonComplete(member)) ||
+                new Set(team.members.map((member: any) => member.email.trim().toLowerCase())).size !== team.members.length
+            ) ||
+            (!individualRegistration && teamRegistrations.length === 0)
+        ) {
+            return {
+                status: 400,
+                message: "Please complete all participant and event details",
+                url: ""
+            };
+        }
+
+        const entries: Array<{ person: any; event: string }> = [];
+        individualRegistration?.events.forEach((event: string) =>
+            entries.push({ person: individualRegistration.participant, event })
+        );
+        teamRegistrations.forEach((team: any) => team.members.forEach((person: any) =>
+            entries.push({ person, event: team.event })
+        ));
+
+        const people = new Map<string, { person: any; events: Set<string> }>();
+        entries.forEach(({ person, event }) => {
+            const email = person.email.trim().toLowerCase();
+            if (!people.has(email)) people.set(email, { person, events: new Set() });
+            people.get(email)!.events.add(event);
+        });
+        const feeScale = [0, 400, 600, 800, 900, 1000];
+        const calculatedFee = Array.from(people.values()).reduce(
+            (total, item) => total + feeScale[Math.min(item.events.size, 5)], 0
+        );
+        const uniquePeople = Array.from(people.values()).map((item) => item.person);
+        const primary = individualRegistration?.participant || uniquePeople[0];
+        const second = uniquePeople[1];
+        const third = uniquePeople[2];
+        const selectedEvents = Array.from(new Set(entries.map((entry) => entry.event)));
 
         // GET LAST USER ID
         try {
@@ -136,6 +196,16 @@ export default function Page() {
 
                     member_2_university,
 
+                    member_3,
+
+                    member_3_email,
+
+                    member_3_phonenumber,
+
+                    member_3_department,
+
+                    member_3_university,
+
                     email,
 
                     phonenumber,
@@ -158,33 +228,43 @@ export default function Page() {
 
                     ${userId},
 
-                    ${formData.isTeamSelected},
+                    ${teamRegistrations.length > 0},
 
-                    ${formData.teamName || ""},
+                    ${teamRegistrations.map((team: any) => team.teamName).join(" / ")},
 
-                    ${formData.member1},
+                    ${primary.name},
 
-                    ${formData.member2 || ""},
+                    ${second?.name || ""},
 
-                    ${formData.member2Email || ""},
+                    ${second?.email || ""},
 
-                    ${formData.member2PhoneNumber || ""},
+                    ${second?.phoneNumber || ""},
 
-                    ${formData.member2Department || ""},
+                    ${second?.department || ""},
 
-                    ${formData.member2University || ""},
+                    ${second?.university || ""},
 
-                    ${formData.email},
+                    ${third?.name || ""},
 
-                    ${formData.phoneNumber},
+                    ${third?.email || ""},
 
-                    ${formData.department},
+                    ${third?.phoneNumber || ""},
 
-                    ${formData.university},
+                    ${third?.department || ""},
 
-                    ${formData.criteria},
+                    ${third?.university || ""},
 
-                    ${formData.fee},
+                    ${primary.email},
+
+                    ${primary.phoneNumber},
+
+                    ${primary.department},
+
+                    ${primary.university},
+
+                    ${selectedEvents as any},
+
+                    ${calculatedFee},
 
                     false,
 
@@ -193,6 +273,31 @@ export default function Page() {
                 )
 
             `;
+
+            if (individualRegistration) {
+                const participant = individualRegistration.participant;
+                await sql`
+                    INSERT INTO singleRegistrationData (
+                        registration_id, name, email, phonenumber,
+                        department, university, events
+                    ) VALUES (
+                        ${userId}, ${participant.name}, ${participant.email},
+                        ${participant.phoneNumber}, ${participant.department},
+                        ${participant.university}, ${individualRegistration.events as any}
+                    )
+                `;
+            }
+
+            for (const team of teamRegistrations) {
+                await sql`
+                    INSERT INTO teamRegistrationData (
+                        registration_id, event, teamname, members
+                    ) VALUES (
+                        ${userId}, ${team.event}, ${team.teamName},
+                        ${JSON.stringify(team.members)}::jsonb
+                    )
+                `;
+            }
 
             console.log(
                 "Registration Submitted"
@@ -209,7 +314,15 @@ export default function Page() {
 
                 tran_id: tran_id,
 
-                ...formData
+                ...formData,
+
+                fee: calculatedFee,
+
+                member1: primary.name,
+
+                email: primary.email,
+
+                phoneNumber: primary.phoneNumber
 
             });
 
@@ -242,6 +355,12 @@ export default function Page() {
                 "SSL PAYMENT FAILED:",
                 data
             );
+
+            // Remove the unpaid draft record when no gateway session was created.
+            await sql`
+                DELETE FROM registrationData
+                WHERE id = ${userId} AND ispaid = FALSE
+            `;
 
             return {
                 status: 500,
@@ -288,23 +407,16 @@ export default function Page() {
 
             {
 
-                !isRegistrationClosed ? (
+                isRegistrationVisible ? (
 
                     <>
 
                         {/* TIMER */}
                         <Timer />
 
-                        {/* TITLE */}
-                        <h1 className={title()}>
-
-                            Registration
-
-                        </h1>
-
                         {/* MARQUEE */}
                         <Marquee
-                            className="py-10"
+                            className="py-5"
                             gradient={false}
                             gradientColor="white"
                             speed={100}

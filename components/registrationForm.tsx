@@ -95,6 +95,24 @@ export default function RegistrationForm(
     const [member2University, setMember2University] =
         useState("");
 
+    const [teamSize, setTeamSize] =
+        useState<2 | 3>(2);
+
+    const [member3, setMember3] =
+        useState("");
+
+    const [member3Email, setMember3Email] =
+        useState("");
+
+    const [member3PhoneNumber, setMember3PhoneNumber] =
+        useState("");
+
+    const [member3Department, setMember3Department] =
+        useState("");
+
+    const [member3University, setMember3University] =
+        useState("");
+
     const [email, setEmail] =
         useState("");
 
@@ -148,11 +166,9 @@ export default function RegistrationForm(
     ): void => {
 
         let fee = 0;
+        const totalEvents = Array.isArray(value) ? value.length : 0;
 
         if (Array.isArray(value)) {
-
-            const totalEvents =
-                value.length;
 
             if (totalEvents === 1) {
 
@@ -181,8 +197,20 @@ export default function RegistrationForm(
             }
         }
 
-        setFee(fee);
+        setFee(
+            isTeamSelected
+                ? teamSize * 400 * totalEvents
+                : fee
+        );
     };
+
+    useEffect(() => {
+        if (isTeamSelected) {
+            setFee(teamSize * 400 * criteria.length);
+        } else {
+            handleCheckboxChange(criteria);
+        }
+    }, [isTeamSelected, teamSize]);
 
     // TEAM / INDIVIDUAL
 
@@ -251,13 +279,18 @@ export default function RegistrationForm(
                 !teamName ||
                 !member1 ||
                 !member2 ||
+                !member2Email ||
+                !member2PhoneNumber ||
+                !member2Department ||
+                !member2University ||
                 (
-                    filteredCriteria.includes("truss") &&
+                    teamSize === 3 &&
                     (
-                        !member2Email ||
-                        !member2PhoneNumber ||
-                        !member2Department ||
-                        !member2University
+                        !member3 ||
+                        !member3Email ||
+                        !member3PhoneNumber ||
+                        !member3Department ||
+                        !member3University
                     )
                 ) ||
                 !email ||
@@ -311,6 +344,18 @@ export default function RegistrationForm(
                 member2Department,
 
                 member2University,
+
+                teamSize,
+
+                member3,
+
+                member3Email,
+
+                member3PhoneNumber,
+
+                member3Department,
+
+                member3University,
 
                 email,
 
@@ -446,6 +491,26 @@ export default function RegistrationForm(
                     )
                 }
 
+                {/* TEAM SIZE */}
+
+                {
+                    type === "team" && (
+                        <RadioGroup
+                            isRequired
+                            label="Number of Team Participants:"
+                            value={String(teamSize)}
+                            orientation="horizontal"
+                            classNames={{ label: "text-left text-bold" }}
+                            onValueChange={(value) =>
+                                setTeamSize(Number(value) as 2 | 3)
+                            }
+                        >
+                            <Radio value="2">2 Members — 800 TK per event</Radio>
+                            <Radio value="3">3 Members — 1200 TK per event</Radio>
+                        </RadioGroup>
+                    )
+                }
+
                 {/* MEMBER 1 */}
 
                 <Input
@@ -472,6 +537,50 @@ export default function RegistrationForm(
                     }
                 />
 
+                {/* MEMBER 1 CONTACT DETAILS */}
+
+                <Input
+                    isRequired
+                    type="email"
+                    labelPlacement="outside"
+                    label={type === "team" ? "Member 1 Email:" : "Email:"}
+                    placeholder="Enter your email"
+                    classNames={{ label: "text-lg" }}
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                />
+
+                <Input
+                    isRequired
+                    type="tel"
+                    labelPlacement="outside"
+                    label={type === "team" ? "Member 1 Phone Number:" : "Phone Number:"}
+                    placeholder="Enter your phone number"
+                    classNames={{ label: "text-lg" }}
+                    value={phoneNumber}
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                />
+
+                <Input
+                    isRequired
+                    labelPlacement="outside"
+                    label={type === "team" ? "Member 1 Department:" : "Department:"}
+                    placeholder="Enter your department name"
+                    classNames={{ label: "text-lg" }}
+                    value={department}
+                    onChange={(event) => setDepartment(event.target.value)}
+                />
+
+                <Input
+                    isRequired
+                    labelPlacement="outside"
+                    label={type === "team" ? "Member 1 University:" : "University:"}
+                    placeholder="Enter your university name"
+                    classNames={{ label: "text-lg" }}
+                    value={university}
+                    onChange={(event) => setUniversity(event.target.value)}
+                />
+
                 {/* MEMBER 2 */}
 
                 {
@@ -496,7 +605,7 @@ export default function RegistrationForm(
                 }
 
                 {
-                    type === "team" && criteria.includes("truss") && (
+                    type === "team" && (
 
                         <>
                             <Input
@@ -552,77 +661,19 @@ export default function RegistrationForm(
                     )
                 }
 
-                {/* EMAIL */}
+                {/* MEMBER 3 */}
 
-                <Input
-                    isRequired
-                    labelPlacement="outside"
-                    label={type === "team" ? "Member 1 Email:" : "Email:"}
-                    placeholder="Enter your email"
-                    classNames={{
-                        label: "text-lg",
-                    }}
-                    value={email}
-                    onChange={(value) =>
-                        setEmail(
-                            value.target.value
-                        )
-                    }
-                />
-
-                {/* PHONE */}
-
-                <Input
-                    isRequired
-                    labelPlacement="outside"
-                    label={type === "team" ? "Member 1 Phone Number:" : "Phone Number:"}
-                    placeholder="Enter your phone number"
-                    classNames={{
-                        label: "text-lg",
-                    }}
-                    value={phoneNumber}
-                    onChange={(value) =>
-                        setPhoneNumber(
-                            value.target.value
-                        )
-                    }
-                />
-
-                {/* DEPARTMENT */}
-
-                <Input
-                    isRequired
-                    labelPlacement="outside"
-                    label={type === "team" ? "Member 1 Department:" : "Department:"}
-                    placeholder="Enter your department name"
-                    classNames={{
-                        label: "text-lg",
-                    }}
-                    value={department}
-                    onChange={(value) =>
-                        setDepartment(
-                            value.target.value
-                        )
-                    }
-                />
-
-                {/* UNIVERSITY */}
-
-                <Input
-                    isRequired
-                    labelPlacement="outside"
-                    label={type === "team" ? "Member 1 University:" : "University:"}
-                    placeholder="Enter your university name"
-                    classNames={{
-                        label: "text-lg",
-                    }}
-                    value={university}
-                    onChange={(value) =>
-                        setUniversity(
-                            value.target.value
-                        )
-                    }
-                />
+                {
+                    type === "team" && teamSize === 3 && (
+                        <>
+                            <Input isRequired labelPlacement="outside" label="Member 3 Name:" placeholder="Enter member 3 name" classNames={{ label: "text-lg" }} value={member3} onChange={(event) => setMember3(event.target.value)} />
+                            <Input isRequired type="email" labelPlacement="outside" label="Member 3 Email:" placeholder="Enter member 3 email" classNames={{ label: "text-lg" }} value={member3Email} onChange={(event) => setMember3Email(event.target.value)} />
+                            <Input isRequired type="tel" labelPlacement="outside" label="Member 3 Phone Number:" placeholder="Enter member 3 phone number" classNames={{ label: "text-lg" }} value={member3PhoneNumber} onChange={(event) => setMember3PhoneNumber(event.target.value)} />
+                            <Input isRequired labelPlacement="outside" label="Member 3 Department:" placeholder="Enter member 3 department" classNames={{ label: "text-lg" }} value={member3Department} onChange={(event) => setMember3Department(event.target.value)} />
+                            <Input isRequired labelPlacement="outside" label="Member 3 University:" placeholder="Enter member 3 university" classNames={{ label: "text-lg" }} value={member3University} onChange={(event) => setMember3University(event.target.value)} />
+                        </>
+                    )
+                }
 
                 {/* EVENTS */}
 

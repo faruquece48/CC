@@ -27,6 +27,28 @@ export async function POST(request: Request) {
                 ORDER BY id DESC
             `;
 
+        } else if (table === "singleRegistration") {
+
+            data = await sql`
+                SELECT single_data.*, master.fee AS total_fee,
+                       master.ispaid, master.tran_id
+                FROM singleRegistrationData AS single_data
+                JOIN registrationData AS master
+                  ON master.id = single_data.registration_id
+                ORDER BY single_data.id DESC
+            `;
+
+        } else if (table === "teamRegistration") {
+
+            data = await sql`
+                SELECT team_data.*, master.fee AS total_fee,
+                       master.ispaid, master.tran_id
+                FROM teamRegistrationData AS team_data
+                JOIN registrationData AS master
+                  ON master.id = team_data.registration_id
+                ORDER BY team_data.id DESC
+            `;
+
         // ===================== SUPPORT TABLE =====================
         } else if (table === "support") {
 

@@ -4,7 +4,10 @@ import Link from "next/link";
 
 import ImageSlideShow from "@/components/slideshow";
 import Timeline from "@/components/timeline";
-import { getRegistrationPhase } from "@/config/deadline";
+import {
+  getRegistrationImpactMessage,
+  getRegistrationPhase,
+} from "@/config/deadline";
 
 import Marquee from "react-fast-marquee";
 
@@ -17,13 +20,11 @@ import {
 
 export default function Home() {
   const registrationPhase = getRegistrationPhase();
-  const isRegistrationOpen = registrationPhase !== "closed";
+  const isRegistrationOpen = typeof registrationPhase === "number";
   const extensionMessage =
-    registrationPhase === 2
-      ? "The registration deadline has been extended in response to students’ requests."
-      : registrationPhase === 3
-        ? "The registration deadline has been extended once again to allow students additional time to complete their registration."
-        : null;
+    registrationPhase === 2 || registrationPhase === 3
+      ? getRegistrationImpactMessage()
+      : null;
 
   const images = [
     "/gallery/image_11.JPG",

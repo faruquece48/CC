@@ -15,15 +15,32 @@ export async function POST(req: Request) {
             member_2_phonenumber,
             member_2_department,
             member_2_university,
+            member_3,
+            member_3_email,
+            member_3_phonenumber,
+            member_3_department,
+            member_3_university,
             email,
             phonenumber,
             department,
             university,
             criteria,
-            fee,
             isteam,
             ispaid
         } = body;
+
+        const selectedEvents = Array.isArray(criteria) ? criteria.filter(Boolean) : [];
+        const individualFees = [0, 400, 600, 800, 900, 1000];
+        const calculatedFee = isteam
+            ? (member_3 ? 1200 : 800) * selectedEvents.length
+            : individualFees[Math.min(selectedEvents.length, 5)];
+
+        if (selectedEvents.length === 0) {
+            return NextResponse.json(
+                { success: false, message: "Please select at least one event" },
+                { status: 400 }
+            );
+        }
 
         await sql`
             INSERT INTO registrationData (
@@ -34,6 +51,11 @@ export async function POST(req: Request) {
                 member_2_phonenumber,
                 member_2_department,
                 member_2_university,
+                member_3,
+                member_3_email,
+                member_3_phonenumber,
+                member_3_department,
+                member_3_university,
                 email,
                 phonenumber,
                 department,
@@ -51,12 +73,17 @@ export async function POST(req: Request) {
                 ${member_2_phonenumber || ""},
                 ${member_2_department || ""},
                 ${member_2_university || ""},
+                ${member_3 || ""},
+                ${member_3_email || ""},
+                ${member_3_phonenumber || ""},
+                ${member_3_department || ""},
+                ${member_3_university || ""},
                 ${email},
                 ${phonenumber},
                 ${department},
                 ${university},
                 ${criteria},
-                ${fee},
+                ${calculatedFee},
                 ${isteam},
                 ${ispaid}
             )
