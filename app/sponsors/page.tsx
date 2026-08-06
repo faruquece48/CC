@@ -22,6 +22,9 @@ import somoy from "@/public/sponsors/somoy.png";
 import AdsterraBanner from "@/components/AdsterraBanner";
 
 export default function SponsorsPage() {
+  // Set this to true if the previous sponsor list needs to be shown again.
+  const showPreviousSponsors = false;
+
   return (
     <div className="w-full bg-[#f7f9fc] overflow-hidden">
 
@@ -97,8 +100,57 @@ export default function SponsorsPage() {
         </div>
       </section>
 
-      {/* MAIN CONTENT */}
-      <section className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-10">
+      {/* CURRENT SPONSOR */}
+      <section className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
+        <SectionTitle text="CONFIRMED SPONSOR" />
+
+        <div className="relative mt-6 overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-md md:p-12">
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/60 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-orange-100/70 blur-3xl" />
+
+          <div className="relative grid items-center gap-8 md:grid-cols-2">
+            <Link
+              href="https://sevenringscement.com/"
+              isExternal
+              className="flex min-h-[180px] items-center justify-center rounded-2xl border border-gray-100 bg-white p-8 shadow-sm"
+            >
+              <Image
+                src={sevenring.src}
+                alt="Seven Rings Cement"
+                className="max-h-32 w-auto object-contain"
+              />
+            </Link>
+
+            <div className="text-center md:text-left">
+              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
+                Proudly Supporting Us
+              </p>
+              <h2 className="mt-3 text-3xl font-bold text-[#083b66] md:text-4xl">
+                Seven Rings Cement
+              </h2>
+              <p className="mt-5 leading-7 text-gray-600">
+                We sincerely thank Seven Rings Cement for supporting our
+                upcoming program and joining us in building a stronger future.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-dashed border-[#6d87a8] bg-white/70 px-6 py-6 text-center">
+          <h3 className="text-xl font-semibold text-[#083b66]">
+            More sponsorship opportunities are available
+          </h3>
+          <p className="mx-auto mt-2 max-w-2xl leading-7 text-gray-600">
+            Additional sponsors and partners will be announced as they are
+            confirmed.
+          </p>
+        </div>
+      </section>
+
+      {/* PREVIOUS SPONSOR LIST — preserved for future use */}
+      <section
+        className={`${showPreviousSponsors ? "block" : "hidden"} max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-10`}
+      >
 
         {/* PLATINUM */}
         <div>
