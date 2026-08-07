@@ -48,7 +48,7 @@ export default function Home() {
     },
     {
       icon: <MdSchool size={24} />,
-      value: "10+",
+      value: "20+",
       label: "Universities",
     },
     {

@@ -432,7 +432,7 @@ function FooterSection() {
                       icon: (
                         <GraduationCap className="text-yellow-400 w-4 h-4" />
                       ),
-                      text: "10+ Universities",
+                      text: "20+ Universities",
                     },
                     {
                       icon: (
