@@ -158,8 +158,7 @@ export default function ArchivePage() {
                   >
                     <img src={photo.src} alt={`${selectedEvent.name} memory ${photo.memoryNumber}`} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#032c26]/70 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                    <div className="absolute bottom-0 left-0 flex w-full translate-y-4 items-center justify-between p-5 text-white opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
-                      <span className="font-semibold">Memory {String(photo.memoryNumber).padStart(2, "0")}</span>
+                    <div className="absolute bottom-0 left-0 flex w-full translate-y-4 items-center justify-end p-5 text-white opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
                       <ArrowUpRight size={20} />
                     </div>
                   </button>
