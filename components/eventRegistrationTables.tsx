@@ -11,34 +11,57 @@ const eventNames: Record<string, string> = {
     poster: "Poster Presentation"
 };
 
+type PaymentFilter = "paid" | "all";
+
 export default function EventRegistrationTables({ password }: { password: string }) {
     const [singleRows, setSingleRows] = useState<any[]>([]);
     const [teamRows, setTeamRows] = useState<any[]>([]);
+    const [uniqueParticipantRows, setUniqueParticipantRows] = useState<any[]>([]);
     const [error, setError] = useState("");
+    const [singlePaymentFilter, setSinglePaymentFilter] = useState<PaymentFilter>("all");
+    const [teamPaymentFilter, setTeamPaymentFilter] = useState<PaymentFilter>("all");
+    const [uniquePaymentFilter, setUniquePaymentFilter] = useState<PaymentFilter>("all");
 
     useEffect(() => {
         Promise.all([
             axios.post("/api/fetchRegData", { password, table: "singleRegistration" }),
-            axios.post("/api/fetchRegData", { password, table: "teamRegistration" })
-        ]).then(([single, team]) => {
+            axios.post("/api/fetchRegData", { password, table: "teamRegistration" }),
+            axios.post("/api/fetchRegData", { password, table: "uniqueParticipants" })
+        ]).then(([single, team, uniqueParticipants]) => {
             setSingleRows(single.data.data);
             setTeamRows(team.data.data);
+            setUniqueParticipantRows(uniqueParticipants.data.data);
         }).catch((requestError) => {
             setError(requestError.response?.data?.message || "Unable to load registration data");
         });
     }, [password]);
 
+    const filteredSingleRows = singlePaymentFilter === "paid"
+        ? singleRows.filter((row) => row.ispaid)
+        : singleRows;
+    const filteredTeamRows = teamPaymentFilter === "paid"
+        ? teamRows.filter((row) => row.ispaid)
+        : teamRows;
+    const filteredUniqueParticipantRows = uniquePaymentFilter === "paid"
+        ? uniqueParticipantRows.filter((row) => row.ispaid)
+        : uniqueParticipantRows;
+
     return (
         <div className="space-y-14">
             {error && <p className="rounded-xl bg-red-50 p-4 text-center font-semibold text-red-600">{error}</p>}
 
-            <DataSection title="Individual Event Registrations" count={singleRows.length}>
+            <DataSection
+                title="Individual Event Registrations"
+                count={filteredSingleRows.length}
+                filter={singlePaymentFilter}
+                onFilterChange={setSinglePaymentFilter}
+            >
                 <table className="min-w-full border-collapse text-sm">
                     <thead className="bg-[#083b66] text-white"><tr>
                         {['ID', 'Name', 'Email', 'Phone', 'Department', 'University', 'Events', 'Total Fee', 'Payment'].map((heading) =>
                             <th key={heading} className="border border-blue-900 p-3 text-left">{heading}</th>)}
                     </tr></thead>
-                    <tbody>{singleRows.map((row) => <tr key={row.id} className="even:bg-blue-50/50">
+                    <tbody>{filteredSingleRows.map((row) => <tr key={row.id} className="even:bg-blue-50/50">
                         <Cell>{row.registration_id}</Cell><Cell>{row.name}</Cell><Cell>{row.email}</Cell>
                         <Cell>{row.phonenumber}</Cell><Cell>{row.department}</Cell><Cell>{row.university}</Cell>
                         <Cell>{row.events?.map((event: string) => eventNames[event] || event).join(', ')}</Cell>
@@ -47,13 +70,18 @@ export default function EventRegistrationTables({ password }: { password: string
                 </table>
             </DataSection>
 
-            <DataSection title="Team Event Registrations" count={teamRows.length}>
+            <DataSection
+                title="Team Event Registrations"
+                count={filteredTeamRows.length}
+                filter={teamPaymentFilter}
+                onFilterChange={setTeamPaymentFilter}
+            >
                 <table className="min-w-full border-collapse text-sm">
                     <thead className="bg-gradient-to-r from-orange-600 to-orange-500 text-white"><tr>
                         {['ID', 'Event', 'Team Name', 'Member', 'Email', 'Phone', 'Department', 'University', 'Total Fee', 'Payment'].map((heading) =>
                             <th key={heading} className="border border-orange-700 p-3 text-left">{heading}</th>)}
                     </tr></thead>
-                    <tbody>{teamRows.flatMap((row) => (row.members || []).map((member: any, index: number) =>
+                    <tbody>{filteredTeamRows.flatMap((row) => (row.members || []).map((member: any, index: number) =>
                         <tr key={`${row.id}-${index}`} className="even:bg-orange-50/50">
                             {index === 0 && <Cell rowSpan={row.members.length}>{row.registration_id}</Cell>}
                             {index === 0 && <Cell rowSpan={row.members.length}>{eventNames[row.event] || row.event}</Cell>}
@@ -66,18 +94,76 @@ export default function EventRegistrationTables({ password }: { password: string
                     ))}</tbody>
                 </table>
             </DataSection>
+
+            <DataSection
+                title="Unique Participants"
+                count={filteredUniqueParticipantRows.length}
+                filter={uniquePaymentFilter}
+                onFilterChange={setUniquePaymentFilter}
+            >
+                <table className="min-w-full border-collapse text-sm">
+                    <thead className="bg-gradient-to-r from-emerald-700 to-emerald-600 text-white"><tr>
+                        {['Registration ID', 'Participant', 'Email', 'Phone', 'Department', 'University', 'Events', 'Payment'].map((heading) =>
+                            <th key={heading} className="border border-emerald-800 p-3 text-left">{heading}</th>)}
+                    </tr></thead>
+                    <tbody>{filteredUniqueParticipantRows.map((row) => (
+                        <tr key={`${row.registration_id}-${row.email}`} className="even:bg-emerald-50/50">
+                            <Cell>{row.registration_id}</Cell>
+                            <Cell>{row.name}</Cell>
+                            <Cell>{row.email}</Cell>
+                            <Cell>{row.phonenumber}</Cell>
+                            <Cell>{row.department}</Cell>
+                            <Cell>{row.university}</Cell>
+                            <Cell>{row.events?.map((event: string) => eventNames[event] || event).join(', ')}</Cell>
+                            <Cell><PaymentStatus paid={row.ispaid} /></Cell>
+                        </tr>
+                    ))}</tbody>
+                </table>
+            </DataSection>
         </div>
     );
 }
 
-function DataSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+function DataSection({ title, count, filter, onFilterChange, children }: {
+    title: string;
+    count: number;
+    filter: PaymentFilter;
+    onFilterChange: (filter: PaymentFilter) => void;
+    children: React.ReactNode;
+}) {
     return <section className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between p-6">
-            <h2 className="text-2xl font-bold text-[#083b66]">{title}</h2>
+        <div className="flex flex-col justify-between gap-4 p-6 md:flex-row md:items-center">
+            <div>
+                <h2 className="text-2xl font-bold text-[#083b66]">{title}</h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                    <FilterButton active={filter === "paid"} onClick={() => onFilterChange("paid")}>Paid Only</FilterButton>
+                    <FilterButton active={filter === "all"} onClick={() => onFilterChange("all")}>Paid &amp; Unpaid</FilterButton>
+                </div>
+            </div>
             <span className="rounded-full bg-blue-50 px-4 py-2 font-semibold text-[#083b66]">{count} records</span>
         </div>
         <div className="overflow-x-auto">{children}</div>
     </section>;
+}
+
+function FilterButton({ active, onClick, children }: {
+    active: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                active
+                    ? "bg-[#083b66] text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+        >
+            {children}
+        </button>
+    );
 }
 
 function Cell({ children, rowSpan }: { children: React.ReactNode; rowSpan?: number }) {
