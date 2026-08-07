@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@nextui-org/button";
-import { Checkbox, CheckboxGroup, Input, Radio, RadioGroup } from "@nextui-org/react";
+import { Checkbox, CheckboxGroup, Input } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 
 type Person = {
@@ -12,7 +12,6 @@ type Person = {
     university: string;
 };
 
-type Mode = "individual" | "team" | "both";
 type TeamEventKey = "truss" | "poster";
 
 const emptyPerson = (): Person => ({
@@ -42,9 +41,8 @@ export default function RegistrationFormV2({
 }: {
     handleSubmission: (data: any) => Promise<any>;
 }) {
-    const [mode, setMode] = useState<Mode>("individual");
     const [individual, setIndividual] = useState<Person>(emptyPerson());
-    const [individualEvents, setIndividualEvents] = useState<string[]>(["cad"]);
+    const [individualEvents, setIndividualEvents] = useState<string[]>([]);
     const [enabledTeamEvents, setEnabledTeamEvents] = useState<TeamEventKey[]>([]);
     const [teamNames, setTeamNames] = useState<Record<TeamEventKey, string>>({ truss: "", poster: "" });
     const [teamMembers, setTeamMembers] = useState<Record<TeamEventKey, Person[]>>({
@@ -56,8 +54,8 @@ export default function RegistrationFormV2({
     const [isLoading, setIsLoading] = useState(false);
     const [draftLoaded, setDraftLoaded] = useState(false);
 
-    const includesIndividual = mode === "individual" || mode === "both";
-    const includesTeam = mode === "team" || mode === "both";
+    const hasIndividualEvents = individualEvents.length > 0;
+    const hasTeamEvents = enabledTeamEvents.length > 0;
     const firstTeamEvent = enabledTeamEvents[0];
     const secondTeamEvent = enabledTeamEvents[1];
 
@@ -66,7 +64,6 @@ export default function RegistrationFormV2({
             const savedDraft = localStorage.getItem(REGISTRATION_DRAFT_KEY);
             if (savedDraft) {
                 const draft = JSON.parse(savedDraft);
-                if (["individual", "team", "both"].includes(draft.mode)) setMode(draft.mode);
                 if (draft.individual) setIndividual(draft.individual);
                 if (Array.isArray(draft.individualEvents)) setIndividualEvents(draft.individualEvents);
                 if (Array.isArray(draft.enabledTeamEvents)) setEnabledTeamEvents(draft.enabledTeamEvents);
@@ -84,7 +81,6 @@ export default function RegistrationFormV2({
     useEffect(() => {
         if (!draftLoaded) return;
         localStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify({
-            mode,
             individual,
             individualEvents,
             enabledTeamEvents,
@@ -92,12 +88,11 @@ export default function RegistrationFormV2({
             teamMembers,
             copyPreviousTeam
         }));
-    }, [draftLoaded, mode, individual, individualEvents, enabledTeamEvents, teamNames, teamMembers, copyPreviousTeam]);
+    }, [draftLoaded, individual, individualEvents, enabledTeamEvents, teamNames, teamMembers, copyPreviousTeam]);
 
     const clearAllData = () => {
-        setMode("individual");
         setIndividual(emptyPerson());
-        setIndividualEvents(["cad"]);
+        setIndividualEvents([]);
         setEnabledTeamEvents([]);
         setTeamNames({ truss: "", poster: "" });
         setTeamMembers({
@@ -110,13 +105,13 @@ export default function RegistrationFormV2({
     };
 
     useEffect(() => {
-        if (mode !== "both") return;
+        if (!hasIndividualEvents || !hasTeamEvents) return;
 
         setTeamMembers((current) => ({
             truss: [individual, ...current.truss.slice(1)],
             poster: [individual, ...current.poster.slice(1)]
         }));
-    }, [mode, individual]);
+    }, [hasIndividualEvents, hasTeamEvents, individual]);
 
     useEffect(() => {
         if (!firstTeamEvent || !secondTeamEvent) {
@@ -149,19 +144,19 @@ export default function RegistrationFormV2({
 
     const allSelectedEntries = () => {
         const entries: Array<{ person: Person; event: string; identity: string }> = [];
-        if (includesIndividual) {
+        if (hasIndividualEvents) {
             individualEvents.forEach((event) => entries.push({
                 person: individual,
                 event,
                 identity: "individual-participant"
             }));
         }
-        if (includesTeam) {
+        if (hasTeamEvents) {
             enabledTeamEvents.forEach((event) => {
                 teamMembers[event].forEach((person, index) => entries.push({
                     person,
                     event,
-                    identity: mode === "both" && index === 0
+                    identity: hasIndividualEvents && index === 0
                         ? "individual-participant"
                         : copyPreviousTeam && event === secondTeamEvent
                             ? `${firstTeamEvent}-member-${index}`
@@ -196,15 +191,15 @@ export default function RegistrationFormV2({
 
     const submit = async () => {
         setError("");
-        if (includesIndividual && (!isPersonComplete(individual) || individualEvents.length === 0)) {
+        if (hasIndividualEvents && !isPersonComplete(individual)) {
             setError("Complete the individual participant card and select at least one individual event.");
             return;
         }
-        if (includesTeam && enabledTeamEvents.length === 0) {
-            setError("Select at least one team event.");
+        if (!hasIndividualEvents && !hasTeamEvents) {
+            setError("Select at least one individual or team event.");
             return;
         }
-        const activeTeamEvents = includesTeam ? enabledTeamEvents : [];
+        const activeTeamEvents = enabledTeamEvents;
 
         for (const event of activeTeamEvents) {
             const members = teamMembers[event];
@@ -218,17 +213,17 @@ export default function RegistrationFormV2({
 
         setIsLoading(true);
         const response = await handleSubmission({
-            mode,
-            individualRegistration: includesIndividual
+            mode: hasIndividualEvents && hasTeamEvents
+                ? "both"
+                : hasIndividualEvents ? "individual" : "team",
+            individualRegistration: hasIndividualEvents
                 ? { participant: individual, events: individualEvents }
                 : null,
-            teamRegistrations: includesTeam
-                ? activeTeamEvents.map((event) => ({
+            teamRegistrations: activeTeamEvents.map((event) => ({
                     event,
                     teamName: teamNames[event],
                     members: teamMembers[event]
-                }))
-                : [],
+                })),
             fee: calculateFee()
         });
         if (response.status === 200 && response.url) {
@@ -242,38 +237,18 @@ export default function RegistrationFormV2({
 
     return (
         <form className="mx-auto mt-5 flex w-full flex-col gap-5" onSubmit={(event) => { event.preventDefault(); submit(); }}>
-            <section className="rounded-2xl border border-blue-100 bg-white p-4 shadow-md">
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-bold text-[#083b66]">Registration Type</h2>
-                    <Button type="button" size="sm" color="danger" variant="light" onPress={clearAllData}>Clear Data</Button>
-                </div>
-                <RadioGroup
-                    value={mode}
-                    orientation="horizontal"
-                    className="mt-2"
-                    onValueChange={(value) => {
-                        const nextMode = value as Mode;
-                        setMode(nextMode);
-                        if ((nextMode === "individual" || nextMode === "both") && individualEvents.length === 0) {
-                            setIndividualEvents(["cad"]);
-                        }
-                        if ((nextMode === "team" || nextMode === "both") && enabledTeamEvents.length === 0) {
-                            setEnabledTeamEvents(["truss"]);
-                        }
-                    }}
-                >
-                    <Radio value="individual">Individual Only</Radio>
-                    <Radio value="team">Team Only</Radio>
-                    <Radio value="both">Individual + Team</Radio>
-                </RadioGroup>
-            </section>
-
-            {includesIndividual && (
+            {(
                 <ParticipantCard
                     title="Individual Participant"
                     subtitle="Select one or more individual events"
                     person={individual}
+                    isRequired={hasIndividualEvents}
                     onChange={(field, value) => setIndividual(updatePerson(individual, field, value))}
+                    headerAction={
+                        <Button type="button" size="sm" color="danger" variant="light" onPress={clearAllData}>
+                            Clear Data
+                        </Button>
+                    }
                 >
                     <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
                         <CheckboxGroup label="Individual Events" value={individualEvents} onValueChange={setIndividualEvents} orientation="horizontal">
@@ -288,7 +263,7 @@ export default function RegistrationFormV2({
                 </ParticipantCard>
             )}
 
-            {includesTeam && (
+            {(
                 <section className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4 shadow-md">
                     <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
                         <div>
@@ -317,7 +292,7 @@ export default function RegistrationFormV2({
                 </section>
             )}
 
-            {includesTeam && enabledTeamEvents.map((event, eventIndex) => (
+            {enabledTeamEvents.map((event, eventIndex) => (
                 <TeamCard
                     key={event}
                     event={event}
@@ -331,7 +306,7 @@ export default function RegistrationFormV2({
                     }}
                     onAdd={() => setTeamMembers({ ...teamMembers, [event]: [...teamMembers[event], emptyPerson()] })}
                     onRemove={() => setTeamMembers({ ...teamMembers, [event]: teamMembers[event].slice(0, -1) })}
-                    lockFirstMember={mode === "both"}
+                    lockFirstMember={hasIndividualEvents}
                     showCopyPrevious={eventIndex === 1}
                     copyPrevious={eventIndex === 1 && copyPreviousTeam}
                     onCopyPreviousChange={setCopyPreviousTeam}
@@ -350,23 +325,28 @@ export default function RegistrationFormV2({
     );
 }
 
-function ParticipantCard({ title, subtitle, person, onChange, children, isReadOnly = false }: {
+function ParticipantCard({ title, subtitle, person, onChange, children, isReadOnly = false, isRequired = true, headerAction }: {
     title: string;
     subtitle: string;
     person: Person;
     onChange: (field: keyof Person, value: string) => void;
     children?: React.ReactNode;
     isReadOnly?: boolean;
+    isRequired?: boolean;
+    headerAction?: React.ReactNode;
 }) {
     return (
         <section className="rounded-2xl border border-blue-100 bg-white p-4 shadow-md">
-            <h2 className="text-lg font-bold text-[#083b66]">{title}</h2>
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-[#083b66]">{title}</h2>
+                {headerAction}
+            </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                <Input size="lg" isRequired isReadOnly={isReadOnly} label="Full Name" labelPlacement="outside" value={person.name} onValueChange={(value) => onChange("name", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired isReadOnly={isReadOnly} type="email" label="Email" labelPlacement="outside" value={person.email} onValueChange={(value) => onChange("email", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired isReadOnly={isReadOnly} type="tel" label="Phone Number" labelPlacement="outside" value={person.phoneNumber} onValueChange={(value) => onChange("phoneNumber", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired isReadOnly={isReadOnly} label="Department" labelPlacement="outside" value={person.department} onValueChange={(value) => onChange("department", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired isReadOnly={isReadOnly} label="University" labelPlacement="outside" value={person.university} onValueChange={(value) => onChange("university", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} label="Full Name" labelPlacement="outside" value={person.name} onValueChange={(value) => onChange("name", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} type="email" label="Email" labelPlacement="outside" value={person.email} onValueChange={(value) => onChange("email", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} type="tel" label="Phone Number" labelPlacement="outside" value={person.phoneNumber} onValueChange={(value) => onChange("phoneNumber", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} label="Department" labelPlacement="outside" value={person.department} onValueChange={(value) => onChange("department", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} label="University" labelPlacement="outside" value={person.university} onValueChange={(value) => onChange("university", value)} classNames={participantInputClasses} />
             </div>
             {children && <div className="mt-3 border-t border-gray-100 pt-3">{children}</div>}
         </section>
