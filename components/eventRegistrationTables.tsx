@@ -2,6 +2,8 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const eventNames: Record<string, string> = {
     cad: "CAD Expert",
@@ -12,6 +14,19 @@ const eventNames: Record<string, string> = {
 };
 
 type PaymentFilter = "paid" | "all";
+
+function downloadExcel(rows: Record<string, unknown>[], fileName: string) {
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    saveAs(
+        new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }),
+        `${fileName}.xlsx`
+    );
+}
 
 export default function EventRegistrationTables({ password }: { password: string }) {
     const [singleRows, setSingleRows] = useState<any[]>([]);
@@ -55,6 +70,20 @@ export default function EventRegistrationTables({ password }: { password: string
                 count={filteredSingleRows.length}
                 filter={singlePaymentFilter}
                 onFilterChange={setSinglePaymentFilter}
+                onDownload={() => downloadExcel(
+                    filteredSingleRows.map((row) => ({
+                        "Registration ID": row.registration_id,
+                        Name: row.name,
+                        Email: row.email,
+                        Phone: row.phonenumber,
+                        Department: row.department,
+                        University: row.university,
+                        Events: row.events?.map((event: string) => eventNames[event] || event).join(", "),
+                        "Total Fee": row.total_fee,
+                        Payment: row.ispaid ? "Paid" : "Unpaid"
+                    })),
+                    "individual-event-registrations"
+                )}
             >
                 <table className="min-w-full border-collapse text-sm">
                     <thead className="bg-[#083b66] text-white"><tr>
@@ -75,6 +104,21 @@ export default function EventRegistrationTables({ password }: { password: string
                 count={filteredTeamRows.length}
                 filter={teamPaymentFilter}
                 onFilterChange={setTeamPaymentFilter}
+                onDownload={() => downloadExcel(
+                    filteredTeamRows.flatMap((row) => (row.members || []).map((member: any) => ({
+                        "Registration ID": row.registration_id,
+                        Event: eventNames[row.event] || row.event,
+                        "Team Name": row.teamname,
+                        Member: member.name,
+                        Email: member.email,
+                        Phone: member.phoneNumber,
+                        Department: member.department,
+                        University: member.university,
+                        "Total Fee": row.total_fee,
+                        Payment: row.ispaid ? "Paid" : "Unpaid"
+                    }))),
+                    "team-event-registrations"
+                )}
             >
                 <table className="min-w-full border-collapse text-sm">
                     <thead className="bg-gradient-to-r from-orange-600 to-orange-500 text-white"><tr>
@@ -100,6 +144,19 @@ export default function EventRegistrationTables({ password }: { password: string
                 count={filteredUniqueParticipantRows.length}
                 filter={uniquePaymentFilter}
                 onFilterChange={setUniquePaymentFilter}
+                onDownload={() => downloadExcel(
+                    filteredUniqueParticipantRows.map((row) => ({
+                        "Registration ID": row.registration_id,
+                        Participant: row.name,
+                        Email: row.email,
+                        Phone: row.phonenumber,
+                        Department: row.department,
+                        University: row.university,
+                        Events: row.events?.map((event: string) => eventNames[event] || event).join(", "),
+                        Payment: row.ispaid ? "Paid" : "Unpaid"
+                    })),
+                    "unique-participants"
+                )}
             >
                 <table className="min-w-full border-collapse text-sm">
                     <thead className="bg-gradient-to-r from-emerald-700 to-emerald-600 text-white"><tr>
@@ -124,11 +181,12 @@ export default function EventRegistrationTables({ password }: { password: string
     );
 }
 
-function DataSection({ title, count, filter, onFilterChange, children }: {
+function DataSection({ title, count, filter, onFilterChange, onDownload, children }: {
     title: string;
     count: number;
     filter: PaymentFilter;
     onFilterChange: (filter: PaymentFilter) => void;
+    onDownload: () => void;
     children: React.ReactNode;
 }) {
     return <section className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl">
@@ -140,7 +198,17 @@ function DataSection({ title, count, filter, onFilterChange, children }: {
                     <FilterButton active={filter === "all"} onClick={() => onFilterChange("all")}>Paid &amp; Unpaid</FilterButton>
                 </div>
             </div>
-            <span className="rounded-full bg-blue-50 px-4 py-2 font-semibold text-[#083b66]">{count} records</span>
+            <div className="flex items-center gap-3">
+                <span className="rounded-full bg-blue-50 px-4 py-2 font-semibold text-[#083b66]">{count} records</span>
+                <button
+                    type="button"
+                    onClick={onDownload}
+                    disabled={count === 0}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Download Excel
+                </button>
+            </div>
         </div>
         <div className="overflow-x-auto">{children}</div>
     </section>;
