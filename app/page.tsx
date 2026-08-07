@@ -8,6 +8,7 @@ import {
   getRegistrationImpactMessage,
   getRegistrationPhase,
 } from "@/config/deadline";
+import { galleryAsset } from "@/config/assets";
 
 import Marquee from "react-fast-marquee";
 
@@ -27,11 +28,11 @@ export default function Home() {
       : null;
 
   const images = [
-    "/gallery/image_11.JPG",
-    "/gallery/image_12.JPG",
-    "/gallery/image_13.JPG",
-    "/gallery/image_14.JPG",
-    "/gallery/image_151.JPG",
+    galleryAsset("image_11.JPG"),
+    galleryAsset("image_12.JPG"),
+    galleryAsset("image_13.JPG"),
+    galleryAsset("image_14.JPG"),
+    galleryAsset("image_151.JPG"),
   ];
 
   const stats = [

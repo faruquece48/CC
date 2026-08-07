@@ -7,6 +7,11 @@ const nextConfig = {
         hostname: 'www.ruet.ac.bd',
         pathname: '/public/storage/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.constructcarnival.com',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {

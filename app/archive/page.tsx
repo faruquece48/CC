@@ -11,6 +11,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { archiveAsset, galleryAsset } from "@/config/assets";
 
 const archiveEvents = [
   {
@@ -20,8 +21,14 @@ const archiveEvents = [
     description:
       "Relive the competitions, celebrations and people who shaped the first chapter of Construct Carnival.",
     photos: Array.from({ length: 41 }, (_, index) => ({
-      src: `/archive/image_${index + 11}.webp`,
-    })),
+      memoryNumber: index + 1,
+      imageNumber: index + 11,
+    }))
+      .filter(({ memoryNumber }) => ![23, 24, 26].includes(memoryNumber))
+      .map(({ memoryNumber, imageNumber }) => ({
+        memoryNumber,
+        src: archiveAsset(`image_${imageNumber}.webp`),
+      })),
   },
   {
     name: "Construct Carnival 2.0",
@@ -67,7 +74,7 @@ export default function ArchivePage() {
     <main className="min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082c27]">
       <section className="relative isolate overflow-hidden bg-[#063f36] px-4 py-16 text-white md:px-8 md:py-24">
         <div className="absolute inset-0 -z-20 opacity-25">
-          <img src="/archive/image_11.webp" alt="" className="h-full w-full object-cover" />
+          <img src={archiveAsset("image_11.webp")} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#042f29] via-[#06483d]/95 to-[#06483d]/70" />
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full border border-white/10" />
@@ -89,9 +96,9 @@ export default function ArchivePage() {
           </div>
 
           <div className="relative hidden h-[360px] lg:block">
-            <img src="/archive/image_14.webp" alt="Archive highlight" className="absolute left-0 top-8 h-64 w-48 rotate-[-6deg] rounded-3xl border-4 border-white/80 object-cover shadow-2xl" />
-            <img src="/archive/image_26.webp" alt="Archive highlight" className="absolute left-40 top-0 z-10 h-72 w-52 rotate-3 rounded-3xl border-4 border-white object-cover shadow-2xl" />
-            <img src="/archive/image_39.webp" alt="Archive highlight" className="absolute bottom-0 right-0 h-60 w-48 rotate-6 rounded-3xl border-4 border-orange-200 object-cover shadow-2xl" />
+            <img src={archiveAsset("image_12.webp")} alt="Archive highlight" className="absolute left-0 top-8 h-64 w-48 rotate-[-6deg] rounded-3xl border-4 border-white/80 object-cover shadow-2xl" />
+            <img src={archiveAsset("image_35.webp")} alt="Archive highlight" className="absolute left-40 top-0 z-10 h-72 w-52 rotate-3 rounded-3xl border-4 border-white object-cover shadow-2xl" />
+            <img src={archiveAsset("image_51.webp")} alt="Archive highlight" className="absolute bottom-0 right-0 h-60 w-48 rotate-6 rounded-3xl border-4 border-orange-200 bg-white object-contain shadow-2xl" />
           </div>
         </div>
       </section>
@@ -149,10 +156,10 @@ export default function ArchivePage() {
                     onClick={() => setActivePhoto(index)}
                     className="group relative aspect-[4/3] overflow-hidden rounded-3xl border border-[#dbe4e0] bg-[#dfe8e4] text-left shadow-sm"
                   >
-                    <img src={photo.src} alt={`${selectedEvent.name} memory ${index + 1}`} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                    <img src={photo.src} alt={`${selectedEvent.name} memory ${photo.memoryNumber}`} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#032c26]/70 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
                     <div className="absolute bottom-0 left-0 flex w-full translate-y-4 items-center justify-between p-5 text-white opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
-                      <span className="font-semibold">Memory {String(index + 1).padStart(2, "0")}</span>
+                      <span className="font-semibold">Memory {String(photo.memoryNumber).padStart(2, "0")}</span>
                       <ArrowUpRight size={20} />
                     </div>
                   </button>
@@ -160,7 +167,7 @@ export default function ArchivePage() {
               })}
             </div>
 
-            <a href="/gallery/magazine.pdf" target="_blank" rel="noopener noreferrer" className="mt-10 flex flex-col justify-between gap-5 rounded-3xl bg-orange-400 p-7 text-[#173d36] shadow-lg transition hover:-translate-y-1 hover:shadow-xl sm:flex-row sm:items-center">
+            <a href={galleryAsset("magazine.pdf")} target="_blank" rel="noopener noreferrer" className="mt-10 flex flex-col justify-between gap-5 rounded-3xl bg-orange-400 p-7 text-[#173d36] shadow-lg transition hover:-translate-y-1 hover:shadow-xl sm:flex-row sm:items-center">
               <div>
                 <p className="text-sm font-bold uppercase tracking-[3px]">Official Publication</p>
                 <h3 className="mt-1 text-2xl font-black">Read the Carnival Magazine</h3>
@@ -182,7 +189,7 @@ export default function ArchivePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#021b17]/95 p-4" role="dialog" aria-modal="true" aria-label="Archive image viewer" onClick={() => setActivePhoto(null)}>
           <button type="button" onClick={() => setActivePhoto(null)} className="absolute right-5 top-5 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20" aria-label="Close image"><X /></button>
           <button type="button" onClick={(event) => { event.stopPropagation(); setActivePhoto((activePhoto - 1 + selectedEvent.photos.length) % selectedEvent.photos.length); }} className="absolute left-3 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20 md:left-8" aria-label="Previous image"><ArrowLeft /></button>
-          <img src={selectedEvent.photos[activePhoto].src} alt={`${selectedEvent.name} memory ${activePhoto + 1}`} className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain shadow-2xl" onClick={(event) => event.stopPropagation()} />
+          <img src={selectedEvent.photos[activePhoto].src} alt={`${selectedEvent.name} memory ${selectedEvent.photos[activePhoto].memoryNumber}`} className="max-h-[85vh] max-w-[88vw] rounded-2xl object-contain shadow-2xl" onClick={(event) => event.stopPropagation()} />
           <button type="button" onClick={(event) => { event.stopPropagation(); setActivePhoto((activePhoto + 1) % selectedEvent.photos.length); }} className="absolute right-3 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20 md:right-8" aria-label="Next image"><ArrowRight /></button>
           <p className="absolute bottom-5 text-sm font-semibold text-white/70">{activePhoto + 1} / {selectedEvent.photos.length}</p>
         </div>

@@ -1,5 +1,6 @@
 import { title } from "@/components/primitives";
 import Image from "next/image";
+import { galleryAsset } from "@/config/assets";
 
 export default function AboutPage() {
   return (
@@ -35,7 +36,8 @@ export default function AboutPage() {
           {/* Profile Image */}
           <div className="w-full max-w-[280px] overflow-hidden rounded-[24px] mb-6 shadow-md bg-white">
             <Image
-              src="/gallery/head.jpg"
+              src={galleryAsset("head.jpg")}
+              unoptimized
               alt="Shayla Sharmin"
               width={700}
               height={900}
