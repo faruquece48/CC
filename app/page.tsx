@@ -168,7 +168,7 @@ export default function Home() {
                   </span>{" "}
                   connecting future innovators through
                   competitions, workshops, creativity,
-                  collaboration, and leadership
+                  collaboration, and leadership.
                 </p>
 
                 {/* Additional Paragraph */}
