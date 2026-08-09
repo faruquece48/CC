@@ -53,14 +53,27 @@ export async function sendRegistrationPaymentEmail(
                 tran_id TEXT PRIMARY KEY,
                 registration_id BIGINT NOT NULL,
                 recipient TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'sending',
                 sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         `;
 
+        await sql`
+            ALTER TABLE paymentEmailLog
+            ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'sent'
+        `;
+
         const claim = await sql`
-            INSERT INTO paymentEmailLog (tran_id, registration_id, recipient)
-            VALUES (${tranId}, ${registration.id}, ${registration.email})
-            ON CONFLICT (tran_id) DO NOTHING
+            INSERT INTO paymentEmailLog (
+                tran_id, registration_id, recipient, status, sent_at
+            )
+            VALUES (
+                ${tranId}, ${registration.id}, ${registration.email}, 'sending', NOW()
+            )
+            ON CONFLICT (tran_id) DO UPDATE
+            SET status = 'sending', sent_at = NOW()
+            WHERE paymentEmailLog.status <> 'sent'
+              AND paymentEmailLog.sent_at < NOW() - INTERVAL '30 seconds'
             RETURNING tran_id
         `;
 
@@ -172,6 +185,14 @@ export async function sendRegistrationPaymentEmail(
                 </div>
             `,
         });
+
+        if (!options.testMode) {
+            await sql`
+                UPDATE paymentEmailLog
+                SET status = 'sent', sent_at = NOW()
+                WHERE tran_id = ${tranId}
+            `;
+        }
 
         console.log("PAYMENT EMAIL: Confirmation sent:", tranId);
         return true;

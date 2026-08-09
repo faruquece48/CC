@@ -1,6 +1,5 @@
 import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { sendRegistrationPaymentEmail } from "@/lib/paymentConfirmationEmail";
 
 const store_id = process.env.STORE_ID;
 const store_passwd = process.env.STORE_PASSWORD;
@@ -88,9 +87,6 @@ export async function POST(request: Request) {
                     WHERE tran_id = ${tran_id}
                 `;
 
-                if (tran_id) {
-                    await sendRegistrationPaymentEmail(tran_id, validation);
-                }
             }
 
             console.log("Database updated successfully.");
