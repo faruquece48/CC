@@ -22,10 +22,15 @@ const formatEvent = (event: string) => eventNames[event] || event;
 export async function sendRegistrationPaymentEmail(
     tranId: string,
     payment: Record<string, unknown>,
-    options: { testMode?: boolean } = {},
+    options: { testMode?: boolean; throwOnError?: boolean } = {},
 ) {
     if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
         console.error("PAYMENT EMAIL: Gmail configuration is missing.");
+        if (options.throwOnError) {
+            throw Object.assign(new Error("Gmail configuration is missing."), {
+                code: "ECONFIG",
+            });
+        }
         return false;
     }
 
@@ -175,6 +180,7 @@ export async function sendRegistrationPaymentEmail(
             await sql`DELETE FROM paymentEmailLog WHERE tran_id = ${tranId}`;
         }
         console.error("PAYMENT EMAIL ERROR:", error);
+        if (options.throwOnError) throw error;
         return false;
     }
 }

@@ -32,11 +32,30 @@ export async function POST(request: Request) {
         );
     }
 
-    const sent = await sendRegistrationPaymentEmail(
-        tranId,
-        { amount: "10.00", bank_tran_id: "LOCAL-EMAIL-TEST" },
-        { testMode: true },
-    );
+    let sent = false;
+
+    try {
+        sent = await sendRegistrationPaymentEmail(
+            tranId,
+            { amount: "10.00", bank_tran_id: "EMAIL-TEST" },
+            { testMode: true, throwOnError: true },
+        );
+    } catch (error: any) {
+        const message = error?.code === "ECONFIG"
+            ? "GMAIL_USER or GMAIL_APP_PASSWORD is missing from this Vercel deployment."
+            : error?.code === "EAUTH"
+            ? "Gmail authentication failed. Verify GMAIL_USER and generate a new App Password for that same account."
+            : ["ETIMEDOUT", "ECONNECTION", "ESOCKET"].includes(error?.code)
+                ? "The server could not connect to Gmail SMTP. Check the Vercel function logs and retry."
+                : error?.code === "ENOENT"
+                    ? "The signature image is missing from the deployed project."
+                    : "The email provider rejected the message. Check the Vercel function log for details.";
+
+        return NextResponse.json(
+            { success: false, message },
+            { status: 503, headers: { "Cache-Control": "no-store" } },
+        );
+    }
 
     return NextResponse.json(
         {
