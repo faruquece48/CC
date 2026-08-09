@@ -4,10 +4,6 @@ import { sql } from "@vercel/postgres";
 import { sendRegistrationPaymentEmail } from "@/lib/paymentConfirmationEmail";
 
 export async function POST(request: Request) {
-    if (process.env.NODE_ENV !== "development") {
-        return NextResponse.json({ success: false }, { status: 404 });
-    }
-
     const { password } = await request.json();
     const provided = Buffer.from(typeof password === "string" ? password : "");
     const expected = Buffer.from(process.env.ADMIN_PASSWORD || "");

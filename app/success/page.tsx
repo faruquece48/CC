@@ -9,14 +9,30 @@ export default function SuccessPage() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
+        const tranId = searchParams.get("tran_id");
+        const controller = new AbortController();
 
-        const timer = setTimeout(() => {
-            router.push("/");
-        }, 3000);
+        if (tranId) {
+            fetch("/api/payment-confirmation-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tranId }),
+                signal: controller.signal,
+            }).catch((error) => {
+                if (error.name !== "AbortError") {
+                    console.error("Confirmation email request failed:", error);
+                }
+            });
+        }
 
-        return () => clearTimeout(timer);
+        const timer = setTimeout(() => router.push("/"), 8000);
 
-    }, [router]);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+
+    }, [router, searchParams]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen gap-4">
@@ -31,6 +47,10 @@ export default function SuccessPage() {
 
             <p>
                 Transaction ID: {searchParams.get("tran_id")}
+            </p>
+
+            <p>
+                Your registration confirmation email is being prepared.
             </p>
 
             <p>

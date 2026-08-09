@@ -119,7 +119,7 @@ export default function PaymentSlipPreviewPage() {
                     disabled={sendingTestEmail}
                     className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
                 >
-                    {sendingTestEmail ? "Sending..." : "Send Local Test Email"}
+                    {sendingTestEmail ? "Sending..." : "Send Test Email"}
                 </button>
             </div>
             <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
