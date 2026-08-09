@@ -32,24 +32,20 @@ export default function EventRegistrationTables({ password }: { password: string
     const [singleRows, setSingleRows] = useState<any[]>([]);
     const [teamRows, setTeamRows] = useState<any[]>([]);
     const [uniqueParticipantRows, setUniqueParticipantRows] = useState<any[]>([]);
-    const [supportRows, setSupportRows] = useState<any[]>([]);
     const [error, setError] = useState("");
     const [singlePaymentFilter, setSinglePaymentFilter] = useState<PaymentFilter>("all");
     const [teamPaymentFilter, setTeamPaymentFilter] = useState<PaymentFilter>("all");
     const [uniquePaymentFilter, setUniquePaymentFilter] = useState<PaymentFilter>("all");
-    const [supportPaymentFilter, setSupportPaymentFilter] = useState<PaymentFilter>("all");
 
     useEffect(() => {
         Promise.all([
             axios.post("/api/fetchRegData", { password, table: "singleRegistration" }),
             axios.post("/api/fetchRegData", { password, table: "teamRegistration" }),
-            axios.post("/api/fetchRegData", { password, table: "uniqueParticipants" }),
-            axios.post("/api/fetchRegData", { password, table: "support" })
-        ]).then(([single, team, uniqueParticipants, support]) => {
+            axios.post("/api/fetchRegData", { password, table: "uniqueParticipants" })
+        ]).then(([single, team, uniqueParticipants]) => {
             setSingleRows(single.data.data);
             setTeamRows(team.data.data);
             setUniqueParticipantRows(uniqueParticipants.data.data);
-            setSupportRows(support.data.data);
         }).catch((requestError) => {
             setError(requestError.response?.data?.message || "Unable to load registration data");
         });
@@ -64,9 +60,6 @@ export default function EventRegistrationTables({ password }: { password: string
     const filteredUniqueParticipantRows = uniquePaymentFilter === "paid"
         ? uniqueParticipantRows.filter((row) => row.ispaid)
         : uniqueParticipantRows;
-    const filteredSupportRows = supportPaymentFilter === "paid"
-        ? supportRows.filter((row) => row.ispaid)
-        : supportRows;
 
     return (
         <div className="space-y-14">
@@ -184,45 +177,6 @@ export default function EventRegistrationTables({ password }: { password: string
                     ))}</tbody>
                 </table>
             </DataSection>
-
-            <DataSection
-                title="Support Contributions"
-                count={filteredSupportRows.length}
-                filter={supportPaymentFilter}
-                onFilterChange={setSupportPaymentFilter}
-                onDownload={() => downloadExcel(
-                    filteredSupportRows.map((row) => ({
-                        ID: row.id,
-                        Name: row.name,
-                        Email: row.email,
-                        Phone: row.phone,
-                        Company: row.company_name,
-                        Amount: row.amount,
-                        "Transaction ID": row.tran_id,
-                        Payment: row.ispaid ? "Paid" : "Unpaid"
-                    })),
-                    "support-contributions"
-                )}
-            >
-                <table className="w-max min-w-full border-collapse text-sm">
-                    <thead className="bg-[#6b2d84] text-white"><tr>
-                        {['ID', 'Name', 'Email', 'Phone', 'Company', 'Amount', 'Transaction ID', 'Payment'].map((heading) =>
-                            <th key={heading} className="whitespace-nowrap border border-purple-900 p-3 text-left">{heading}</th>)}
-                    </tr></thead>
-                    <tbody>{filteredSupportRows.map((row) => (
-                        <tr key={row.id} className="even:bg-purple-50/50">
-                            <Cell>{row.id}</Cell>
-                            <Cell>{row.name}</Cell>
-                            <Cell>{row.email}</Cell>
-                            <Cell>{row.phone}</Cell>
-                            <Cell>{row.company_name}</Cell>
-                            <Cell>{row.amount} TK</Cell>
-                            <Cell>{row.tran_id}</Cell>
-                            <Cell><PaymentStatus paid={row.ispaid} /></Cell>
-                        </tr>
-                    ))}</tbody>
-                </table>
-            </DataSection>
         </div>
     );
 }
@@ -235,7 +189,7 @@ function DataSection({ title, count, filter, onFilterChange, onDownload, childre
     onDownload: () => void;
     children: React.ReactNode;
 }) {
-    return <section className="w-full min-w-0 max-w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl">
+    return <section className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl">
         <div className="flex flex-col justify-between gap-4 p-6 md:flex-row md:items-center">
             <div>
                 <h2 className="text-2xl font-bold text-[#083b66]">{title}</h2>
@@ -256,7 +210,7 @@ function DataSection({ title, count, filter, onFilterChange, onDownload, childre
                 </button>
             </div>
         </div>
-        <div className="w-full min-w-0 max-w-full overflow-x-auto">{children}</div>
+        <div className="overflow-x-auto">{children}</div>
     </section>;
 }
 
