@@ -107,7 +107,7 @@ export default function RegistrationDataPage() {
 
     return (
 
-        <div className="p-10">
+        <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
 
             <EventRegistrationTables
                 password={inputPassword}
