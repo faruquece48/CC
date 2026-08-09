@@ -115,14 +115,13 @@ export default function SupportPage() {
         {/* COMPANY NAME */}
         <div className="flex flex-col gap-1">
           <label className="text-lg font-medium text-gray-700">
-            Organization Name
+            Organization Name (Optional)
           </label>
 
           <input
             type="text"
             name="company_name"
             placeholder="Your Company / Organization"
-            required
             className="border rounded-lg p-4 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400"
           />
         </div>
