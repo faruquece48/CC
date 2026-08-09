@@ -1,20 +1,34 @@
 "use client";
 
 import { CheckCircle2, LockKeyhole, ReceiptText } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
-const previewTeams = [
-    {
-        name: "Team Structure",
-        event: "Truss Combat",
-        members: ["Member One", "Member Two", "Member Three"],
-    },
-    {
-        name: "Team Vision",
-        event: "Poster Presentation",
-        members: ["Member Four", "Member Five", "Member Six"],
-    },
-];
+const eventNames: Record<string, string> = {
+    cad: "CAD Expert",
+    mechamind: "Mechamind",
+    management: "Management Maestro",
+    truss: "Truss Combat",
+    poster: "Poster Presentation",
+};
+
+type PaidRegistration = {
+    id: number;
+    maskedEmail: string;
+};
+
+type PreviewRegistration = {
+    id: number;
+    memberName: string;
+    email: string;
+    fee: number | string;
+    transactionId: string;
+    individual: Array<{ name: string; email: string; events: string[] }>;
+    teams: Array<{
+        event: string;
+        teamname: string;
+        members: Array<{ name: string }>;
+    }>;
+};
 
 export default function PaymentSlipPreviewPage() {
     const [password, setPassword] = useState("");
@@ -24,6 +38,54 @@ export default function PaymentSlipPreviewPage() {
     const [error, setError] = useState("");
     const [emailTestStatus, setEmailTestStatus] = useState("");
     const [sendingTestEmail, setSendingTestEmail] = useState(false);
+    const [paidRegistrations, setPaidRegistrations] = useState<PaidRegistration[]>([]);
+    const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<number[]>([]);
+    const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+    const [previewRegistration, setPreviewRegistration] = useState<PreviewRegistration | null>(null);
+    const [loadingPreview, setLoadingPreview] = useState(false);
+
+    useEffect(() => {
+        const registrationId = selectedRegistrationIds[0];
+        if (!authenticated || !verifiedPassword || !registrationId) {
+            setPreviewRegistration(null);
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingPreview(true);
+
+        fetch("/api/payment-slip-preview-data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: verifiedPassword, registrationId }),
+            signal: controller.signal,
+        })
+            .then((response) => response.json())
+            .then((result) => setPreviewRegistration(result.registration || null))
+            .catch((requestError) => {
+                if (requestError.name !== "AbortError") setPreviewRegistration(null);
+            })
+            .finally(() => setLoadingPreview(false));
+
+        return () => controller.abort();
+    }, [authenticated, selectedRegistrationIds, verifiedPassword]);
+
+    const loadPaidRegistrations = async (adminPassword: string) => {
+        setLoadingRegistrations(true);
+        try {
+            const response = await fetch("/api/paid-registration-ids", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: adminPassword }),
+            });
+            const result = await response.json();
+            setPaidRegistrations(result.registrations || []);
+        } catch {
+            setEmailTestStatus("Unable to load paid registrations.");
+        } finally {
+            setLoadingRegistrations(false);
+        }
+    };
 
     const authenticate = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -44,6 +106,7 @@ export default function PaymentSlipPreviewPage() {
 
             setVerifiedPassword(password);
             setAuthenticated(true);
+            void loadPaidRegistrations(password);
             setPassword("");
         } catch {
             setError("Unable to verify the password");
@@ -52,23 +115,44 @@ export default function PaymentSlipPreviewPage() {
         }
     };
 
-    const sendTestEmail = async () => {
+    const sendTestEmails = async () => {
         setSendingTestEmail(true);
         setEmailTestStatus("");
 
-        try {
-            const response = await fetch("/api/test-payment-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password: verifiedPassword }),
-            });
-            const result = await response.json();
-            setEmailTestStatus(result.message || "Unable to send test email.");
-        } catch {
-            setEmailTestStatus("Unable to send test email.");
-        } finally {
-            setSendingTestEmail(false);
+        let sent = 0;
+        const failed: number[] = [];
+
+        for (const registrationId of selectedRegistrationIds) {
+            try {
+                const response = await fetch("/api/test-payment-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        password: verifiedPassword,
+                        registrationId,
+                    }),
+                });
+                if (response.ok) sent += 1;
+                else failed.push(registrationId);
+            } catch {
+                failed.push(registrationId);
+            }
         }
+
+        setEmailTestStatus(
+            failed.length === 0
+                ? `${sent} payment slip${sent === 1 ? "" : "s"} accepted for delivery.`
+                : `${sent} sent. Failed IDs: ${failed.join(", ")}.`,
+        );
+        setSendingTestEmail(false);
+    };
+
+    const toggleRegistration = (registrationId: number) => {
+        setSelectedRegistrationIds((current) =>
+            current.includes(registrationId)
+                ? current.filter((id) => id !== registrationId)
+                : [...current, registrationId],
+        );
     };
 
     if (!authenticated) {
@@ -109,18 +193,71 @@ export default function PaymentSlipPreviewPage() {
 
     return (
         <main className="bg-gray-100 px-4 py-12">
-            <div className="mx-auto mb-6 flex max-w-3xl flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-200 bg-sky-50 p-4">
-                <p className="text-sm font-medium text-sky-900">
-                    {emailTestStatus || "Send this slip to the latest paid registration email."}
-                </p>
+            <div className="mx-auto mb-6 max-w-3xl rounded-lg border border-sky-200 bg-sky-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 className="font-bold text-sky-950">Paid Registration IDs</h2>
+                        <p className="text-sm text-sky-800">{selectedRegistrationIds.length} selected</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRegistrationIds(paidRegistrations.map((item) => item.id))}
+                            disabled={paidRegistrations.length === 0}
+                            className="rounded-md border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-sky-800 disabled:opacity-50"
+                        >
+                            Select All
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRegistrationIds([])}
+                            disabled={selectedRegistrationIds.length === 0}
+                            className="rounded-md border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-sky-800 disabled:opacity-50"
+                        >
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <div className="my-4 max-h-56 overflow-y-auto rounded-md border border-sky-200 bg-white">
+                    {loadingRegistrations ? (
+                        <p className="p-4 text-sm text-gray-500">Loading paid registrations...</p>
+                    ) : paidRegistrations.length === 0 ? (
+                        <p className="p-4 text-sm text-gray-500">No paid registrations found.</p>
+                    ) : (
+                        paidRegistrations.map((registration) => (
+                            <label
+                                key={registration.id}
+                                className="flex cursor-pointer items-center justify-between gap-4 border-b border-sky-100 px-4 py-3 last:border-b-0 hover:bg-sky-50"
+                            >
+                                <span className="flex items-center gap-3 font-semibold text-gray-900">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedRegistrationIds.includes(registration.id)}
+                                        onChange={() => toggleRegistration(registration.id)}
+                                        className="h-4 w-4 accent-sky-700"
+                                    />
+                                    #{registration.id}
+                                </span>
+                                <span className="text-sm text-gray-500">{registration.maskedEmail}</span>
+                            </label>
+                        ))
+                    )}
+                </div>
+
                 <button
                     type="button"
-                    onClick={sendTestEmail}
-                    disabled={sendingTestEmail}
-                    className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+                    onClick={sendTestEmails}
+                    disabled={sendingTestEmail || selectedRegistrationIds.length === 0}
+                    className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {sendingTestEmail ? "Sending..." : "Send Test Email"}
+                    {sendingTestEmail
+                        ? "Sending..."
+                        : `Send ${selectedRegistrationIds.length || "Selected"} Slip${selectedRegistrationIds.length === 1 ? "" : "s"}`}
                 </button>
+                {emailTestStatus && (
+                    <p className="mt-3 text-sm font-medium text-sky-900">{emailTestStatus}</p>
+                )}
             </div>
             <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
                 <header className="border-b border-gray-200 bg-white px-6 py-6 text-center">
@@ -142,7 +279,11 @@ export default function PaymentSlipPreviewPage() {
                     <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-200 pb-4">
                         <div>
                             <p className="text-sm text-gray-500">Confirmation for</p>
-                            <p className="font-bold text-gray-900">Sample Participant</p>
+                            <p className="font-bold text-gray-900">
+                                {loadingPreview
+                                    ? "Loading registration..."
+                                    : previewRegistration?.memberName || "Select a paid Registration ID"}
+                            </p>
                         </div>
                         <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
                             <ReceiptText size={18} aria-hidden="true" />
@@ -152,68 +293,69 @@ export default function PaymentSlipPreviewPage() {
 
                     <section className="border-l-4 border-emerald-500 bg-emerald-50 p-4">
                         <dl className="grid gap-3 sm:grid-cols-2">
-                            <Detail label="Registration ID" value="1001" />
-                            <Detail label="Payment Status" value="Paid" accent />
-                            <Detail label="Transaction ID" value="BECMCC20-1001-123456789012" />
-                            <Detail label="Gateway Transaction" value="SSL-DEMO-987654" />
-                            <Detail label="Amount" value="1,000 BDT" />
-                            <Detail label="Payment Date" value="15 August 2026" />
+                            <Detail label="Registration ID" value={previewRegistration ? String(previewRegistration.id) : "-"} />
+                            <Detail label="Payment Status" value={previewRegistration ? "Paid" : "-"} accent={Boolean(previewRegistration)} />
+                            <Detail label="Transaction ID" value={previewRegistration?.transactionId || "-"} />
+                            <Detail label="Email" value={previewRegistration?.email || "-"} />
+                            <Detail label="Amount" value={previewRegistration ? `${Number(previewRegistration.fee).toLocaleString()} BDT` : "-"} />
                         </dl>
                     </section>
 
-                    <section className="mt-7">
-                        <h2 className="mb-3 text-lg font-bold text-gray-900">Individual Event Registration</h2>
-                        <div className="overflow-x-auto rounded-md border border-gray-200">
-                            <table className="min-w-full border-collapse text-sm">
-                                <thead className="bg-gray-100 text-left text-gray-700">
-                                    <tr><th className="p-3">Participant</th><th className="p-3">Events</th><th className="p-3">Email</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr className="border-t border-gray-200">
-                                        <td className="p-3">Sample Participant</td>
-                                        <td className="p-3">CAD Expert, Mechamind</td>
-                                        <td className="p-3">participant@example.com</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section className="mt-7">
-                        <h2 className="mb-3 text-lg font-bold text-gray-900">Team Event Registration</h2>
-                        <div className="overflow-x-auto rounded-md border border-gray-200">
-                            <table className="min-w-full border-collapse text-sm">
-                                <thead className="bg-gray-100 text-left text-gray-700">
-                                    <tr><th className="p-3">Team</th><th className="p-3">Event</th><th className="p-3">Member</th></tr>
-                                </thead>
-                                <tbody>
-                                    {previewTeams.flatMap((team) =>
-                                        team.members.map((member, index) => (
-                                            <tr key={`${team.name}-${member}`} className="border-t border-gray-200">
-                                                {index === 0 && (
-                                                    <td
-                                                        rowSpan={team.members.length}
-                                                        className="border-r border-gray-200 p-3 align-middle font-semibold"
-                                                    >
-                                                        {team.name}
-                                                    </td>
-                                                )}
-                                                {index === 0 && (
-                                                    <td
-                                                        rowSpan={team.members.length}
-                                                        className="border-r border-gray-200 p-3 align-middle"
-                                                    >
-                                                        {team.event}
-                                                    </td>
-                                                )}
-                                                <td className="p-3">{member}</td>
+                    {previewRegistration && previewRegistration.individual.length > 0 && (
+                        <section className="mt-7">
+                            <h2 className="mb-3 text-lg font-bold text-gray-900">Individual Event Registration</h2>
+                            <div className="overflow-x-auto rounded-md border border-gray-200">
+                                <table className="min-w-full border-collapse text-sm">
+                                    <thead className="bg-gray-100 text-left text-gray-700">
+                                        <tr><th className="p-3">Participant</th><th className="p-3">Events</th><th className="p-3">Email</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {previewRegistration.individual.map((participant) => (
+                                            <tr key={`${participant.email}-${participant.events.join("-")}`} className="border-t border-gray-200">
+                                                <td className="p-3">{participant.name}</td>
+                                                <td className="p-3">
+                                                    {participant.events.map((event) => eventNames[event] || event).join(", ")}
+                                                </td>
+                                                <td className="p-3">{participant.email}</td>
                                             </tr>
-                                        )),
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    )}
+
+                    {previewRegistration && previewRegistration.teams.length > 0 && (
+                        <section className="mt-7">
+                            <h2 className="mb-3 text-lg font-bold text-gray-900">Team Event Registration</h2>
+                            <div className="overflow-x-auto rounded-md border border-gray-200">
+                                <table className="min-w-full border-collapse text-sm">
+                                    <thead className="bg-gray-100 text-left text-gray-700">
+                                        <tr><th className="p-3">Team</th><th className="p-3">Event</th><th className="p-3">Member</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {previewRegistration.teams.flatMap((team) =>
+                                            team.members.map((member, index) => (
+                                                <tr key={`${team.teamname}-${team.event}-${index}`} className="border-t border-gray-200">
+                                                    {index === 0 && (
+                                                        <td rowSpan={team.members.length} className="border-r border-gray-200 p-3 align-middle font-semibold">
+                                                            {team.teamname}
+                                                        </td>
+                                                    )}
+                                                    {index === 0 && (
+                                                        <td rowSpan={team.members.length} className="border-r border-gray-200 p-3 align-middle">
+                                                            {eventNames[team.event] || team.event}
+                                                        </td>
+                                                    )}
+                                                    <td className="p-3">{member.name}</td>
+                                                </tr>
+                                            )),
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    )}
 
                     <p className="mt-8 border-t border-gray-200 pt-5 text-sm text-gray-500">
                         This is an electronically generated payment slip and requires no further verification.

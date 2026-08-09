@@ -122,10 +122,6 @@ export default function RegistrationFormV2({
         }
 
         if (copyPreviousTeam) {
-            setTeamNames((current) => ({
-                ...current,
-                [secondTeamEvent]: current[firstTeamEvent]
-            }));
             setTeamMembers((current) => ({
                 ...current,
                 [secondTeamEvent]: current[firstTeamEvent].map((member) => ({ ...member }))
@@ -135,7 +131,6 @@ export default function RegistrationFormV2({
         copyPreviousTeam,
         firstTeamEvent,
         secondTeamEvent,
-        firstTeamEvent ? teamNames[firstTeamEvent] : "",
         firstTeamEvent ? teamMembers[firstTeamEvent] : null
     ]);
 
@@ -389,7 +384,7 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
                 )}
             </div>
             <div className="space-y-4 p-4">
-                <Input size="lg" isRequired isReadOnly={copyPrevious} label="Team Name" labelPlacement="outside" value={teamName} onValueChange={onTeamNameChange} classNames={participantInputClasses} />
+                <Input size="lg" isRequired label="Team Name" labelPlacement="outside" value={teamName} onValueChange={onTeamNameChange} classNames={participantInputClasses} />
                 {members.map((member, index) => (
                     <ParticipantCard
                         key={index}

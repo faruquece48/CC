@@ -4,7 +4,7 @@ import { sql } from "@vercel/postgres";
 import { sendRegistrationPaymentEmail } from "@/lib/paymentConfirmationEmail";
 
 export async function POST(request: Request) {
-    const { password } = await request.json();
+    const { password, registrationId } = await request.json();
     const provided = Buffer.from(typeof password === "string" ? password : "");
     const expected = Buffer.from(process.env.ADMIN_PASSWORD || "");
 
@@ -16,19 +16,30 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const latest = await sql`
+    const selectedRegistrationId = Number(registrationId);
+
+    if (!Number.isInteger(selectedRegistrationId) || selectedRegistrationId <= 0) {
+        return NextResponse.json(
+            { success: false, message: "Enter a valid Registration ID." },
+            { status: 400 },
+        );
+    }
+
+    const selected = await sql`
         SELECT tran_id, email
         FROM registrationData
-        WHERE ispaid = TRUE
-        ORDER BY id DESC
+        WHERE id = ${selectedRegistrationId} AND ispaid = TRUE
         LIMIT 1
     `;
-    const tranId = latest.rows[0]?.tran_id;
-    const recipient = latest.rows[0]?.email;
+    const tranId = selected.rows[0]?.tran_id;
+    const recipient = selected.rows[0]?.email;
 
     if (!tranId || !recipient) {
         return NextResponse.json(
-            { success: false, message: "No paid registration was found." },
+            {
+                success: false,
+                message: `Paid registration #${selectedRegistrationId} was not found.`,
+            },
             { status: 404 },
         );
     }
@@ -67,7 +78,7 @@ export async function POST(request: Request) {
         {
             success: sent,
             message: sent
-                ? `Gmail accepted the test email for delivery to ${maskedRecipient}.`
+                ? `Gmail accepted the slip for registration #${selectedRegistrationId} for delivery to ${maskedRecipient}.`
                 : "Test email could not be sent. Check the server log.",
         },
         { status: sent ? 200 : 500 },
