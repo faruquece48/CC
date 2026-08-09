@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, LockKeyhole, ReceiptText } from "lucide-react";
+import { CheckCircle2, LockKeyhole, ReceiptText, Search } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 const eventNames: Record<string, string> = {
@@ -41,6 +41,7 @@ export default function PaymentSlipPreviewPage() {
     const [paidRegistrations, setPaidRegistrations] = useState<PaidRegistration[]>([]);
     const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<number[]>([]);
     const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+    const [registrationSearch, setRegistrationSearch] = useState("");
     const [previewRegistration, setPreviewRegistration] = useState<PreviewRegistration | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
 
@@ -155,6 +156,10 @@ export default function PaymentSlipPreviewPage() {
         );
     };
 
+    const filteredPaidRegistrations = paidRegistrations.filter((registration) =>
+        String(registration.id).includes(registrationSearch.trim()),
+    );
+
     if (!authenticated) {
         return (
             <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
@@ -202,8 +207,8 @@ export default function PaymentSlipPreviewPage() {
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={() => setSelectedRegistrationIds(paidRegistrations.map((item) => item.id))}
-                            disabled={paidRegistrations.length === 0}
+                            onClick={() => setSelectedRegistrationIds(filteredPaidRegistrations.map((item) => item.id))}
+                            disabled={filteredPaidRegistrations.length === 0}
                             className="rounded-md border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-sky-800 disabled:opacity-50"
                         >
                             Select All
@@ -219,13 +224,32 @@ export default function PaymentSlipPreviewPage() {
                     </div>
                 </div>
 
+                <div className="relative mt-4">
+                    <Search
+                        size={18}
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sky-700"
+                        aria-hidden="true"
+                    />
+                    <input
+                        type="search"
+                        inputMode="numeric"
+                        value={registrationSearch}
+                        onChange={(event) => setRegistrationSearch(event.target.value.replace(/\D/g, ""))}
+                        placeholder="Search Registration ID"
+                        aria-label="Search Registration ID"
+                        className="w-full rounded-md border border-sky-300 bg-white py-2 pl-10 pr-3 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-100"
+                    />
+                </div>
+
                 <div className="my-4 max-h-56 overflow-y-auto rounded-md border border-sky-200 bg-white">
                     {loadingRegistrations ? (
                         <p className="p-4 text-sm text-gray-500">Loading paid registrations...</p>
-                    ) : paidRegistrations.length === 0 ? (
-                        <p className="p-4 text-sm text-gray-500">No paid registrations found.</p>
+                    ) : filteredPaidRegistrations.length === 0 ? (
+                        <p className="p-4 text-sm text-gray-500">
+                            {registrationSearch ? "No matching paid Registration ID." : "No paid registrations found."}
+                        </p>
                     ) : (
-                        paidRegistrations.map((registration) => (
+                        filteredPaidRegistrations.map((registration) => (
                             <label
                                 key={registration.id}
                                 className="flex cursor-pointer items-center justify-between gap-4 border-b border-sky-100 px-4 py-3 last:border-b-0 hover:bg-sky-50"
