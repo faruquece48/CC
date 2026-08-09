@@ -155,6 +155,7 @@ export async function sendRegistrationPaymentEmail(
                         <div style="margin:20px 0;padding:16px;background:#f0fdf4;border-left:4px solid #16a34a;">
                             <p style="margin:4px 0;"><strong>Registration ID:</strong> ${escapeHtml(registration.id)}</p>
                             <p style="margin:4px 0;"><strong>Transaction ID:</strong> ${escapeHtml(tranId)}</p>
+                            <p style="margin:4px 0;"><strong>Phone:</strong> ${escapeHtml(registration.phonenumber)}</p>
                             <p style="margin:4px 0;"><strong>Gateway Transaction:</strong> ${escapeHtml(payment.bank_tran_id || payment.val_id || "-")}</p>
                             <p style="margin:4px 0;"><strong>Amount:</strong> ${escapeHtml(payment.amount || registration.fee)} BDT</p>
                             <p style="margin:4px 0;"><strong>Payment Status:</strong> Paid</p>

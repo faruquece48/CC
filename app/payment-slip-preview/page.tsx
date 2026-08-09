@@ -20,6 +20,7 @@ type PreviewRegistration = {
     id: number;
     memberName: string;
     email: string;
+    phone: string;
     fee: number | string;
     transactionId: string;
     individual: Array<{ name: string; email: string; events: string[] }>;
@@ -321,6 +322,7 @@ export default function PaymentSlipPreviewPage() {
                             <Detail label="Payment Status" value={previewRegistration ? "Paid" : "-"} accent={Boolean(previewRegistration)} />
                             <Detail label="Transaction ID" value={previewRegistration?.transactionId || "-"} />
                             <Detail label="Email" value={previewRegistration?.email || "-"} />
+                            <Detail label="Phone" value={previewRegistration?.phone || "-"} />
                             <Detail label="Amount" value={previewRegistration ? `${Number(previewRegistration.fee).toLocaleString()} BDT` : "-"} />
                         </dl>
                     </section>
