@@ -32,7 +32,7 @@ export function getRegistrationImpactMessage(now = new Date()) {
   const phase = getRegistrationPhase(now);
 
   if (phase === "not_started") {
-    return "Registration will open on August 5, 2026 at 12:00 AM.";
+    return "Registration will open on August 15, 2026 at 12:00 AM.";
   }
 
   if (phase === 2) {

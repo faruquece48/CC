@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
 	Card,
@@ -15,7 +15,26 @@ import Link from "next/link";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
 
+import { REGISTRATION_START_DATE } from "@/config/deadline";
+
 export default function App() {
+
+	const [rulebooksAvailable, setRulebooksAvailable] = useState(false);
+
+	useEffect(() => {
+		const registrationStart = new Date(REGISTRATION_START_DATE).getTime();
+		const updateAvailability = () => {
+			setRulebooksAvailable(Date.now() >= registrationStart);
+		};
+
+		updateAvailability();
+
+		const remaining = registrationStart - Date.now();
+		if (remaining <= 0) return;
+
+		const timeout = window.setTimeout(updateAvailability, remaining + 100);
+		return () => window.clearTimeout(timeout);
+	}, []);
 
 	// useEffect(() => {
 
@@ -228,26 +247,31 @@ export default function App() {
 
 								<div className="flex flex-row w-full mt-4 gap-3">
 
-									{/* Rulebook */}
-
-									<Link
-										className="w-full"
-										href={item.ruleBook}
-										target="_blank"
-										rel="noopener noreferrer"
-									>
-
+									{rulebooksAvailable ? (
+										<Link
+											className="w-full"
+											href={item.ruleBook}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											<Button fullWidth size="md" variant="flat">
+												Rulebook
+											</Button>
+										</Link>
+									) : (
 										<Button
 											fullWidth
 											size="md"
 											variant="flat"
+											onPress={() =>
+												window.alert(
+													"The rulebook will be available on 15th August, 2026"
+												)
+											}
 										>
-
 											Rulebook
-
 										</Button>
-
-									</Link>
+									)}
 
 									{/* Registration */}
 
