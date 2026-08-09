@@ -1,4 +1,5 @@
 export const REGISTRATION_START_DATE = "August 15, 2026 00:00:00";
+export const REGISTRATION_TEST_START_DATE = "August 5, 2026 00:00:00";
 
 export const REGISTRATION_DEADLINES = [
   "September 15, 2026 23:59:59",
@@ -15,8 +16,11 @@ export function haveSameSecondAndThirdDeadline() {
   );
 }
 
-export function getRegistrationPhase(now = new Date()): RegistrationPhase {
-  if (now < new Date(REGISTRATION_START_DATE)) return "not_started";
+export function getRegistrationPhase(
+  now = new Date(),
+  startDate = REGISTRATION_START_DATE
+): RegistrationPhase {
+  if (now < new Date(startDate)) return "not_started";
   if (now <= new Date(REGISTRATION_DEADLINES[0])) return 1;
   if (now <= new Date(REGISTRATION_DEADLINES[1])) return 2;
 
@@ -28,11 +32,19 @@ export function getRegistrationPhase(now = new Date()): RegistrationPhase {
   return "closed";
 }
 
-export function getRegistrationImpactMessage(now = new Date()) {
-  const phase = getRegistrationPhase(now);
+export function getRegistrationImpactMessage(
+  now = new Date(),
+  startDate = REGISTRATION_START_DATE
+) {
+  const phase = getRegistrationPhase(now, startDate);
 
   if (phase === "not_started") {
-    return "Registration will open on August 15, 2026 at 12:00 AM.";
+    const formattedStartDate = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    }).format(new Date(startDate));
+    return `Registration will open on ${formattedStartDate} at 12:00 AM.`;
   }
 
   if (phase === 2) {
@@ -46,10 +58,13 @@ export function getRegistrationImpactMessage(now = new Date()) {
   return "Registration is Live Now!";
 }
 
-export function getRegistrationStartRemainingMessage(now = new Date()) {
+export function getRegistrationStartRemainingMessage(
+  now = new Date(),
+  startDate = REGISTRATION_START_DATE
+) {
   const remaining = Math.max(
     0,
-    new Date(REGISTRATION_START_DATE).getTime() - now.getTime()
+    new Date(startDate).getTime() - now.getTime()
   );
   const days = Math.floor(remaining / 86_400_000);
   const hours = Math.floor((remaining / 3_600_000) % 24);
@@ -60,8 +75,11 @@ export function getRegistrationStartRemainingMessage(now = new Date()) {
   return `Registration has not started yet. Try again in ${pad(days)} days ${pad(hours)} hours ${pad(minutes)} minutes ${pad(seconds)} seconds.`;
 }
 
-export function getActiveRegistrationDeadline(now = new Date()) {
-  const phase = getRegistrationPhase(now);
+export function getActiveRegistrationDeadline(
+  now = new Date(),
+  startDate = REGISTRATION_START_DATE
+) {
+  const phase = getRegistrationPhase(now, startDate);
 
   return typeof phase === "number" ? REGISTRATION_DEADLINES[phase - 1] : null;
 }

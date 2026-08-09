@@ -10,7 +10,11 @@ import {
   REGISTRATION_START_DATE
 } from "@/config/deadline";
 
-export const Timer = () => {
+export const Timer = ({
+  registrationStartDate = REGISTRATION_START_DATE
+}: {
+  registrationStartDate?: string;
+}) => {
 
   const [days, setDays] = useState(0);
 
@@ -24,11 +28,11 @@ export const Timer = () => {
 
   const getTime = () => {
 
-    const phase = getRegistrationPhase();
+    const phase = getRegistrationPhase(new Date(), registrationStartDate);
     const isWaitingToStart = phase === "not_started";
     const deadline = isWaitingToStart
-      ? REGISTRATION_START_DATE
-      : getActiveRegistrationDeadline();
+      ? registrationStartDate
+      : getActiveRegistrationDeadline(new Date(), registrationStartDate);
 
     setTimerTitle(
       isWaitingToStart
@@ -95,7 +99,7 @@ export const Timer = () => {
     return () =>
       clearInterval(interval);
 
-  }, []);
+  }, [registrationStartDate]);
 
   return (
 

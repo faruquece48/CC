@@ -37,9 +37,11 @@ const participantInputClasses = {
 const REGISTRATION_DRAFT_KEY = "construct-carnival-registration-draft";
 
 export default function RegistrationFormV2({
-    handleSubmission
+    handleSubmission,
+    forcedTotalFee
 }: {
     handleSubmission: (data: any) => Promise<any>;
+    forcedTotalFee?: number;
 }) {
     const [individual, setIndividual] = useState<Person>(emptyPerson());
     const [individualEvents, setIndividualEvents] = useState<string[]>([]);
@@ -183,7 +185,7 @@ export default function RegistrationFormV2({
         }));
     };
 
-    const calculateFee = () =>
+    const calculateFee = () => forcedTotalFee ??
         getFeeBreakdown().reduce((total, participant) => total + participant.fee, 0);
 
     const isPersonComplete = (person: Person) =>
@@ -257,7 +259,9 @@ export default function RegistrationFormV2({
                             <Checkbox value="management">Management Maestro</Checkbox>
                         </CheckboxGroup>
                         <p className="whitespace-nowrap text-sm font-semibold text-blue-700">
-                            1 event: 400 TK · 2 events: 600 TK · 3 events: 800 TK
+                            {forcedTotalFee !== undefined
+                                ? `Temporary test total: ${forcedTotalFee} TK`
+                                : "1 event: 400 TK · 2 events: 600 TK · 3 events: 800 TK"}
                         </p>
                     </div>
                 </ParticipantCard>
@@ -285,7 +289,11 @@ export default function RegistrationFormV2({
                             </CheckboxGroup>
                         </div>
                         <div className="text-left text-sm font-semibold text-orange-600 lg:text-right">
-                            <p>Per person: 1 event = 400 TK · 2 events = 600 TK</p>
+                            <p>
+                                {forcedTotalFee !== undefined
+                                    ? `Temporary test total: ${forcedTotalFee} TK`
+                                    : "Per person: 1 event = 400 TK · 2 events = 600 TK"}
+                            </p>
                             <p>Use the same email when a member joins both events.</p>
                         </div>
                     </div>

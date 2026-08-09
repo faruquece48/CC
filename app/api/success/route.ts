@@ -1,6 +1,7 @@
 import axios from "axios";
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
+import { sendRegistrationPaymentEmail } from "@/lib/paymentConfirmationEmail";
 
 const store_id = process.env.STORE_ID;
 const store_passwd = process.env.STORE_PASSWORD;
@@ -32,7 +33,10 @@ export async function POST(request: Request) {
         const data = validationResponse.data;
         console.log("SSL Validation Response:", data);
 
-        if (data.status === "VALID" || data.status === "VALIDATED") {
+        if (
+            (data.status === "VALID" || data.status === "VALIDATED") &&
+            data.tran_id === tran_id
+        ) {
 
             // SUPPORT PAYMENT
             if (tran_id.startsWith("SUPPORT-")) {
@@ -51,6 +55,8 @@ export async function POST(request: Request) {
                     WHERE tran_id = ${tran_id}
                 `;
                 console.log("Registration payment marked paid:", tran_id);
+
+                await sendRegistrationPaymentEmail(tran_id, data);
             }
 
             const successUrl = new URL("https://constructcarnival.com/success");
