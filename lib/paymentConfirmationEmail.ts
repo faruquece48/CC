@@ -131,7 +131,7 @@ export async function sendRegistrationPaymentEmail(
         await transporter.sendMail({
             from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
             to: registration.email,
-            subject: `${options.testMode ? "[TEST] " : ""}Payment confirmed - Registration #${registration.id}`,
+            subject: "Registration Confirmation for Construct Carnival 2.0",
             attachments: [
                 {
                     filename: "event-head-signature.png",

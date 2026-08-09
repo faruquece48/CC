@@ -17,20 +17,26 @@ export async function POST(request: Request) {
     }
 
     const latest = await sql`
-        SELECT tran_id
+        SELECT tran_id, email
         FROM registrationData
         WHERE ispaid = TRUE
         ORDER BY id DESC
         LIMIT 1
     `;
     const tranId = latest.rows[0]?.tran_id;
+    const recipient = latest.rows[0]?.email;
 
-    if (!tranId) {
+    if (!tranId || !recipient) {
         return NextResponse.json(
             { success: false, message: "No paid registration was found." },
             { status: 404 },
         );
     }
+
+    const [localPart, domain = ""] = String(recipient).split("@");
+    const maskedRecipient = `${localPart.slice(0, 2)}${"*".repeat(
+        Math.max(2, localPart.length - 2),
+    )}@${domain}`;
 
     let sent = false;
 
@@ -60,7 +66,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
         {
             success: sent,
-            message: sent ? "Test email sent." : "Test email could not be sent. Check the server log.",
+            message: sent
+                ? `Gmail accepted the test email for delivery to ${maskedRecipient}.`
+                : "Test email could not be sent. Check the server log.",
         },
         { status: sent ? 200 : 500 },
     );
