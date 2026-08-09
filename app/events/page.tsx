@@ -20,6 +20,7 @@ import { REGISTRATION_START_DATE } from "@/config/deadline";
 export default function App() {
 
 	const [rulebooksAvailable, setRulebooksAvailable] = useState(false);
+	const [showRulebookNotice, setShowRulebookNotice] = useState(false);
 
 	useEffect(() => {
 		const registrationStart = new Date(REGISTRATION_START_DATE).getTime();
@@ -99,6 +100,37 @@ export default function App() {
 	return (
 
 		<div>
+
+			{showRulebookNotice && (
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+					role="presentation"
+					onClick={() => setShowRulebookNotice(false)}
+				>
+					<div
+						className="w-full max-w-2xl rounded-lg bg-white p-8 text-center shadow-2xl"
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="rulebook-notice"
+						onClick={(event) => event.stopPropagation()}
+					>
+						<p id="rulebook-notice" className="whitespace-nowrap text-lg font-medium text-gray-800">
+							The rulebook will be available on{" "}
+							<span className="bg-gradient-to-r from-rose-600 via-amber-500 to-emerald-600 bg-clip-text font-bold text-transparent">
+								15th August, 2026
+							</span>.
+						</p>
+
+						<Button
+							className="mt-6"
+							color="primary"
+							onPress={() => setShowRulebookNotice(false)}
+						>
+							OK
+						</Button>
+					</div>
+				</div>
+			)}
 
 			{/* HERO TITLE SECTION */}
 
@@ -263,11 +295,7 @@ export default function App() {
 											fullWidth
 											size="md"
 											variant="flat"
-											onPress={() =>
-												window.alert(
-													"The rulebook will be available on 15th August, 2026"
-												)
-											}
+											onPress={() => setShowRulebookNotice(true)}
 										>
 											Rulebook
 										</Button>
