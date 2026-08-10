@@ -123,7 +123,7 @@ export default function PaymentSlipPreviewPage() {
         setEmailTestStatus("");
 
         let sent = 0;
-        const failed: number[] = [];
+        const failed: Array<{ id: number; message: string }> = [];
 
         for (const registrationId of selectedRegistrationIds) {
             try {
@@ -135,17 +135,29 @@ export default function PaymentSlipPreviewPage() {
                         registrationId,
                     }),
                 });
-                if (response.ok) sent += 1;
-                else failed.push(registrationId);
+                const result = await response.json().catch(() => null);
+                if (response.ok) {
+                    sent += 1;
+                } else {
+                    failed.push({
+                        id: registrationId,
+                        message: result?.message || `Request failed with status ${response.status}.`,
+                    });
+                }
             } catch {
-                failed.push(registrationId);
+                failed.push({
+                    id: registrationId,
+                    message: "The request could not reach the email endpoint.",
+                });
             }
         }
 
         setEmailTestStatus(
             failed.length === 0
                 ? `${sent} payment slip${sent === 1 ? "" : "s"} accepted for delivery.`
-                : `${sent} sent. Failed IDs: ${failed.join(", ")}.`,
+                : `${sent} sent. ${failed
+                    .map(({ id, message }) => `Registration #${id}: ${message}`)
+                    .join(" ")}`,
         );
         setSendingTestEmail(false);
     };

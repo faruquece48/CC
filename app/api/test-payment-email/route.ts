@@ -58,14 +58,19 @@ export async function POST(request: Request) {
             { testMode: true, throwOnError: true },
         );
     } catch (error: any) {
+        const missingPath = String(error?.path || "");
         const message = error?.code === "ECONFIG"
             ? "GMAIL_USER or GMAIL_APP_PASSWORD is missing from this Vercel deployment."
             : error?.code === "EAUTH"
             ? "Gmail authentication failed. Verify GMAIL_USER and generate a new App Password for that same account."
             : ["ETIMEDOUT", "ECONNECTION", "ESOCKET"].includes(error?.code)
                 ? "The server could not connect to Gmail SMTP. Check the Vercel function logs and retry."
-                : error?.code === "ENOENT"
+                : error?.code === "ENOENT" && missingPath.toLowerCase().endsWith(".afm")
+                    ? "A PDF font asset is missing from the Vercel function bundle. Redeploy the latest code and retry."
+                : error?.code === "ENOENT" && missingPath.toLowerCase().endsWith("signature.png")
                     ? "The signature image is missing from the deployed project."
+                : error?.code === "ENOENT"
+                    ? "A required payment-slip asset is missing from the deployed project."
                     : "The email provider rejected the message. Check the Vercel function log for details.";
 
         return NextResponse.json(
