@@ -1,4 +1,4 @@
-export const REGISTRATION_START_DATE = "August 5, 2026 00:00:00";
+export const REGISTRATION_START_DATE = "August 15, 2026 00:00:00";
 export const REGISTRATION_TEST_START_DATE = "August 5, 2026 00:00:00";
 
 export const REGISTRATION_DEADLINES = [
