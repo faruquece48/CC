@@ -10,26 +10,40 @@ export default function SuccessPage() {
 
     useEffect(() => {
         const tranId = searchParams.get("tran_id");
-        const controller = new AbortController();
+        let redirectTimer: ReturnType<typeof setTimeout> | undefined;
+        let active = true;
 
-        if (tranId) {
-            fetch("/api/payment-confirmation-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tranId }),
-                signal: controller.signal,
-            }).catch((error) => {
-                if (error.name !== "AbortError") {
+        const redirectHome = () => router.push("/");
+        const fallbackTimer = setTimeout(redirectHome, 30_000);
+
+        const processConfirmation = async () => {
+            if (tranId) {
+                try {
+                    const response = await fetch("/api/payment-confirmation-email", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ tranId }),
+                    });
+                    if (!response.ok) {
+                        console.error("Confirmation email request failed with status:", response.status);
+                    }
+                } catch (error) {
                     console.error("Confirmation email request failed:", error);
                 }
-            });
-        }
+            }
 
-        const timer = setTimeout(() => router.push("/"), 8000);
+            if (active) {
+                clearTimeout(fallbackTimer);
+                redirectTimer = setTimeout(redirectHome, 3_000);
+            }
+        };
+
+        void processConfirmation();
 
         return () => {
-            clearTimeout(timer);
-            controller.abort();
+            active = false;
+            clearTimeout(fallbackTimer);
+            if (redirectTimer) clearTimeout(redirectTimer);
         };
 
     }, [router, searchParams]);
