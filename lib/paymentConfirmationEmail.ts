@@ -3,6 +3,7 @@ import { sql } from "@vercel/postgres";
 import { join } from "node:path";
 import QRCode from "qrcode";
 import { createPaymentVerificationUrl } from "@/lib/paymentVerification";
+import { createPaymentSlipPdf } from "@/lib/paymentSlipPdf";
 
 const eventNames: Record<string, string> = {
     cad: "CAD Expert",
@@ -136,6 +137,19 @@ export async function sendRegistrationPaymentEmail(
             margin: 1,
             errorCorrectionLevel: "M",
         });
+        const paymentSlipPdf = await createPaymentSlipPdf({
+            registrationId: registration.id,
+            participantName: registration.member_1,
+            email: registration.email,
+            phone: registration.phonenumber,
+            transactionId: tranId,
+            gatewayTransaction: String(payment.bank_tran_id || payment.val_id || "-"),
+            amount: payment.amount || registration.fee,
+            individual: individualResult.rows as any,
+            teams: teamResult.rows as any,
+            qrCode: verificationQr,
+            formatEvent,
+        });
 
         await transporter.sendMail({
             from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
@@ -152,14 +166,27 @@ export async function sendRegistrationPaymentEmail(
                     content: verificationQr,
                     cid: "payment-verification-qr",
                 },
+                {
+                    filename: `Construct-Carnival-Payment-Slip-${registration.id}.pdf`,
+                    content: paymentSlipPdf,
+                    contentType: "application/pdf",
+                },
             ],
             html: `
                 <div style="margin:0 auto;max-width:680px;font-family:Arial,sans-serif;color:#1f2937;">
-                    <div style="padding:24px;text-align:center;border:1px solid #d1d5db;border-bottom:0;">
-                        <img src="https://constructcarnival.com/logo/blue-main_x1024.png" alt="Construct Carnival logo" width="80" height="80" style="display:block;margin:0 auto;object-fit:contain;" />
-                        <h1 style="margin:8px 0 0;font-size:24px;color:#111827;">Construct Carnival 2.0</h1>
-                        <p style="margin:6px 0 0;color:#0369a1;font-weight:600;">Building Future, Managing Reality</p>
-                    </div>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #d1d5db;border-bottom:0;">
+                        <tr>
+                            <td width="96" style="padding:24px 0 24px 24px;">&nbsp;</td>
+                            <td style="padding:24px 12px;text-align:center;">
+                                <img src="https://constructcarnival.com/logo/blue-main_x1024.png" alt="Construct Carnival logo" width="80" height="80" style="display:block;margin:0 auto;object-fit:contain;" />
+                                <h1 style="margin:8px 0 0;font-size:24px;color:#111827;">Construct Carnival 2.0</h1>
+                                <p style="margin:6px 0 0;color:#0369a1;font-weight:600;">Building Future, Managing Reality</p>
+                            </td>
+                            <td width="96" valign="top" style="padding:24px 24px 24px 0;text-align:right;">
+                                <img src="cid:payment-verification-qr" alt="Payment verification QR code" width="96" height="96" style="display:block;width:96px;height:96px;margin-left:auto;" />
+                            </td>
+                        </tr>
+                    </table>
                     <div style="background:#064e3b;padding:16px;color:white;text-align:center;">
                         <h2 style="margin:0;font-size:20px;">Payment Confirmed</h2>
                     </div>
@@ -188,11 +215,6 @@ export async function sendRegistrationPaymentEmail(
                                 <tbody>${teamRows}</tbody>
                             </table>
                         ` : ""}
-                        <div style="margin-top:28px;text-align:center;">
-                            <h2 style="margin:0 0 8px;font-size:18px;">Verify This Payment</h2>
-                            <img src="cid:payment-verification-qr" alt="Payment verification QR code" width="180" height="180" style="display:block;width:180px;height:180px;margin:0 auto;" />
-                            <p style="margin:8px 0 0;color:#4b5563;font-size:13px;">Scan the QR code to verify this payment.</p>
-                        </div>
                         <p style="margin-top:24px;color:#4b5563;">This is an electronically generated payment slip and requires no further verification.</p>
                         <div style="margin-top:56px;text-align:right;">
                             <div style="display:inline-block;width:220px;text-align:center;">

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, LockKeyhole, ReceiptText, Search } from "lucide-react";
+import { CheckCircle2, LockKeyhole, Search } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 const eventNames: Record<string, string> = {
@@ -286,7 +286,7 @@ export default function PaymentSlipPreviewPage() {
                 )}
             </div>
             <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
-                <header className="border-b border-gray-200 bg-white px-6 py-6 text-center">
+                <header className="relative border-b border-gray-200 bg-white px-6 py-6 text-center">
                     <img
                         src="/logo/blue-main_x1024.png"
                         alt="Construct Carnival logo"
@@ -294,6 +294,13 @@ export default function PaymentSlipPreviewPage() {
                     />
                     <h1 className="mt-2 text-2xl font-bold text-gray-900">Construct Carnival 2.0</h1>
                     <p className="mt-1 font-semibold text-sky-700">Building Future, Managing Reality</p>
+                    {previewRegistration && (
+                        <img
+                            src={previewRegistration.verificationQr}
+                            alt="Payment verification QR code"
+                            className="absolute right-6 top-6 h-24 w-24"
+                        />
+                    )}
                 </header>
 
                 <div className="flex items-center justify-center gap-3 bg-emerald-900 px-6 py-4 text-white">
@@ -310,10 +317,6 @@ export default function PaymentSlipPreviewPage() {
                                     ? "Loading registration..."
                                     : previewRegistration?.memberName || "Select a paid Registration ID"}
                             </p>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                            <ReceiptText size={18} aria-hidden="true" />
-                            PAYMENT SLIP
                         </div>
                     </div>
 
@@ -381,18 +384,6 @@ export default function PaymentSlipPreviewPage() {
                                     </tbody>
                                 </table>
                             </div>
-                        </section>
-                    )}
-
-                    {previewRegistration && (
-                        <section className="mt-8 text-center">
-                            <h2 className="text-lg font-bold text-gray-900">Verify This Payment</h2>
-                            <img
-                                src={previewRegistration.verificationQr}
-                                alt="Payment verification QR code"
-                                className="mx-auto mt-3 h-44 w-44"
-                            />
-                            <p className="mt-2 text-sm text-gray-500">Scan the QR code to verify this payment.</p>
                         </section>
                     )}
 
