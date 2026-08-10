@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 import { sql } from "@vercel/postgres";
-import { join } from "node:path";
 import QRCode from "qrcode";
 import { createPaymentVerificationUrl } from "@/lib/paymentVerification";
 import { createPaymentSlipPdf } from "@/lib/paymentSlipPdf";
@@ -21,6 +20,7 @@ const escapeHtml = (value: unknown) => String(value ?? "")
     .replaceAll("'", "&#039;");
 
 const formatEvent = (event: string) => eventNames[event] || event;
+const brandedEventName = '<span style="color:#14532d;">Construct</span> <span style="color:#ca8a04;">Carnival</span> <span style="color:#c65d13;">2.0</span>';
 
 export async function sendRegistrationPaymentEmail(
     tranId: string,
@@ -38,7 +38,7 @@ export async function sendRegistrationPaymentEmail(
     }
 
     const registrationResult = await sql`
-        SELECT id, member_1, email, phonenumber, fee, tran_id
+        SELECT id, member_1, email, phonenumber, department, university, fee, tran_id
         FROM registrationData
         WHERE tran_id = ${tranId}
         LIMIT 1
@@ -99,27 +99,6 @@ export async function sendRegistrationPaymentEmail(
             `,
         ]);
 
-        const individualRows = individualResult.rows.map((row) => `
-            <tr>
-                <td style="padding:8px;border:1px solid #d1d5db;">${escapeHtml(row.name)}</td>
-                <td style="padding:8px;border:1px solid #d1d5db;">${escapeHtml(
-                    (row.events || []).map(formatEvent).join(", "),
-                )}</td>
-                <td style="padding:8px;border:1px solid #d1d5db;">${escapeHtml(row.email)}</td>
-            </tr>
-        `).join("");
-
-        const teamRows = teamResult.rows.flatMap((team) => {
-            const members = Array.isArray(team.members) ? team.members : [];
-            return members.map((member: Record<string, unknown>, index: number) => `
-                <tr>
-                    ${index === 0 ? `<td rowspan="${members.length}" style="padding:8px;border:1px solid #d1d5db;vertical-align:middle;font-weight:600;">${escapeHtml(team.teamname)}</td>` : ""}
-                    ${index === 0 ? `<td rowspan="${members.length}" style="padding:8px;border:1px solid #d1d5db;vertical-align:middle;">${escapeHtml(formatEvent(team.event))}</td>` : ""}
-                    <td style="padding:8px;border:1px solid #d1d5db;">${escapeHtml(member.name)}</td>
-                </tr>
-            `);
-        }).join("");
-
         const transporter = nodemailer.createTransport({
             service: "gmail",
             connectionTimeout: 10_000,
@@ -142,8 +121,9 @@ export async function sendRegistrationPaymentEmail(
             participantName: registration.member_1,
             email: registration.email,
             phone: registration.phonenumber,
+            department: registration.department,
+            university: registration.university,
             transactionId: tranId,
-            gatewayTransaction: String(payment.bank_tran_id || payment.val_id || "-"),
             amount: payment.amount || registration.fee,
             individual: individualResult.rows as any,
             teams: teamResult.rows as any,
@@ -157,73 +137,26 @@ export async function sendRegistrationPaymentEmail(
             subject: "Registration Confirmation for Construct Carnival 2.0",
             attachments: [
                 {
-                    filename: "event-head-signature.png",
-                    path: join(process.cwd(), "public", "images", "signature.png"),
-                    cid: "event-head-signature",
-                },
-                {
-                    filename: "payment-verification-qr.png",
-                    content: verificationQr,
-                    cid: "payment-verification-qr",
-                },
-                {
                     filename: `Construct-Carnival-Payment-Slip-${registration.id}.pdf`,
                     content: paymentSlipPdf,
                     contentType: "application/pdf",
                 },
             ],
+            text: `Dear ${registration.member_1},
+
+Thank you for participating in Construct Carnival 2.0. We are delighted to have you as part of the event and truly appreciate your enthusiasm and participation. Your official registration and payment details are provided in the attachment. Please review the attachment for your participant and event information.
+
+We look forward to welcoming you to Construct Carnival 2.0 and wish you a wonderful experience.
+
+Best regards,
+Construct Carnival 2.0
+Building Future, Managing Reality`,
             html: `
-                <div style="margin:0 auto;max-width:680px;font-family:Arial,sans-serif;color:#1f2937;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #d1d5db;border-bottom:0;">
-                        <tr>
-                            <td width="96" style="padding:24px 0 24px 24px;">&nbsp;</td>
-                            <td style="padding:24px 12px;text-align:center;">
-                                <img src="https://constructcarnival.com/logo/blue-main_x1024.png" alt="Construct Carnival logo" width="80" height="80" style="display:block;margin:0 auto;object-fit:contain;" />
-                                <h1 style="margin:8px 0 0;font-size:24px;color:#111827;">Construct Carnival 2.0</h1>
-                                <p style="margin:6px 0 0;color:#0369a1;font-weight:600;">Building Future, Managing Reality</p>
-                            </td>
-                            <td width="96" valign="top" style="padding:24px 24px 24px 0;text-align:right;">
-                                <img src="cid:payment-verification-qr" alt="Payment verification QR code" width="96" height="96" style="display:block;width:96px;height:96px;margin-left:auto;" />
-                            </td>
-                        </tr>
-                    </table>
-                    <div style="background:#064e3b;padding:16px;color:white;text-align:center;">
-                        <h2 style="margin:0;font-size:20px;">Payment Confirmed</h2>
-                    </div>
-                    <div style="padding:24px;border:1px solid #d1d5db;border-top:0;">
-                        <p>Dear ${escapeHtml(registration.member_1)},</p>
-                        <p>Your registration payment has been successfully confirmed.</p>
-                        <div style="margin:20px 0;padding:16px;background:#f0fdf4;border-left:4px solid #16a34a;">
-                            <p style="margin:4px 0;"><strong>Registration ID:</strong> ${escapeHtml(registration.id)}</p>
-                            <p style="margin:4px 0;"><strong>Transaction ID:</strong> ${escapeHtml(tranId)}</p>
-                            <p style="margin:4px 0;"><strong>Phone:</strong> ${escapeHtml(registration.phonenumber)}</p>
-                            <p style="margin:4px 0;"><strong>Gateway Transaction:</strong> ${escapeHtml(payment.bank_tran_id || payment.val_id || "-")}</p>
-                            <p style="margin:4px 0;"><strong>Amount:</strong> ${escapeHtml(payment.amount || registration.fee)} BDT</p>
-                            <p style="margin:4px 0;"><strong>Payment Status:</strong> Paid</p>
-                        </div>
-                        ${individualRows ? `
-                            <h2 style="font-size:18px;">Individual Event Registration</h2>
-                            <table style="width:100%;border-collapse:collapse;">
-                                <thead><tr><th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Participant</th><th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Events</th><th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Email</th></tr></thead>
-                                <tbody>${individualRows}</tbody>
-                            </table>
-                        ` : ""}
-                        ${teamRows ? `
-                            <h2 style="font-size:18px;">Team Event Registration</h2>
-                            <table style="width:100%;border-collapse:collapse;">
-                                <thead><tr><th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Team</th><th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Event</th><th style="padding:8px;border:1px solid #d1d5db;text-align:left;">Member</th></tr></thead>
-                                <tbody>${teamRows}</tbody>
-                            </table>
-                        ` : ""}
-                        <p style="margin-top:24px;color:#4b5563;">This is an electronically generated payment slip and requires no further verification.</p>
-                        <div style="margin-top:56px;text-align:right;">
-                            <div style="display:inline-block;width:220px;text-align:center;">
-                                <img src="cid:event-head-signature" alt="Electronic signature of Event Head" height="96" style="display:block;width:auto;height:96px;margin:0 auto 4px;object-fit:contain;" />
-                                <div style="border-top:1px solid #374151;padding-top:8px;font-weight:600;">Signature of Event Head</div>
-                                <p style="margin:5px 0 0;color:#6b7280;font-size:13px;">Construct Carnival 2.0</p>
-                            </div>
-                        </div>
-                    </div>
+                <div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;font-size:15px;line-height:1.6;">
+                    <p><strong>Dear ${escapeHtml(registration.member_1)},</strong></p>
+                    <p style="text-align:justify;">Thank you for participating in <strong>${brandedEventName}</strong>. We are delighted to have you as part of the event and truly appreciate your enthusiasm and participation. Your official registration and payment details are provided in the attachment. Please review the attachment for your participant and event information.</p>
+                    <p style="text-align:justify;">We look forward to welcoming you to <strong>${brandedEventName}</strong> and wish you a wonderful experience.</p>
+                    <p style="margin-top:28px;"><strong>Best regards,</strong><br /><strong>${brandedEventName}</strong><br /><span style="color:#111827;">Building Future, Managing Reality</span></p>
                 </div>
             `,
         });

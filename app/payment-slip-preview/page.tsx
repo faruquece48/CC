@@ -1,35 +1,11 @@
 "use client";
 
-import { CheckCircle2, LockKeyhole, Search } from "lucide-react";
+import { LockKeyhole, Search } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
-
-const eventNames: Record<string, string> = {
-    cad: "CAD Expert",
-    mechamind: "Mechamind",
-    management: "Management Maestro",
-    truss: "Truss Combat",
-    poster: "Poster Presentation",
-};
 
 type PaidRegistration = {
     id: number;
     maskedEmail: string;
-};
-
-type PreviewRegistration = {
-    id: number;
-    memberName: string;
-    email: string;
-    phone: string;
-    fee: number | string;
-    transactionId: string;
-    verificationQr: string;
-    individual: Array<{ name: string; email: string; events: string[] }>;
-    teams: Array<{
-        event: string;
-        teamname: string;
-        members: Array<{ name: string }>;
-    }>;
 };
 
 export default function PaymentSlipPreviewPage() {
@@ -44,33 +20,57 @@ export default function PaymentSlipPreviewPage() {
     const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<number[]>([]);
     const [loadingRegistrations, setLoadingRegistrations] = useState(false);
     const [registrationSearch, setRegistrationSearch] = useState("");
-    const [previewRegistration, setPreviewRegistration] = useState<PreviewRegistration | null>(null);
+    const [previewPdfUrl, setPreviewPdfUrl] = useState("");
+    const [previewError, setPreviewError] = useState("");
     const [loadingPreview, setLoadingPreview] = useState(false);
 
     useEffect(() => {
         const registrationId = selectedRegistrationIds[0];
         if (!authenticated || !verifiedPassword || !registrationId) {
-            setPreviewRegistration(null);
+            setPreviewPdfUrl("");
+            setPreviewError("");
             return;
         }
 
         const controller = new AbortController();
+        let objectUrl = "";
+        let active = true;
         setLoadingPreview(true);
+        setPreviewError("");
 
-        fetch("/api/payment-slip-preview-data", {
+        fetch("/api/payment-slip-preview-pdf", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password: verifiedPassword, registrationId }),
             signal: controller.signal,
         })
-            .then((response) => response.json())
-            .then((result) => setPreviewRegistration(result.registration || null))
-            .catch((requestError) => {
-                if (requestError.name !== "AbortError") setPreviewRegistration(null);
+            .then(async (response) => {
+                if (!response.ok) {
+                    const result = await response.json().catch(() => null);
+                    throw new Error(result?.message || "Unable to generate the PDF preview.");
+                }
+                return response.blob();
             })
-            .finally(() => setLoadingPreview(false));
+            .then((pdf) => {
+                if (!active) return;
+                objectUrl = URL.createObjectURL(pdf);
+                setPreviewPdfUrl(objectUrl);
+            })
+            .catch((requestError) => {
+                if (active && requestError.name !== "AbortError") {
+                    setPreviewPdfUrl("");
+                    setPreviewError(requestError.message || "Unable to generate the PDF preview.");
+                }
+            })
+            .finally(() => {
+                if (active) setLoadingPreview(false);
+            });
 
-        return () => controller.abort();
+        return () => {
+            active = false;
+            controller.abort();
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
     }, [authenticated, selectedRegistrationIds, verifiedPassword]);
 
     const loadPaidRegistrations = async (adminPassword: string) => {
@@ -297,136 +297,27 @@ export default function PaymentSlipPreviewPage() {
                     <p className="mt-3 text-sm font-medium text-sky-900">{emailTestStatus}</p>
                 )}
             </div>
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
-                <header className="relative border-b border-gray-200 bg-white px-6 py-6 text-center">
-                    <img
-                        src="/logo/blue-main_x1024.png"
-                        alt="Construct Carnival logo"
-                        className="mx-auto h-20 w-20 object-contain"
-                    />
-                    <h1 className="mt-2 text-2xl font-bold text-gray-900">Construct Carnival 2.0</h1>
-                    <p className="mt-1 font-semibold text-sky-700">Building Future, Managing Reality</p>
-                    {previewRegistration && (
-                        <img
-                            src={previewRegistration.verificationQr}
-                            alt="Payment verification QR code"
-                            className="absolute right-6 top-6 h-24 w-24"
-                        />
-                    )}
-                </header>
-
-                <div className="flex items-center justify-center gap-3 bg-emerald-900 px-6 py-4 text-white">
-                    <CheckCircle2 size={28} aria-hidden="true" />
-                    <h2 className="text-xl font-bold">Payment Confirmed</h2>
-                </div>
-
-                <div className="p-6 sm:p-8">
-                    <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-200 pb-4">
-                        <div>
-                            <p className="text-sm text-gray-500">Confirmation for</p>
-                            <p className="font-bold text-gray-900">
-                                {loadingPreview
-                                    ? "Loading registration..."
-                                    : previewRegistration?.memberName || "Select a paid Registration ID"}
-                            </p>
-                        </div>
+            <section className="mx-auto w-full max-w-4xl">
+                {loadingPreview ? (
+                    <div className="flex aspect-[210/297] items-center justify-center border border-gray-300 bg-white text-sm font-medium text-gray-500 shadow-xl">
+                        Generating A4 preview...
                     </div>
-
-                    <section className="border-l-4 border-emerald-500 bg-emerald-50 p-4">
-                        <dl className="grid gap-3 sm:grid-cols-2">
-                            <Detail label="Registration ID" value={previewRegistration ? String(previewRegistration.id) : "-"} />
-                            <Detail label="Payment Status" value={previewRegistration ? "Paid" : "-"} accent={Boolean(previewRegistration)} />
-                            <Detail label="Transaction ID" value={previewRegistration?.transactionId || "-"} />
-                            <Detail label="Email" value={previewRegistration?.email || "-"} />
-                            <Detail label="Phone" value={previewRegistration?.phone || "-"} />
-                            <Detail label="Amount" value={previewRegistration ? `${Number(previewRegistration.fee).toLocaleString()} BDT` : "-"} />
-                        </dl>
-                    </section>
-
-                    {previewRegistration && previewRegistration.individual.length > 0 && (
-                        <section className="mt-7">
-                            <h2 className="mb-3 text-lg font-bold text-gray-900">Individual Event Registration</h2>
-                            <div className="overflow-x-auto rounded-md border border-gray-200">
-                                <table className="min-w-full border-collapse text-sm">
-                                    <thead className="bg-gray-100 text-left text-gray-700">
-                                        <tr><th className="p-3">Participant</th><th className="p-3">Events</th><th className="p-3">Email</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {previewRegistration.individual.map((participant) => (
-                                            <tr key={`${participant.email}-${participant.events.join("-")}`} className="border-t border-gray-200">
-                                                <td className="p-3">{participant.name}</td>
-                                                <td className="p-3">
-                                                    {participant.events.map((event) => eventNames[event] || event).join(", ")}
-                                                </td>
-                                                <td className="p-3">{participant.email}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-                    )}
-
-                    {previewRegistration && previewRegistration.teams.length > 0 && (
-                        <section className="mt-7">
-                            <h2 className="mb-3 text-lg font-bold text-gray-900">Team Event Registration</h2>
-                            <div className="overflow-x-auto rounded-md border border-gray-200">
-                                <table className="min-w-full border-collapse text-sm">
-                                    <thead className="bg-gray-100 text-left text-gray-700">
-                                        <tr><th className="p-3">Team</th><th className="p-3">Event</th><th className="p-3">Member</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {previewRegistration.teams.flatMap((team) =>
-                                            team.members.map((member, index) => (
-                                                <tr key={`${team.teamname}-${team.event}-${index}`} className="border-t border-gray-200">
-                                                    {index === 0 && (
-                                                        <td rowSpan={team.members.length} className="border-r border-gray-200 p-3 align-middle font-semibold">
-                                                            {team.teamname}
-                                                        </td>
-                                                    )}
-                                                    {index === 0 && (
-                                                        <td rowSpan={team.members.length} className="border-r border-gray-200 p-3 align-middle">
-                                                            {eventNames[team.event] || team.event}
-                                                        </td>
-                                                    )}
-                                                    <td className="p-3">{member.name}</td>
-                                                </tr>
-                                            )),
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-                    )}
-
-                    <p className="mt-8 border-t border-gray-200 pt-5 text-sm text-gray-500">
-                        This is an electronically generated payment slip and requires no further verification.
-                    </p>
-
-                    <footer className="mt-14 flex justify-end">
-                        <div className="w-56 text-center">
-                            <img
-                                src="/images/signature.png"
-                                alt="Electronic signature of Event Head"
-                                className="mx-auto mb-1 h-24 w-auto object-contain"
-                            />
-                            <div className="border-t border-gray-700 pt-2 font-semibold text-gray-900">
-                                Signature of Event Head
-                            </div>
-                            <p className="mt-1 text-sm text-gray-500">Construct Carnival 2.0</p>
-                        </div>
-                    </footer>
-                </div>
-            </div>
+                ) : previewError ? (
+                    <div className="border border-red-200 bg-red-50 p-5 text-sm font-medium text-red-700">
+                        {previewError}
+                    </div>
+                ) : previewPdfUrl ? (
+                    <iframe
+                        src={previewPdfUrl}
+                        title="A4 payment slip preview"
+                        className="aspect-[210/297] w-full border border-gray-300 bg-white shadow-xl"
+                    />
+                ) : (
+                    <div className="flex aspect-[210/297] items-center justify-center border border-gray-300 bg-white px-6 text-center text-sm font-medium text-gray-500 shadow-xl">
+                        Select a paid Registration ID to preview its A4 payment slip.
+                    </div>
+                )}
+            </section>
         </main>
-    );
-}
-
-function Detail({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
-    return (
-        <div>
-            <dt className="text-xs font-semibold uppercase text-gray-500">{label}</dt>
-            <dd className={`mt-1 font-semibold ${accent ? "text-emerald-700" : "text-gray-900"}`}>{value}</dd>
-        </div>
     );
 }

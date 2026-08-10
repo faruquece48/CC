@@ -26,13 +26,14 @@ export async function POST(request: Request) {
     }
 
     const selected = await sql`
-        SELECT tran_id, email
+        SELECT tran_id, email, fee
         FROM registrationData
         WHERE id = ${selectedRegistrationId} AND ispaid = TRUE
         LIMIT 1
     `;
     const tranId = selected.rows[0]?.tran_id;
     const recipient = selected.rows[0]?.email;
+    const fee = selected.rows[0]?.fee;
 
     if (!tranId || !recipient) {
         return NextResponse.json(
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     try {
         sent = await sendRegistrationPaymentEmail(
             tranId,
-            { amount: "10.00", bank_tran_id: "EMAIL-TEST" },
+            { amount: fee },
             { testMode: true, throwOnError: true },
         );
     } catch (error: any) {

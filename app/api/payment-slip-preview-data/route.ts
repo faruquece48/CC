@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const registration = await sql`
-        SELECT id, member_1, email, phonenumber, fee, tran_id
+        SELECT id, member_1, email, phonenumber, department, university, fee, tran_id
         FROM registrationData
         WHERE id = ${id} AND ispaid = TRUE
         LIMIT 1
@@ -63,6 +63,8 @@ export async function POST(request: Request) {
                 memberName: registration.rows[0].member_1,
                 email: registration.rows[0].email,
                 phone: registration.rows[0].phonenumber,
+                department: registration.rows[0].department,
+                university: registration.rows[0].university,
                 fee: registration.rows[0].fee,
                 transactionId: registration.rows[0].tran_id,
                 verificationQr,
