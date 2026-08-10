@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    serverComponentsExternalPackages: ["pdfkit"],
     // PDFKit reads its built-in fonts at runtime, so Vercel must bundle them
     // with the serverless functions that generate payment-slip PDFs.
     outputFileTracingIncludes: {
-      "/api/payment-confirmation-email": ["./node_modules/pdfkit/js/data/*.afm"],
-      "/api/test-payment-email": ["./node_modules/pdfkit/js/data/*.afm"],
+      "/*": ["./node_modules/pdfkit/js/data/**/*"],
     },
   },
   images: {
