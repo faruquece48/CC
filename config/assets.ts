@@ -6,8 +6,14 @@ export const archiveAssetBase =
 export const galleryAssetBase =
   process.env.NEXT_PUBLIC_GALLERY_ASSET_URL || `${r2PublicBase}/gallery`;
 
+export const rulebookAssetBase =
+  process.env.NEXT_PUBLIC_RULEBOOK_ASSET_URL || `${r2PublicBase}/rulebook`;
+
 export const archiveAsset = (fileName: string) =>
   `${archiveAssetBase}/${fileName}`;
 
 export const galleryAsset = (fileName: string) =>
   `${galleryAssetBase}/${fileName}`;
+
+export const rulebookAsset = (fileName: string) =>
+  `${rulebookAssetBase}/${fileName}`;

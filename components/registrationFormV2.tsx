@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@nextui-org/button";
-import { Checkbox, CheckboxGroup, Input } from "@nextui-org/react";
+import { Checkbox, CheckboxGroup, Input, Textarea } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 
 type Person = {
@@ -47,6 +47,7 @@ export default function RegistrationFormV2({
     const [individualEvents, setIndividualEvents] = useState<string[]>([]);
     const [enabledTeamEvents, setEnabledTeamEvents] = useState<TeamEventKey[]>([]);
     const [teamNames, setTeamNames] = useState<Record<TeamEventKey, string>>({ truss: "", poster: "" });
+    const [trussDeliveryAddress, setTrussDeliveryAddress] = useState("");
     const [teamMembers, setTeamMembers] = useState<Record<TeamEventKey, Person[]>>({
         truss: [emptyPerson(), emptyPerson()],
         poster: [emptyPerson(), emptyPerson()]
@@ -71,6 +72,7 @@ export default function RegistrationFormV2({
                 if (Array.isArray(draft.enabledTeamEvents)) setEnabledTeamEvents(draft.enabledTeamEvents);
                 if (draft.teamNames) setTeamNames(draft.teamNames);
                 if (draft.teamMembers) setTeamMembers(draft.teamMembers);
+                if (typeof draft.trussDeliveryAddress === "string") setTrussDeliveryAddress(draft.trussDeliveryAddress);
                 if (typeof draft.copyPreviousTeam === "boolean") setCopyPreviousTeam(draft.copyPreviousTeam);
             }
         } catch {
@@ -88,15 +90,17 @@ export default function RegistrationFormV2({
             enabledTeamEvents,
             teamNames,
             teamMembers,
+            trussDeliveryAddress,
             copyPreviousTeam
         }));
-    }, [draftLoaded, individual, individualEvents, enabledTeamEvents, teamNames, teamMembers, copyPreviousTeam]);
+    }, [draftLoaded, individual, individualEvents, enabledTeamEvents, teamNames, teamMembers, trussDeliveryAddress, copyPreviousTeam]);
 
     const clearAllData = () => {
         setIndividual(emptyPerson());
         setIndividualEvents([]);
         setEnabledTeamEvents([]);
         setTeamNames({ truss: "", poster: "" });
+        setTrussDeliveryAddress("");
         setTeamMembers({
             truss: [emptyPerson(), emptyPerson()],
             poster: [emptyPerson(), emptyPerson()]
@@ -198,6 +202,11 @@ export default function RegistrationFormV2({
         }
         const activeTeamEvents = enabledTeamEvents;
 
+        if (activeTeamEvents.includes("truss") && !trussDeliveryAddress.trim()) {
+            setError("Enter the postal address for Truss Combat materials.");
+            return;
+        }
+
         for (const event of activeTeamEvents) {
             const members = teamMembers[event];
             const uniqueEmails = new Set(members.map((member) => member.email.trim().toLowerCase()));
@@ -219,6 +228,7 @@ export default function RegistrationFormV2({
             teamRegistrations: activeTeamEvents.map((event) => ({
                     event,
                     teamName: teamNames[event],
+                    deliveryAddress: event === "truss" ? trussDeliveryAddress.trim() : "",
                     members: teamMembers[event]
                 })),
             fee: calculateFee()
@@ -313,6 +323,8 @@ export default function RegistrationFormV2({
                     showCopyPrevious={eventIndex === 1}
                     copyPrevious={eventIndex === 1 && copyPreviousTeam}
                     onCopyPreviousChange={setCopyPreviousTeam}
+                    deliveryAddress={event === "truss" ? trussDeliveryAddress : ""}
+                    onDeliveryAddressChange={event === "truss" ? setTrussDeliveryAddress : undefined}
                 />
             ))}
 
@@ -356,7 +368,7 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
     );
 }
 
-function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, onAdd, onRemove, lockFirstMember, showCopyPrevious, copyPrevious, onCopyPreviousChange }: {
+function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, onAdd, onRemove, lockFirstMember, showCopyPrevious, copyPrevious, onCopyPreviousChange, deliveryAddress, onDeliveryAddressChange }: {
     event: TeamEventKey;
     teamName: string;
     members: Person[];
@@ -368,6 +380,8 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
     showCopyPrevious: boolean;
     copyPrevious: boolean;
     onCopyPreviousChange: (selected: boolean) => void;
+    deliveryAddress: string;
+    onDeliveryAddressChange?: (value: string) => void;
 }) {
     return (
         <section className="overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-lg">
@@ -385,6 +399,18 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
             </div>
             <div className="space-y-4 p-4">
                 <Input size="lg" isRequired label="Team Name" labelPlacement="outside" value={teamName} onValueChange={onTeamNameChange} classNames={participantInputClasses} />
+                {event === "truss" && onDeliveryAddressChange && (
+                    <Textarea
+                        isRequired
+                        minRows={3}
+                        label="Postal Address"
+                        labelPlacement="outside"
+                        placeholder="Enter the complete postal address for receiving Truss Combat materials"
+                        value={deliveryAddress}
+                        onValueChange={onDeliveryAddressChange}
+                        classNames={participantInputClasses}
+                    />
+                )}
                 {members.map((member, index) => (
                     <ParticipantCard
                         key={index}

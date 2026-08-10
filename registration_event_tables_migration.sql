@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS teamRegistrationData (
     registration_id BIGINT NOT NULL REFERENCES registrationData(id) ON DELETE CASCADE,
     event TEXT NOT NULL,
     teamname TEXT NOT NULL,
+    delivery_address TEXT NOT NULL DEFAULT '',
     members JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -97,6 +97,9 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
             teamRegistrations.some((team: any) =>
                 !validTeamEvents.includes(team.event) ||
                 typeof team.teamName !== "string" || !team.teamName.trim() ||
+                (team.event === "truss" && (
+                    typeof team.deliveryAddress !== "string" || !team.deliveryAddress.trim()
+                )) ||
                 !Array.isArray(team.members) || team.members.length < 2 || team.members.length > 3 ||
                 team.members.some((member: any) => !isPersonComplete(member)) ||
                 new Set(team.members.map((member: any) => member.email.trim().toLowerCase())).size !== team.members.length
@@ -170,6 +173,11 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
         }
 
         try {
+
+            await sql`
+                ALTER TABLE teamRegistrationData
+                ADD COLUMN IF NOT EXISTS delivery_address TEXT NOT NULL DEFAULT ''
+            `;
 
             // GENERATE TRANSACTION ID
             const _tran_id =
@@ -313,9 +321,10 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
             for (const team of teamRegistrations) {
                 await sql`
                     INSERT INTO teamRegistrationData (
-                        registration_id, event, teamname, members
+                        registration_id, event, teamname, delivery_address, members
                     ) VALUES (
                         ${userId}, ${team.event}, ${team.teamName},
+                        ${team.event === "truss" ? team.deliveryAddress.trim() : ""},
                         ${JSON.stringify(team.members)}::jsonb
                     )
                 `;

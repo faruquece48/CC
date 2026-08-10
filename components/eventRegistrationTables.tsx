@@ -116,6 +116,7 @@ export default function EventRegistrationTables({ password }: { password: string
                         "Registration ID": row.registration_id,
                         Event: eventNames[row.event] || row.event,
                         "Team Name": row.teamname,
+                        "Postal Address": row.delivery_address || "",
                         Member: member.name,
                         Email: member.email,
                         Phone: member.phoneNumber,
@@ -129,7 +130,7 @@ export default function EventRegistrationTables({ password }: { password: string
             >
                 <table className="min-w-full border-collapse text-sm">
                     <thead className="bg-gradient-to-r from-orange-600 to-orange-500 text-white"><tr>
-                        {['ID', 'Event', 'Team Name', 'Member', 'Email', 'Phone', 'Department', 'University', 'Total Fee', 'Payment'].map((heading) =>
+                        {['ID', 'Event', 'Team Name', 'Postal Address', 'Member', 'Email', 'Phone', 'Department', 'University', 'Total Fee', 'Payment'].map((heading) =>
                             <th key={heading} className="border border-orange-700 p-3 text-left">{heading}</th>)}
                     </tr></thead>
                     <tbody>{filteredTeamRows.flatMap((row) => (row.members || []).map((member: any, index: number) =>
@@ -137,6 +138,7 @@ export default function EventRegistrationTables({ password }: { password: string
                             {index === 0 && <Cell rowSpan={row.members.length}>{row.registration_id}</Cell>}
                             {index === 0 && <Cell rowSpan={row.members.length}>{eventNames[row.event] || row.event}</Cell>}
                             {index === 0 && <Cell rowSpan={row.members.length}>{row.teamname}</Cell>}
+                            {index === 0 && <Cell rowSpan={row.members.length}>{row.delivery_address || "-"}</Cell>}
                             <Cell>{member.name}</Cell><Cell>{member.email}</Cell><Cell>{member.phoneNumber}</Cell>
                             <Cell>{member.department}</Cell><Cell>{member.university}</Cell>
                             {index === 0 && <Cell rowSpan={row.members.length}>{row.total_fee} TK</Cell>}

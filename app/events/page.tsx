@@ -16,6 +16,7 @@ import Link from "next/link";
 import AdsterraBanner from "@/components/AdsterraBanner";
 
 import { REGISTRATION_START_DATE } from "@/config/deadline";
+import { rulebookAsset } from "@/config/assets";
 
 export default function App() {
 
@@ -62,35 +63,35 @@ export default function App() {
 		{
 			title: "CAD Expert",
 			img: "/images/cad.png",
-			ruleBook: "/rulebook/cad.pdf",
+			ruleBook: rulebookAsset("CAD_Expert.pdf"),
 			value: "cad",
 		},
 
 		{
 			title: "Mechamind",
 			img: "/images/mechamind.png",
-			ruleBook: "/rulebook/mechamind.pdf",
+			ruleBook: rulebookAsset("Mechamind.pdf"),
 			value: "mechamind",
 		},
 
 		{
 			title: "Truss Combat",
 			img: "/images/truss.png",
-			ruleBook: "/rulebook/truss.pdf",
+			ruleBook: rulebookAsset("Truss_Combat.pdf"),
 			value: "truss",
 		},
 
 		{
 			title: "Management Maestro",
 			img: "/images/management.png",
-			ruleBook: "/rulebook/management.pdf",
+			ruleBook: rulebookAsset("Management_Maestro.pdf"),
 			value: "management",
 		},
 
 		{
 			title: "Poster Presentation",
 			img: "/images/poster.png",
-			ruleBook: "/rulebook/poster.pdf",
+			ruleBook: rulebookAsset("Poster_Presentation.pdf"),
 			value: "poster",
 		}
 
