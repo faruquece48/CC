@@ -23,6 +23,7 @@ type PreviewRegistration = {
     phone: string;
     fee: number | string;
     transactionId: string;
+    verificationQr: string;
     individual: Array<{ name: string; email: string; events: string[] }>;
     teams: Array<{
         event: string;
@@ -380,6 +381,18 @@ export default function PaymentSlipPreviewPage() {
                                     </tbody>
                                 </table>
                             </div>
+                        </section>
+                    )}
+
+                    {previewRegistration && (
+                        <section className="mt-8 text-center">
+                            <h2 className="text-lg font-bold text-gray-900">Verify This Payment</h2>
+                            <img
+                                src={previewRegistration.verificationQr}
+                                alt="Payment verification QR code"
+                                className="mx-auto mt-3 h-44 w-44"
+                            />
+                            <p className="mt-2 text-sm text-gray-500">Scan the QR code to verify this payment.</p>
                         </section>
                     )}
 

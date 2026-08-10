@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import { sql } from "@vercel/postgres";
 import { join } from "node:path";
+import QRCode from "qrcode";
+import { createPaymentVerificationUrl } from "@/lib/paymentVerification";
 
 const eventNames: Record<string, string> = {
     cad: "CAD Expert",
@@ -128,6 +130,13 @@ export async function sendRegistrationPaymentEmail(
             },
         });
 
+        const verificationUrl = createPaymentVerificationUrl(tranId);
+        const verificationQr = await QRCode.toBuffer(verificationUrl, {
+            width: 220,
+            margin: 1,
+            errorCorrectionLevel: "M",
+        });
+
         await transporter.sendMail({
             from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
             to: registration.email,
@@ -137,6 +146,11 @@ export async function sendRegistrationPaymentEmail(
                     filename: "event-head-signature.png",
                     path: join(process.cwd(), "public", "images", "signature.png"),
                     cid: "event-head-signature",
+                },
+                {
+                    filename: "payment-verification-qr.png",
+                    content: verificationQr,
+                    cid: "payment-verification-qr",
                 },
             ],
             html: `
@@ -174,6 +188,11 @@ export async function sendRegistrationPaymentEmail(
                                 <tbody>${teamRows}</tbody>
                             </table>
                         ` : ""}
+                        <div style="margin-top:28px;text-align:center;">
+                            <h2 style="margin:0 0 8px;font-size:18px;">Verify This Payment</h2>
+                            <img src="cid:payment-verification-qr" alt="Payment verification QR code" width="180" height="180" style="display:block;width:180px;height:180px;margin:0 auto;" />
+                            <p style="margin:8px 0 0;color:#4b5563;font-size:13px;">Scan the QR code to verify this payment.</p>
+                        </div>
                         <p style="margin-top:24px;color:#4b5563;">This is an electronically generated payment slip and requires no further verification.</p>
                         <div style="margin-top:56px;text-align:right;">
                             <div style="display:inline-block;width:220px;text-align:center;">

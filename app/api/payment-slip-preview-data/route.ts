@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
+import QRCode from "qrcode";
+import { createPaymentVerificationUrl } from "@/lib/paymentVerification";
 
 export async function POST(request: Request) {
     const { password, registrationId } = await request.json();
@@ -46,6 +48,13 @@ export async function POST(request: Request) {
         `,
     ]);
 
+    const verificationUrl = createPaymentVerificationUrl(registration.rows[0].tran_id);
+    const verificationQr = await QRCode.toDataURL(verificationUrl, {
+        width: 220,
+        margin: 1,
+        errorCorrectionLevel: "M",
+    });
+
     return NextResponse.json(
         {
             success: true,
@@ -56,6 +65,7 @@ export async function POST(request: Request) {
                 phone: registration.rows[0].phonenumber,
                 fee: registration.rows[0].fee,
                 transactionId: registration.rows[0].tran_id,
+                verificationQr,
                 individual: individual.rows,
                 teams: teams.rows,
             },
