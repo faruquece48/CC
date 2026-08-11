@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import { existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { createCertificateId, formatCertificateEvents } from "@/lib/participationCertificate";
@@ -52,13 +53,20 @@ export function createParticipationCertificatePdf(
     const muted = "#52615e";
     const sealPath = join(process.cwd(), "public", "logo", "certificate_logo.png");
     const brandPath = join(process.cwd(), "public", "logo", "blue-main_x1024.png");
-    const signaturePath = join(process.cwd(), "public", "images", "signature.png");
+    const coordinatorSignaturePath = join(process.cwd(), "public", "images", "Signature_1.png");
+    const headSignaturePath = join(process.cwd(), "public", "images", "signature.png");
     const fontPath = (...parts: string[]) => join(process.cwd(), "node_modules", "@fontsource", ...parts);
     document.registerFont("Certificate Inter", fontPath("inter", "files", "inter-latin-400-normal.woff"));
     document.registerFont("Certificate Inter Bold", fontPath("inter", "files", "inter-latin-700-normal.woff"));
     document.registerFont("Certificate Lora Bold", fontPath("lora", "files", "lora-latin-700-normal.woff"));
     document.registerFont("Certificate Lora Italic", fontPath("lora", "files", "lora-latin-400-italic.woff"));
-    document.registerFont("Certificate Script", fontPath("great-vibes", "files", "great-vibes-latin-400-normal.woff"));
+    const edwardianFontPath = "C:\\Windows\\Fonts\\ITCEDSCR.TTF";
+    document.registerFont(
+      "Certificate Script",
+      existsSync(edwardianFontPath)
+        ? edwardianFontPath
+        : fontPath("great-vibes", "files", "great-vibes-latin-400-normal.woff"),
+    );
 
     const frameBlue = "#176f8f";
     document.rect(0, 0, width, height).fill("#fffdf7");
@@ -165,7 +173,7 @@ export function createParticipationCertificatePdf(
       .text(", organized by the Department of Building Engineering & Construction Management at Rajshahi University of Engineering & Technology.");
 
     const coordinatorCenterX = width / 4;
-    document.image(signaturePath, coordinatorCenterX - 55, 466, { fit: [110, 50], align: "center" });
+    document.image(coordinatorSignaturePath, coordinatorCenterX - 55, 474, { fit: [110, 40], align: "center" });
     document.moveTo(coordinatorCenterX - 67, 518).lineTo(coordinatorCenterX + 67, 518).lineWidth(1).stroke(gold);
     document.font("Certificate Inter Bold").fontSize(10).fillColor("#173e36")
       .text("EVENT COORDINATOR", coordinatorCenterX - 82, 527, { width: 164, align: "center" });
@@ -175,7 +183,7 @@ export function createParticipationCertificatePdf(
     document.image(sealPath, width / 2 - 42, 465, { fit: [84, 84] });
 
     const headCenterX = width * 3 / 4;
-    document.image(signaturePath, headCenterX - 55, 466, { fit: [110, 50], align: "center" });
+    document.image(headSignaturePath, headCenterX - 55, 466, { fit: [110, 50], align: "center" });
     document.moveTo(headCenterX - 67, 518).lineTo(headCenterX + 67, 518).lineWidth(1).stroke(gold);
     document.font("Certificate Inter Bold").fontSize(10).fillColor("#173e36")
       .text("HEAD", headCenterX - 82, 527, { width: 164, align: "center" });

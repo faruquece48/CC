@@ -38,9 +38,10 @@ export async function createParticipationCertificateImage(participant: {
   email: string;
   events: string[];
 }) {
-  const [brandLogo, seal, signature, certificateFont] = await Promise.all([
+  const [brandLogo, seal, coordinatorSignature, headSignature, certificateFont] = await Promise.all([
     readFile(join(process.cwd(), "public", "logo", "blue-main.svg")),
     readFile(join(process.cwd(), "public", "logo", "certificate_logo.png")),
+    readFile(join(process.cwd(), "public", "images", "Signature_1.png")),
     readFile(join(process.cwd(), "public", "images", "signature.png")),
     readFile(join(process.cwd(), "node_modules", "next", "dist", "compiled", "@vercel", "og", "noto-sans-v27-latin-regular.ttf")),
   ]);
@@ -49,7 +50,8 @@ export async function createParticipationCertificateImage(participant: {
   const certificateId = escapeXml(createCertificateId(participant.name, participant.email));
   const logoUrl = asDataUrl(brandLogo, "image/svg+xml");
   const sealUrl = asDataUrl(seal, "image/png");
-  const signatureUrl = asDataUrl(signature, "image/png");
+  const coordinatorSignatureUrl = asDataUrl(coordinatorSignature, "image/png");
+  const headSignatureUrl = asDataUrl(headSignature, "image/png");
   const fontUrl = asDataUrl(certificateFont, "font/ttf");
 
   const svg = `
@@ -103,14 +105,14 @@ export async function createParticipationCertificateImage(participant: {
       </g>
 
       <g text-anchor="middle" font-family="Certificate Sans, sans-serif">
-        <image href="${signatureUrl}" x="285" y="866" width="230" height="105" preserveAspectRatio="xMidYMid meet"/>
+        <image href="${coordinatorSignatureUrl}" x="285" y="866" width="230" height="105" preserveAspectRatio="xMidYMid meet"/>
         <line x1="260" y1="964" x2="540" y2="964" stroke="#c29339" stroke-width="2"/>
         <text x="400" y="1001" font-size="22" font-weight="800" letter-spacing="2" fill="#173e36">EVENT COORDINATOR</text>
         <text x="400" y="1032" font-size="19" fill="#52645f">Construct Carnival 2.0</text>
 
         <image href="${sealUrl}" x="710" y="866" width="180" height="180" preserveAspectRatio="xMidYMid meet"/>
 
-        <image href="${signatureUrl}" x="1085" y="866" width="230" height="105" preserveAspectRatio="xMidYMid meet"/>
+        <image href="${headSignatureUrl}" x="1085" y="866" width="230" height="105" preserveAspectRatio="xMidYMid meet"/>
         <line x1="1060" y1="964" x2="1340" y2="964" stroke="#c29339" stroke-width="2"/>
         <text x="1200" y="1001" font-size="22" font-weight="800" letter-spacing="2" fill="#173e36">HEAD</text>
         <text x="1200" y="1032" font-size="19" fill="#52645f">Dept. of BECM, RUET</text>

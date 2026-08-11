@@ -3,6 +3,8 @@
 import { Award, CheckCircle2, Database, Download, Loader2, Mail } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
+import coordinatorSignature from "@/public/images/Signature_1.png";
+import headSignature from "@/public/images/signature.png";
 
 type DatabaseParticipant = {
   registration_id: number;
@@ -409,7 +411,7 @@ export default function CertificatePage() {
               <p
                 className="mt-[54px] min-h-[82px] max-w-[760px] border-b-2 border-[#c9a457] px-10 text-[62px] font-normal leading-[1.15] text-[#172e29]"
                 style={{
-                  fontFamily: '"Great Vibes", cursive',
+                  fontFamily: '"Edwardian Script ITC", "Great Vibes", cursive',
                   textTransform: "capitalize",
                   wordSpacing: "0.22em",
                 }}
@@ -433,9 +435,9 @@ export default function CertificatePage() {
               <div className="text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/signature.png"
+                  src={coordinatorSignature.src}
                   alt="Event coordinator signature"
-                  className="mx-auto h-12 w-36 object-contain object-bottom"
+                  className="mx-auto h-10 w-36 object-contain object-bottom"
                 />
                 <div className="mx-auto h-px w-52 bg-[#c29339]" />
                 <p className="mt-2 text-[15px] font-extrabold uppercase tracking-[0.08em] text-[#173e36]">Event Coordinator</p>
@@ -445,8 +447,8 @@ export default function CertificatePage() {
               <div className="text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/signature.png"
-                  alt="Convenor signature"
+                  src={headSignature.src}
+                  alt="Head signature"
                   className="mx-auto h-12 w-36 object-contain object-bottom"
                 />
                 <div className="mx-auto h-px w-52 bg-[#c29339]" />
