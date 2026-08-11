@@ -5,7 +5,13 @@ const nextConfig = {
     // PDFKit reads its built-in fonts at runtime, so Vercel must bundle them
     // with the serverless functions that generate payment-slip PDFs.
     outputFileTracingIncludes: {
-      "/*": ["./node_modules/pdfkit/js/data/**/*"],
+      "/*": [
+        "./node_modules/pdfkit/js/data/**/*",
+        "./node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-regular.ttf",
+        "./node_modules/@fontsource/inter/files/inter-latin-*.woff",
+        "./node_modules/@fontsource/lora/files/lora-latin-*.woff",
+        "./node_modules/@fontsource/great-vibes/files/great-vibes-latin-*.woff",
+      ],
     },
   },
   images: {

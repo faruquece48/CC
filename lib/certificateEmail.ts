@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import { sql } from "@vercel/postgres";
-import { createParticipationCertificateImage, formatCertificateEvents } from "@/lib/participationCertificate";
+import { formatCertificateEvents } from "@/lib/participationCertificate";
+import { createParticipationCertificatePdf } from "@/lib/participationCertificatePdf";
+import { formatParticipantName } from "@/lib/participantName";
 
 const escapeHtml = (value: unknown) => String(value ?? "")
   .replaceAll("&", "&amp;")
@@ -14,7 +16,7 @@ export async function sendParticipationCertificate(participant: {
   name: string;
   email: string;
   events: string[];
-}) {
+}, options: { forceResend?: boolean } = {}) {
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
     throw Object.assign(new Error("Gmail configuration is missing."), { code: "ECONFIG" });
   }
@@ -31,7 +33,7 @@ export async function sendParticipationCertificate(participant: {
     )
   `;
 
-  const normalizedEmail = participant.email.trim().toLowerCase();
+  const normalizedEmail = participant.email.trim().toLowerCase().replace(/\s+/g, "");
   const { createCertificateId } = await import("@/lib/participationCertificate");
   const certificateId = createCertificateId(participant.name, participant.email);
   const claim = await sql`
@@ -42,14 +44,15 @@ export async function sendParticipationCertificate(participant: {
     )
     ON CONFLICT (normalized_email) DO UPDATE
     SET status = 'sending', sent_at = NOW()
-    WHERE certificateEmailLog.status <> 'sent'
-      AND certificateEmailLog.sent_at < NOW() - INTERVAL '30 seconds'
+    WHERE (certificateEmailLog.status = 'sent' AND ${Boolean(options.forceResend)})
+       OR (certificateEmailLog.status <> 'sent'
+         AND certificateEmailLog.sent_at < NOW() - INTERVAL '30 seconds')
     RETURNING normalized_email
   `;
   if (claim.rowCount === 0) return { sent: false, alreadySent: true, certificateId };
 
   try {
-    const certificate = await createParticipationCertificateImage(participant);
+    const certificate = await createParticipationCertificatePdf(participant);
     const transporter = nodemailer.createTransport({
       service: "gmail",
       connectionTimeout: 10_000,
@@ -58,18 +61,19 @@ export async function sendParticipationCertificate(participant: {
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
     });
     const events = formatCertificateEvents(participant.events);
+    const participantName = formatParticipantName(participant.name);
 
     await transporter.sendMail({
       from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
       to: participant.email,
       subject: "Certificate of Participation — Construct Carnival 2.0",
       attachments: [{
-        filename: `Construct-Carnival-Certificate-${certificateId}.png`,
+        filename: `Construct-Carnival-Certificate-${certificateId}.pdf`,
         content: certificate,
-        contentType: "image/png",
+        contentType: "application/pdf",
       }],
-      text: `Dear ${participant.name},\n\nThank you for participating in ${events}. Your Certificate of Participation is attached.\n\nBest regards,\nConstruct Carnival 2.0`,
-      html: `<div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;font-size:15px;line-height:1.7"><p><strong>Dear ${escapeHtml(participant.name)},</strong></p><p>Thank you for your enthusiastic participation in <strong>${escapeHtml(events)}</strong>. Your official Certificate of Participation is attached to this email.</p><p style="margin-top:28px"><strong>Best regards,</strong><br>Construct Carnival 2.0<br>Department of BECM, RUET</p></div>`,
+      text: `Dear ${participantName},\n\nThank you for participating in ${events}. Your Certificate of Participation is attached.\n\nBest regards,\nConstruct Carnival 2.0`,
+      html: `<div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;font-size:15px;line-height:1.7"><p><strong>Dear ${escapeHtml(participantName)},</strong></p><p>Thank you for your enthusiastic participation in <strong>${escapeHtml(events)}</strong>. Your official Certificate of Participation is attached to this email.</p><p style="margin-top:28px"><strong>Best regards,</strong><br>Construct Carnival 2.0<br>Department of BECM, RUET</p></div>`,
     });
 
     await sql`UPDATE certificateEmailLog SET status = 'sent', sent_at = NOW() WHERE normalized_email = ${normalizedEmail}`;
