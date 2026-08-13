@@ -489,6 +489,7 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
                         <RegistrationForm
                             handleSubmission={handleSubmission}
                             allowPriorRegistration
+                            advancedDesign
                         />
 
                     </>

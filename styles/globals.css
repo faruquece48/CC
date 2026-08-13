@@ -1,3 +1,154 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Test registration card treatment */
+.registration-form-advanced {
+  gap: 18px;
+}
+
+.registration-form-advanced .participant-card,
+.registration-form-advanced .team-event-selector,
+.registration-form-advanced .team-card,
+.registration-form-advanced .registration-total {
+  border-radius: 8px;
+}
+
+.registration-form-advanced > .participant-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #b9cfda;
+  padding: 0 20px 20px;
+  background: #eef5f5;
+  box-shadow: 0 12px 30px rgba(14, 54, 72, 0.14);
+}
+
+.registration-form-advanced > .participant-card::before {
+  display: none;
+}
+
+.registration-form-advanced > .participant-card .participant-card-header {
+  margin: 0 -20px 18px;
+  padding: 17px 20px;
+  border-bottom: 4px solid #c49745;
+  background: #104f60;
+}
+
+.registration-form-advanced > .participant-card .participant-card-header h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  color: #ffffff;
+}
+
+.registration-form-advanced > .participant-card .participant-card-header p {
+  color: #d8e8eb;
+}
+
+.registration-form-advanced > .participant-card .participant-card-header button {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.registration-form-advanced > .participant-card > .mx-auto {
+  max-width: none;
+  margin: 0 0 16px;
+  border: 1px solid #9bbbc3;
+  border-left: 5px solid #c49745;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.registration-form-advanced > .participant-card > .mt-3.grid {
+  margin-top: 0;
+  padding: 18px;
+  border: 1px solid #c5d7dc;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.registration-form-advanced .team-event-selector {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #9bbbc3;
+  border-left: 7px solid #c49745;
+  padding: 18px 20px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(14, 54, 72, 0.1);
+}
+
+.registration-form-advanced .team-event-selector::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34%;
+  height: 4px;
+  content: "";
+  background: #104f60;
+}
+
+.registration-form-advanced .team-event-selector h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  color: #123f4b;
+}
+
+.registration-form-advanced .team-card {
+  border: 1px solid #779ca8;
+  background: #eef5f5;
+  box-shadow: 0 12px 28px rgba(14, 54, 72, 0.14);
+}
+
+.registration-form-advanced .team-card-header {
+  position: relative;
+  padding: 16px 20px;
+  background: #104f60;
+}
+
+.registration-form-advanced .team-card-header::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 84px;
+  height: 3px;
+  content: "";
+  background: #d2a457;
+}
+
+.registration-form-advanced .team-card-header h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+}
+
+.registration-form-advanced .team-card .participant-card {
+  border: 0;
+  border-top: 1px solid #d8e3e7;
+  border-radius: 0;
+  margin-inline: -4px;
+  padding: 16px 14px 12px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.registration-form-advanced .team-card .participant-card-header h2 {
+  font-size: 16px;
+  color: #174c5a;
+}
+
+.registration-form-advanced .registration-total {
+  border: 1px solid #91b1be;
+  border-left: 5px solid #c49745;
+  box-shadow: 0 10px 24px rgba(14, 54, 72, 0.13);
+}
+
+.registration-form-advanced input {
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .registration-form-advanced > .participant-card {
+    padding-inline: 14px;
+  }
+
+  .registration-form-advanced > .participant-card::before {
+    margin-inline: -14px;
+  }
+}

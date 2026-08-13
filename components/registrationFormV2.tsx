@@ -45,11 +45,13 @@ const REGISTRATION_DRAFT_KEY = "construct-carnival-registration-draft";
 export default function RegistrationFormV2({
     handleSubmission,
     forcedTotalFee,
-    allowPriorRegistration = false
+    allowPriorRegistration = false,
+    advancedDesign = false
 }: {
     handleSubmission: (data: any) => Promise<any>;
     forcedTotalFee?: number;
     allowPriorRegistration?: boolean;
+    advancedDesign?: boolean;
 }) {
     const [individual, setIndividual] = useState<Person>(emptyPerson());
     const [individualEvents, setIndividualEvents] = useState<string[]>([]);
@@ -269,7 +271,7 @@ export default function RegistrationFormV2({
     };
 
     return (
-        <form className="mx-auto mt-5 flex w-full max-w-6xl flex-col gap-5 px-3 sm:px-5" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+        <form className={`registration-form mx-auto mt-5 flex w-full max-w-6xl flex-col gap-5 px-3 sm:px-5 ${advancedDesign ? "registration-form-advanced" : ""}`} onSubmit={(event) => { event.preventDefault(); submit(); }}>
             {(
                 <ParticipantCard
                     title="Individual Participant"
@@ -314,7 +316,7 @@ export default function RegistrationFormV2({
             )}
 
             {availableTeamEvents.length > 0 && (
-                <section className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4 shadow-md">
+                <section className="team-event-selector rounded-2xl border border-orange-100 bg-orange-50/40 p-4 shadow-md">
                     <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
                         <div>
                             <h2 className="text-lg font-bold text-[#083b66]">Team Events <span className="text-sm font-normal text-gray-500">(2–3 members per event)</span></h2>
@@ -373,7 +375,7 @@ export default function RegistrationFormV2({
                 />
             ))}
 
-            <section className="sticky bottom-4 z-50 flex flex-col items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-white p-4 shadow-xl md:flex-row">
+            <section className="registration-total sticky bottom-4 z-50 flex flex-col items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-white p-4 shadow-xl md:flex-row">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Calculated Total</p>
                     <p className="text-2xl font-bold text-[#083b66]">{calculateFee()} TK</p>
@@ -469,8 +471,8 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
     };
 
     return (
-        <section className="rounded-2xl border border-blue-100 bg-white p-4 shadow-md">
-            <div className="flex items-center justify-between gap-3">
+        <section className="participant-card rounded-2xl border border-blue-100 bg-white p-4 shadow-md">
+            <div className="participant-card-header flex items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-[#083b66]">{title}</h2>
                     <p className="text-sm text-gray-500">{subtitle}</p>
@@ -560,8 +562,8 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
     allowPriorRegistration: boolean;
 }) {
     return (
-        <section className="overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-lg">
-            <div className="flex flex-col justify-between gap-2 bg-gradient-to-r from-[#083b66] to-[#0b4d8a] px-5 py-3 text-white sm:flex-row sm:items-center">
+        <section className="team-card overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-lg">
+            <div className="team-card-header flex flex-col justify-between gap-2 bg-gradient-to-r from-[#083b66] to-[#0b4d8a] px-5 py-3 text-white sm:flex-row sm:items-center">
                 <h2 className="text-xl font-bold">{eventNames[event]}</h2>
                 {showCopyPrevious && (
                     <Checkbox
