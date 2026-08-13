@@ -3,6 +3,7 @@
 import { Button } from "@nextui-org/button";
 import { Checkbox, CheckboxGroup, Input, Textarea } from "@nextui-org/react";
 import { useEffect, useState } from "react";
+import { TRUSS_COURIER_FEE } from "@/config/registrationFee";
 
 type Person = {
     name: string;
@@ -10,13 +11,18 @@ type Person = {
     phoneNumber: string;
     department: string;
     university: string;
+    previousEvents?: string[];
 };
 
 type TeamEventKey = "truss" | "poster";
 
 const emptyPerson = (): Person => ({
-    name: "", email: "", phoneNumber: "", department: "", university: ""
+    name: "", email: "", phoneNumber: "", department: "", university: "", previousEvents: []
 });
+
+const isCompletePerson = (person: Person) =>
+    [person.name, person.email, person.phoneNumber, person.department, person.university]
+        .every((value) => value.trim() !== "");
 
 const eventNames: Record<string, string> = {
     cad: "CAD Expert",
@@ -38,10 +44,12 @@ const REGISTRATION_DRAFT_KEY = "construct-carnival-registration-draft";
 
 export default function RegistrationFormV2({
     handleSubmission,
-    forcedTotalFee
+    forcedTotalFee,
+    allowPriorRegistration = false
 }: {
     handleSubmission: (data: any) => Promise<any>;
     forcedTotalFee?: number;
+    allowPriorRegistration?: boolean;
 }) {
     const [individual, setIndividual] = useState<Person>(emptyPerson());
     const [individualEvents, setIndividualEvents] = useState<string[]>([]);
@@ -56,9 +64,12 @@ export default function RegistrationFormV2({
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [draftLoaded, setDraftLoaded] = useState(false);
+    const [isPrimaryVerificationPending, setIsPrimaryVerificationPending] = useState(false);
 
     const hasIndividualEvents = individualEvents.length > 0;
     const hasTeamEvents = enabledTeamEvents.length > 0;
+    const availableTeamEvents = (["truss", "poster"] as TeamEventKey[])
+        .filter((event) => !individual.previousEvents?.includes(event));
     const firstTeamEvent = enabledTeamEvents[0];
     const secondTeamEvent = enabledTeamEvents[1];
 
@@ -106,18 +117,24 @@ export default function RegistrationFormV2({
             poster: [emptyPerson(), emptyPerson()]
         });
         setCopyPreviousTeam(false);
+        setIsPrimaryVerificationPending(false);
         setError("");
         localStorage.removeItem(REGISTRATION_DRAFT_KEY);
     };
 
     useEffect(() => {
-        if (!hasIndividualEvents || !hasTeamEvents) return;
+        if (!hasTeamEvents) return;
 
         setTeamMembers((current) => ({
             truss: [individual, ...current.truss.slice(1)],
             poster: [individual, ...current.poster.slice(1)]
         }));
-    }, [hasIndividualEvents, hasTeamEvents, individual]);
+    }, [hasTeamEvents, individual]);
+
+    useEffect(() => {
+        const previousEvents = new Set(individual.previousEvents || []);
+        setIndividualEvents((current) => current.filter((event) => !previousEvents.has(event)));
+    }, [individual.previousEvents]);
 
     useEffect(() => {
         if (!firstTeamEvent || !secondTeamEvent) {
@@ -157,7 +174,7 @@ export default function RegistrationFormV2({
                 teamMembers[event].forEach((person, index) => entries.push({
                     person,
                     event,
-                    identity: hasIndividualEvents && index === 0
+                    identity: index === 0
                         ? "individual-participant"
                         : copyPreviousTeam && event === secondTeamEvent
                             ? `${firstTeamEvent}-member-${index}`
@@ -169,30 +186,35 @@ export default function RegistrationFormV2({
     };
 
     const getFeeBreakdown = () => {
-        const people = new Map<string, { name: string; events: Set<string> }>();
+        const people = new Map<string, { name: string; events: Set<string>; previousEvents: Set<string> }>();
         allSelectedEntries().forEach(({ person, event, identity }) => {
             const email = person.email.trim().toLowerCase();
             const key = email || identity;
-            if (!people.has(key)) people.set(key, { name: person.name, events: new Set() });
+            if (!people.has(key)) people.set(key, {
+                name: person.name,
+                events: new Set(),
+                previousEvents: new Set(person.previousEvents || [])
+            });
             people.get(key)!.events.add(event);
         });
         return Array.from(people.entries()).map(([key, item], index) => ({
             key,
             name: item.name.trim() || `Participant ${index + 1}`,
             events: Array.from(item.events),
-            fee: feeForEventCount(item.events.size)
+            fee: feeForEventCount(new Set([...item.previousEvents, ...item.events]).size) -
+                feeForEventCount(item.previousEvents.size)
         }));
     };
 
-    const calculateFee = () => forcedTotalFee ??
+    const calculateParticipantFee = () =>
         getFeeBreakdown().reduce((total, participant) => total + participant.fee, 0);
 
-    const isPersonComplete = (person: Person) =>
-        Object.values(person).every((value) => value.trim() !== "");
+    const calculateFee = () => forcedTotalFee ??
+        calculateParticipantFee() + (enabledTeamEvents.includes("truss") ? TRUSS_COURIER_FEE : 0);
 
     const submit = async () => {
         setError("");
-        if (hasIndividualEvents && !isPersonComplete(individual)) {
+        if (hasIndividualEvents && !isCompletePerson(individual)) {
             setError("Complete the individual participant card and select at least one individual event.");
             return;
         }
@@ -211,8 +233,12 @@ export default function RegistrationFormV2({
             const members = teamMembers[event];
             const uniqueEmails = new Set(members.map((member) => member.email.trim().toLowerCase()));
             if (!teamNames[event].trim() || members.length < 2 || members.length > 3 ||
-                members.some((member) => !isPersonComplete(member)) || uniqueEmails.size !== members.length) {
+                members.some((member) => !isCompletePerson(member)) || uniqueEmails.size !== members.length) {
                 setError(`${eventNames[event]} requires a team name and 2–3 complete, distinct members.`);
+                return;
+            }
+            if (members.some((member) => member.previousEvents?.includes(event))) {
+                setError(`A verified member has already participated in ${eventNames[event]}.`);
                 return;
             }
         }
@@ -243,14 +269,29 @@ export default function RegistrationFormV2({
     };
 
     return (
-        <form className="mx-auto mt-5 flex w-full flex-col gap-5" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+        <form className="mx-auto mt-5 flex w-full max-w-6xl flex-col gap-5 px-3 sm:px-5" onSubmit={(event) => { event.preventDefault(); submit(); }}>
             {(
                 <ParticipantCard
                     title="Individual Participant"
                     subtitle="Select one or more individual events"
                     person={individual}
                     isRequired={hasIndividualEvents}
-                    onChange={(field, value) => setIndividual(updatePerson(individual, field, value))}
+                    allowPriorRegistration={allowPriorRegistration}
+                    onChange={(field, value) => setIndividual((current) => updatePerson(current, field, value))}
+                    onPriorRegistrationVerified={() => {
+                        setIsPrimaryVerificationPending(false);
+                        setIndividualEvents([]);
+                        setEnabledTeamEvents([]);
+                        setCopyPreviousTeam(false);
+                    }}
+                    onPriorRegistrationSelectionChange={(selected) => {
+                        setIsPrimaryVerificationPending(selected);
+                        if (selected) {
+                            setIndividualEvents([]);
+                            setEnabledTeamEvents([]);
+                            setCopyPreviousTeam(false);
+                        }
+                    }}
                     headerAction={
                         <Button type="button" size="sm" color="danger" variant="light" onPress={clearAllData}>
                             Clear Data
@@ -258,10 +299,10 @@ export default function RegistrationFormV2({
                     }
                 >
                     <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
-                        <CheckboxGroup label="Individual Events" value={individualEvents} onValueChange={setIndividualEvents} orientation="horizontal">
-                            <Checkbox value="cad">CAD Expert</Checkbox>
-                            <Checkbox value="mechamind">Mechamind</Checkbox>
-                            <Checkbox value="management">Management Maestro</Checkbox>
+                        <CheckboxGroup isDisabled={isPrimaryVerificationPending} label="Individual Events" value={individualEvents} onValueChange={setIndividualEvents} orientation="horizontal">
+                            {!individual.previousEvents?.includes("cad") && <Checkbox value="cad">CAD Expert</Checkbox>}
+                            {!individual.previousEvents?.includes("mechamind") && <Checkbox value="mechamind">Mechamind</Checkbox>}
+                            {!individual.previousEvents?.includes("management") && <Checkbox value="management">Management Maestro</Checkbox>}
                         </CheckboxGroup>
                         <p className="whitespace-nowrap text-sm font-semibold text-blue-700">
                             {forcedTotalFee !== undefined
@@ -272,12 +313,13 @@ export default function RegistrationFormV2({
                 </ParticipantCard>
             )}
 
-            {(
+            {availableTeamEvents.length > 0 && (
                 <section className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4 shadow-md">
                     <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
                         <div>
                             <h2 className="text-lg font-bold text-[#083b66]">Team Events <span className="text-sm font-normal text-gray-500">(2–3 members per event)</span></h2>
                             <CheckboxGroup
+                                isDisabled={isPrimaryVerificationPending}
                                 value={enabledTeamEvents}
                                 onValueChange={(values) => {
                                     const selected = values as TeamEventKey[];
@@ -289,8 +331,8 @@ export default function RegistrationFormV2({
                                 orientation="horizontal"
                                 className="mt-2"
                             >
-                                <Checkbox value="truss">Truss Combat</Checkbox>
-                                <Checkbox value="poster">Poster Presentation</Checkbox>
+                                {!individual.previousEvents?.includes("truss") && <Checkbox value="truss">Truss Combat</Checkbox>}
+                                {!individual.previousEvents?.includes("poster") && <Checkbox value="poster">Poster Presentation</Checkbox>}
                             </CheckboxGroup>
                         </div>
                         <div className="text-left text-sm font-semibold text-orange-600 lg:text-right">
@@ -313,18 +355,21 @@ export default function RegistrationFormV2({
                     members={teamMembers[event]}
                     onTeamNameChange={(value) => setTeamNames({ ...teamNames, [event]: value })}
                     onMemberChange={(index, field, value) => {
-                        const members = [...teamMembers[event]];
-                        members[index] = updatePerson(members[index], field, value);
-                        setTeamMembers({ ...teamMembers, [event]: members });
+                        setTeamMembers((current) => {
+                            const members = [...current[event]];
+                            members[index] = updatePerson(members[index], field, value);
+                            return { ...current, [event]: members };
+                        });
                     }}
                     onAdd={() => setTeamMembers({ ...teamMembers, [event]: [...teamMembers[event], emptyPerson()] })}
                     onRemove={() => setTeamMembers({ ...teamMembers, [event]: teamMembers[event].slice(0, -1) })}
-                    lockFirstMember={hasIndividualEvents}
+                    lockFirstMember
                     showCopyPrevious={eventIndex === 1}
                     copyPrevious={eventIndex === 1 && copyPreviousTeam}
                     onCopyPreviousChange={setCopyPreviousTeam}
                     deliveryAddress={event === "truss" ? trussDeliveryAddress : ""}
                     onDeliveryAddressChange={event === "truss" ? setTrussDeliveryAddress : undefined}
+                    allowPriorRegistration={allowPriorRegistration}
                 />
             ))}
 
@@ -332,6 +377,11 @@ export default function RegistrationFormV2({
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Calculated Total</p>
                     <p className="text-2xl font-bold text-[#083b66]">{calculateFee()} TK</p>
+                    {enabledTeamEvents.includes("truss") && (
+                        <p className="mt-1 text-sm font-medium text-orange-700">
+                            Note: Includes a one-time {TRUSS_COURIER_FEE} TK courier charge for Truss Combat materials.
+                        </p>
+                    )}
                 </div>
                 <Button type="submit" color="primary" size="lg" isLoading={isLoading} className="w-full font-semibold md:w-auto">Proceed to Payment</Button>
             </section>
@@ -340,7 +390,7 @@ export default function RegistrationFormV2({
     );
 }
 
-function ParticipantCard({ title, subtitle, person, onChange, children, isReadOnly = false, isRequired = true, headerAction }: {
+function ParticipantCard({ title, subtitle, person, onChange, children, isReadOnly = false, isRequired = true, headerAction, allowPriorRegistration = false, onPriorRegistrationVerified, onPriorRegistrationSelectionChange, registrationEvent }: {
     title: string;
     subtitle: string;
     person: Person;
@@ -349,26 +399,151 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
     isReadOnly?: boolean;
     isRequired?: boolean;
     headerAction?: React.ReactNode;
+    allowPriorRegistration?: boolean;
+    onPriorRegistrationVerified?: () => void;
+    onPriorRegistrationSelectionChange?: (selected: boolean) => void;
+    registrationEvent?: string;
 }) {
+    const [registeredEarlier, setRegisteredEarlier] = useState(false);
+    const [lookupEmail, setLookupEmail] = useState("");
+    const [otp, setOtp] = useState("");
+    const [otpSent, setOtpSent] = useState(false);
+    const [isVerified, setIsVerified] = useState(false);
+    const [verificationMessage, setVerificationMessage] = useState("");
+    const [verificationLoading, setVerificationLoading] = useState(false);
+
+    useEffect(() => {
+        if (person.email) return;
+        setRegisteredEarlier(false);
+        setLookupEmail("");
+        setOtp("");
+        setOtpSent(false);
+        setIsVerified(false);
+        setVerificationMessage("");
+    }, [person.email]);
+
+    const requestOtp = async () => {
+        setVerificationLoading(true);
+        setVerificationMessage("");
+        try {
+            const response = await fetch("/api/registration-otp/request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: lookupEmail, event: registrationEvent })
+            });
+            const data = await response.json();
+            setVerificationMessage(data.message);
+            if (response.ok) setOtpSent(true);
+        } catch {
+            setVerificationMessage("Could not contact the verification service");
+        } finally {
+            setVerificationLoading(false);
+        }
+    };
+
+    const verifyOtp = async () => {
+        setVerificationLoading(true);
+        setVerificationMessage("");
+        try {
+            const response = await fetch("/api/registration-otp/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: lookupEmail, otp, event: registrationEvent })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                setVerificationMessage(data.message);
+                return;
+            }
+            (Object.keys(data.participant) as Array<keyof Person>).forEach((field) =>
+                (onChange as any)(field, data.participant[field])
+            );
+            onPriorRegistrationVerified?.();
+            setIsVerified(true);
+            setVerificationMessage("Email verified. Previous registration information loaded.");
+        } catch {
+            setVerificationMessage("Could not contact the verification service");
+        } finally {
+            setVerificationLoading(false);
+        }
+    };
+
     return (
         <section className="rounded-2xl border border-blue-100 bg-white p-4 shadow-md">
             <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-[#083b66]">{title}</h2>
+                <div>
+                    <h2 className="text-lg font-bold text-[#083b66]">{title}</h2>
+                    <p className="text-sm text-gray-500">{subtitle}</p>
+                </div>
                 {headerAction}
             </div>
+            {allowPriorRegistration && !isReadOnly && (
+                <div className="mx-auto mt-3 w-full max-w-3xl rounded-md border border-blue-200 bg-blue-50/30 p-3">
+                    <Checkbox
+                        isSelected={registeredEarlier}
+                        isDisabled={isVerified}
+                        onValueChange={(selected) => {
+                            setRegisteredEarlier(selected);
+                            onPriorRegistrationSelectionChange?.(selected);
+                            setOtpSent(false);
+                            setOtp("");
+                            setVerificationMessage("");
+                        }}
+                    >
+                        Registered earlier
+                    </Checkbox>
+                    {registeredEarlier && !isVerified && (
+                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+                            <Input
+                                type="email"
+                                label="Previously registered email"
+                                labelPlacement="outside"
+                                value={lookupEmail}
+                                onValueChange={setLookupEmail}
+                                className="w-full sm:w-72 sm:flex-none"
+                            />
+                            {otpSent && (
+                                <Input
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    label="Verification code"
+                                    labelPlacement="outside"
+                                    value={otp}
+                                    onValueChange={(value) => setOtp(value.replace(/\D/g, "").slice(0, 6))}
+                                    className="w-full sm:w-32 sm:flex-none"
+                                />
+                            )}
+                            <Button
+                                type="button"
+                                color="primary"
+                                isLoading={verificationLoading}
+                                isDisabled={!lookupEmail || (otpSent && otp.length !== 6)}
+                                onPress={otpSent ? verifyOtp : requestOtp}
+                            >
+                                {otpSent ? "Verify Code" : "Send Code"}
+                            </Button>
+                        </div>
+                    )}
+                    {verificationMessage && (
+                        <p className={`mt-2 text-sm font-medium ${isVerified || otpSent ? "text-green-700" : "text-rose-600"}`}>
+                            {verificationMessage}
+                        </p>
+                    )}
+                </div>
+            )}
             <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} label="Full Name" labelPlacement="outside" value={person.name} onValueChange={(value) => onChange("name", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} type="email" label="Email" labelPlacement="outside" value={person.email} onValueChange={(value) => onChange("email", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} type="tel" label="Phone Number" labelPlacement="outside" value={person.phoneNumber} onValueChange={(value) => onChange("phoneNumber", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} label="Department" labelPlacement="outside" value={person.department} onValueChange={(value) => onChange("department", value)} classNames={participantInputClasses} />
-                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly} label="University" labelPlacement="outside" value={person.university} onValueChange={(value) => onChange("university", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly || isVerified} label="Full Name" labelPlacement="outside" value={person.name} onValueChange={(value) => onChange("name", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly || isVerified} type="email" label="Email" labelPlacement="outside" value={person.email} onValueChange={(value) => onChange("email", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly || isVerified} type="tel" label="Phone Number" labelPlacement="outside" value={person.phoneNumber} onValueChange={(value) => onChange("phoneNumber", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly || isVerified} label="Department" labelPlacement="outside" value={person.department} onValueChange={(value) => onChange("department", value)} classNames={participantInputClasses} />
+                <Input size="lg" isRequired={isRequired} isReadOnly={isReadOnly || isVerified} label="University" labelPlacement="outside" value={person.university} onValueChange={(value) => onChange("university", value)} classNames={participantInputClasses} />
             </div>
             {children && <div className="mt-3 border-t border-gray-100 pt-3">{children}</div>}
         </section>
     );
 }
 
-function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, onAdd, onRemove, lockFirstMember, showCopyPrevious, copyPrevious, onCopyPreviousChange, deliveryAddress, onDeliveryAddressChange }: {
+function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, onAdd, onRemove, lockFirstMember, showCopyPrevious, copyPrevious, onCopyPreviousChange, deliveryAddress, onDeliveryAddressChange, allowPriorRegistration }: {
     event: TeamEventKey;
     teamName: string;
     members: Person[];
@@ -382,6 +557,7 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
     onCopyPreviousChange: (selected: boolean) => void;
     deliveryAddress: string;
     onDeliveryAddressChange?: (value: string) => void;
+    allowPriorRegistration: boolean;
 }) {
     return (
         <section className="overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-lg">
@@ -419,6 +595,8 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
                             ? "Copied from the individual participant card"
                             : `${eventNames[event]} team member`}
                         person={member}
+                        allowPriorRegistration={allowPriorRegistration && index > 0}
+                        registrationEvent={event}
                         isReadOnly={copyPrevious || (lockFirstMember && index === 0)}
                         onChange={(field, value) => onMemberChange(index, field, value)}
                     />

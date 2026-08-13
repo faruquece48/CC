@@ -1,1 +1,2 @@
 export const REGISTRATION_TEST_TOTAL_FEE = 10;
+export const TRUSS_COURIER_FEE = 150;

@@ -19,11 +19,10 @@ import {
     REGISTRATION_START_DATE,
     REGISTRATION_TEST_START_DATE
 } from "@/config/deadline";
-import {
-    REGISTRATION_TEST_TOTAL_FEE
-} from "@/config/registrationFee";
 import { cookies } from "next/headers";
 import { ADMIN_SESSION_COOKIE, isValidAdminSession } from "@/lib/adminSession";
+import { findPriorParticipant } from "@/lib/priorRegistration";
+import { TRUSS_COURIER_FEE } from "@/config/registrationFee";
 
 export const dynamic = "force-dynamic";
 
@@ -128,12 +127,32 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
             people.get(email)!.events.add(event);
         });
         const feeScale = [0, 400, 600, 800, 900, 1000];
-        const regularCalculatedFee = Array.from(people.values()).reduce(
-            (total, item) => total + feeScale[Math.min(item.events.size, 5)], 0
+        const peopleWithHistory = await Promise.all(
+            Array.from(people.entries()).map(async ([email, item]) => ({
+                email,
+                item,
+                previousEvents: new Set((await findPriorParticipant(email))?.previousEvents || [])
+            }))
         );
-        const calculatedFee = testMode
-            ? REGISTRATION_TEST_TOTAL_FEE
-            : regularCalculatedFee;
+        const duplicateEvent = peopleWithHistory.find(({ item, previousEvents }) =>
+            Array.from(item.events).some((event) => previousEvents.has(event))
+        );
+        if (duplicateEvent) {
+            return {
+                status: 400,
+                message: `${duplicateEvent.item.person.name} has already participated in one of the selected events`,
+                url: ""
+            };
+        }
+        const participantCalculatedFee = peopleWithHistory.reduce((total, { item, previousEvents }) => {
+            const combinedEvents = new Set([...previousEvents, ...item.events]);
+            return total +
+                feeScale[Math.min(combinedEvents.size, 5)] -
+                feeScale[Math.min(previousEvents.size, 5)];
+        }, 0);
+        const regularCalculatedFee = participantCalculatedFee +
+            (teamRegistrations.some((team: any) => team.event === "truss") ? TRUSS_COURIER_FEE : 0);
+        const calculatedFee = regularCalculatedFee;
         const uniquePeople = Array.from(people.values()).map((item) => item.person);
         const primary = individualRegistration?.participant || uniquePeople[0];
         const second = uniquePeople[1];
@@ -465,7 +484,7 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
                         {/* FORM */}
                         <RegistrationForm
                             handleSubmission={handleSubmission}
-                            forcedTotalFee={testMode ? REGISTRATION_TEST_TOTAL_FEE : undefined}
+                            allowPriorRegistration
                         />
 
                     </>
