@@ -46,12 +46,14 @@ export default function RegistrationFormV2({
     handleSubmission,
     forcedTotalFee,
     allowPriorRegistration = false,
-    advancedDesign = false
+    advancedDesign = false,
+    otpValidityMinutes = 10
 }: {
     handleSubmission: (data: any) => Promise<any>;
     forcedTotalFee?: number;
     allowPriorRegistration?: boolean;
     advancedDesign?: boolean;
+    otpValidityMinutes?: number;
 }) {
     const [individual, setIndividual] = useState<Person>(emptyPerson());
     const [individualEvents, setIndividualEvents] = useState<string[]>([]);
@@ -294,6 +296,7 @@ export default function RegistrationFormV2({
                             setCopyPreviousTeam(false);
                         }
                     }}
+                    otpValidityMinutes={otpValidityMinutes}
                     headerAction={
                         <Button type="button" size="sm" color="danger" variant="light" onPress={clearAllData}>
                             Clear Data
@@ -372,6 +375,7 @@ export default function RegistrationFormV2({
                     deliveryAddress={event === "truss" ? trussDeliveryAddress : ""}
                     onDeliveryAddressChange={event === "truss" ? setTrussDeliveryAddress : undefined}
                     allowPriorRegistration={allowPriorRegistration}
+                    otpValidityMinutes={otpValidityMinutes}
                 />
             ))}
 
@@ -392,7 +396,7 @@ export default function RegistrationFormV2({
     );
 }
 
-function ParticipantCard({ title, subtitle, person, onChange, children, isReadOnly = false, isRequired = true, headerAction, allowPriorRegistration = false, onPriorRegistrationVerified, onPriorRegistrationSelectionChange, registrationEvent }: {
+function ParticipantCard({ title, subtitle, person, onChange, children, isReadOnly = false, isRequired = true, headerAction, allowPriorRegistration = false, onPriorRegistrationVerified, onPriorRegistrationSelectionChange, registrationEvent, otpValidityMinutes = 10 }: {
     title: string;
     subtitle: string;
     person: Person;
@@ -405,6 +409,7 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
     onPriorRegistrationVerified?: () => void;
     onPriorRegistrationSelectionChange?: (selected: boolean) => void;
     registrationEvent?: string;
+    otpValidityMinutes?: number;
 }) {
     const [registeredEarlier, setRegisteredEarlier] = useState(false);
     const [lookupEmail, setLookupEmail] = useState("");
@@ -413,6 +418,24 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
     const [isVerified, setIsVerified] = useState(false);
     const [verificationMessage, setVerificationMessage] = useState("");
     const [verificationLoading, setVerificationLoading] = useState(false);
+    const [otpSecondsRemaining, setOtpSecondsRemaining] = useState(0);
+
+    useEffect(() => {
+        if (!otpSent || otpSecondsRemaining <= 0) return;
+        const timer = window.setInterval(() => {
+            setOtpSecondsRemaining((remaining) => {
+                if (remaining <= 1) {
+                    window.clearInterval(timer);
+                    setOtpSent(false);
+                    setOtp("");
+                    setVerificationMessage("Verification code expired. Request a new code.");
+                    return 0;
+                }
+                return remaining - 1;
+            });
+        }, 1000);
+        return () => window.clearInterval(timer);
+    }, [otpSent, otpSecondsRemaining]);
 
     useEffect(() => {
         if (person.email) return;
@@ -431,11 +454,14 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
             const response = await fetch("/api/registration-otp/request", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: lookupEmail, event: registrationEvent })
+                body: JSON.stringify({ email: lookupEmail, event: registrationEvent, validityMinutes: otpValidityMinutes })
             });
             const data = await response.json();
             setVerificationMessage(data.message);
-            if (response.ok) setOtpSent(true);
+            if (response.ok) {
+                setOtpSent(true);
+                setOtpSecondsRemaining(otpValidityMinutes * 60);
+            }
         } catch {
             setVerificationMessage("Could not contact the verification service");
         } finally {
@@ -505,15 +531,20 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
                                 className="w-full sm:w-72 sm:flex-none"
                             />
                             {otpSent && (
-                                <Input
-                                    inputMode="numeric"
-                                    maxLength={6}
-                                    label="Verification code"
-                                    labelPlacement="outside"
-                                    value={otp}
-                                    onValueChange={(value) => setOtp(value.replace(/\D/g, "").slice(0, 6))}
-                                    className="w-full sm:w-32 sm:flex-none"
-                                />
+                                <div className="flex items-end gap-2">
+                                    <Input
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        label="Verification code"
+                                        labelPlacement="outside"
+                                        value={otp}
+                                        onValueChange={(value) => setOtp(value.replace(/\D/g, "").slice(0, 6))}
+                                        className="w-full sm:w-32 sm:flex-none"
+                                    />
+                                    <span className="mb-2 min-w-12 font-mono text-sm font-semibold text-rose-700">
+                                        {Math.floor(otpSecondsRemaining / 60)}:{String(otpSecondsRemaining % 60).padStart(2, "0")}
+                                    </span>
+                                </div>
                             )}
                             <Button
                                 type="button"
@@ -545,7 +576,7 @@ function ParticipantCard({ title, subtitle, person, onChange, children, isReadOn
     );
 }
 
-function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, onAdd, onRemove, lockFirstMember, showCopyPrevious, copyPrevious, onCopyPreviousChange, deliveryAddress, onDeliveryAddressChange, allowPriorRegistration }: {
+function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, onAdd, onRemove, lockFirstMember, showCopyPrevious, copyPrevious, onCopyPreviousChange, deliveryAddress, onDeliveryAddressChange, allowPriorRegistration, otpValidityMinutes }: {
     event: TeamEventKey;
     teamName: string;
     members: Person[];
@@ -560,6 +591,7 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
     deliveryAddress: string;
     onDeliveryAddressChange?: (value: string) => void;
     allowPriorRegistration: boolean;
+    otpValidityMinutes: number;
 }) {
     return (
         <section className="team-card overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-lg">
@@ -599,6 +631,7 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
                         person={member}
                         allowPriorRegistration={allowPriorRegistration && index > 0}
                         registrationEvent={event}
+                        otpValidityMinutes={otpValidityMinutes}
                         isReadOnly={copyPrevious || (lockFirstMember && index === 0)}
                         onChange={(field, value) => onMemberChange(index, field, value)}
                     />

@@ -162,9 +162,9 @@ export const Navbar = () => {
                         hover:scale-105
                       "
                       style={{
-                        padding: "5px 18px",
+                        padding: "5px 12px",
                         borderRadius: "9999px",
-                        fontSize: "14px",
+                        fontSize: "13px",
                         fontWeight: pathname === item.href ? 600 : 500,
                         color:
                           pathname === item.href

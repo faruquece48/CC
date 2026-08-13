@@ -109,7 +109,7 @@ export async function findPriorParticipant(rawEmail: string): Promise<PriorParti
     };
 }
 
-export async function sendRegistrationOtp(email: string, otp: string) {
+export async function sendRegistrationOtp(email: string, otp: string, validityMinutes = 10) {
     if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
         throw new Error("Email service is not configured");
     }
@@ -123,7 +123,7 @@ export async function sendRegistrationOtp(email: string, otp: string) {
         from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
         to: email,
         subject: "Your registration verification code",
-        text: `Your Construct Carnival verification code is ${otp}. It expires in 10 minutes.`,
-        html: `<p>Your Construct Carnival verification code is:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">${otp}</p><p>This code expires in 10 minutes. Do not share it with anyone.</p>`
+        text: `Your Construct Carnival verification code is ${otp}. This OTP is valid for ${validityMinutes} minutes only.`,
+        html: `<p>Your Construct Carnival verification code is:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">${otp}</p><p>This OTP is valid for <strong>${validityMinutes} minutes only</strong>. Do not share it with anyone.</p>`
     });
 }

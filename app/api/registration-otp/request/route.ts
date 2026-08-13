@@ -13,6 +13,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const email = String(body.email || "").trim().toLowerCase();
         const event = String(body.event || "");
+        const validityMinutes = Number(body.validityMinutes) === 5 ? 5 : 10;
         if (!/^\S+@\S+\.\S+$/.test(email)) {
             return NextResponse.json({ message: "Enter a valid email address" }, { status: 400 });
         }
@@ -38,16 +39,16 @@ export async function POST(request: Request) {
         }
 
         const otp = createRegistrationOtp();
-        await sendRegistrationOtp(email, otp);
-        await sql`
+        await sendRegistrationOtp(email, otp, validityMinutes);
+        await sql.query(`
             INSERT INTO registrationEmailOtp (email, code_hash, expires_at, created_at, attempts)
-            VALUES (${email}, ${hashRegistrationOtp(email, otp)}, NOW() + INTERVAL '10 minutes', NOW(), 0)
+            VALUES ($1, $2, NOW() + ($3 * INTERVAL '1 minute'), NOW(), 0)
             ON CONFLICT (email) DO UPDATE SET
                 code_hash = EXCLUDED.code_hash,
                 expires_at = EXCLUDED.expires_at,
                 created_at = EXCLUDED.created_at,
                 attempts = 0
-        `;
+        `, [email, hashRegistrationOtp(email, otp), validityMinutes]);
 
         return NextResponse.json({ message: "Verification code sent" });
     } catch (error) {

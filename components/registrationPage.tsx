@@ -490,6 +490,7 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
                             handleSubmission={handleSubmission}
                             allowPriorRegistration
                             advancedDesign
+                            otpValidityMinutes={testMode ? 5 : 10}
                         />
 
                     </>

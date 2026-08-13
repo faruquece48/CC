@@ -52,6 +52,10 @@ export const siteConfig: SiteConfig = {
       href: "/archive",
     },
     {
+      label: "FAQ",
+      href: "/faq",
+    },
+    {
       label: "Contact",
       href: "/contact",
     },
@@ -85,6 +89,10 @@ export const siteConfig: SiteConfig = {
     {
       label: "Archive",
       href: "/archive",
+    },
+    {
+      label: "FAQ",
+      href: "/faq",
     },
     {
       label: "Contact",
