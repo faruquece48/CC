@@ -11,9 +11,13 @@ import {
 } from "@/config/deadline";
 
 export const Timer = ({
-  registrationStartDate = REGISTRATION_START_DATE
+  registrationStartDate = REGISTRATION_START_DATE,
+  variant = "default",
+  flushTop = false
 }: {
   registrationStartDate?: string;
+  variant?: "default" | "classic";
+  flushTop?: boolean;
 }) => {
 
   const [days, setDays] = useState(0);
@@ -104,12 +108,21 @@ export const Timer = ({
   return (
 
     <div
-      className="timer border border-rose-600 rounded"
+      className={`timer ${variant === "classic" ? "timer-classic" : "timer-default border border-rose-600 rounded"} ${flushTop ? "timer-flush-top" : ""}`}
       role="timer"
     >
 
+      {variant === "classic" && (
+        <>
+          <span className="timer-corner timer-corner-tl" aria-hidden="true" />
+          <span className="timer-corner timer-corner-tr" aria-hidden="true" />
+          <span className="timer-corner timer-corner-bl" aria-hidden="true" />
+          <span className="timer-corner timer-corner-br" aria-hidden="true" />
+        </>
+      )}
+
       {/* TITLE */}
-      <h1 className="text-center font-bold text-lg">
+      <h1 className="timer-title text-center font-bold text-lg">
 
         {timerTitle}
 
@@ -120,7 +133,7 @@ export const Timer = ({
 
         <div className="box">
 
-          <p id="day">
+          <p>
 
             {days < 10 ? "0" + days : days}
 
@@ -141,7 +154,7 @@ export const Timer = ({
 
         <div className="box">
 
-          <p id="hour">
+          <p>
 
             {hours < 10 ? "0" + hours : hours}
 
@@ -162,7 +175,7 @@ export const Timer = ({
 
         <div className="box">
 
-          <p id="minute">
+          <p>
 
             {minutes < 10 ? "0" + minutes : minutes}
 
@@ -183,7 +196,7 @@ export const Timer = ({
 
         <div className="box">
 
-          <p id="second">
+          <p>
 
             {seconds < 10 ? "0" + seconds : seconds}
 

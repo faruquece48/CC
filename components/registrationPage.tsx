@@ -462,7 +462,11 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
                     <>
 
                         {/* TIMER */}
-                        <Timer registrationStartDate={registrationStartDate} />
+                        <Timer
+                            registrationStartDate={registrationStartDate}
+                            variant="classic"
+                            flushTop={!testMode}
+                        />
 
                         {/* MARQUEE */}
                         <Marquee
