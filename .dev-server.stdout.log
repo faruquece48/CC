@@ -1,0 +1,12 @@
+
+> next-app-template@0.0.1 dev
+> next dev
+
+   ▲ Next.js 14.1.4
+   - Local:        http://localhost:3000
+   - Environments: .env.local
+
+ ✓ Ready in 3.1s
+ ○ Compiling /sponsors ...
+ ✓ Compiled /sponsors in 11.6s (2903 modules)
+ ✓ Compiled in 982ms (1448 modules)

@@ -18,6 +18,7 @@ import rupali from "@/public/sponsors/rupali.png";
 import brack from "@/public/sponsors/brack1.png";
 
 import somoy from "@/public/sponsors/somoy.png";
+import iqac from "@/public/sponsors/IQAC.png";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
 
@@ -102,7 +103,7 @@ export default function SponsorsPage() {
 
       {/* CURRENT SPONSOR */}
       <section className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
-        <SectionTitle text="CONFIRMED SPONSOR" />
+        <SectionTitle text="CONFIRMED SPONSORS" />
 
         <div className="relative mt-6 overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-md md:p-12">
           <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/60 blur-3xl" />
@@ -131,6 +132,39 @@ export default function SponsorsPage() {
               <p className="mt-5 leading-7 text-gray-600">
                 We sincerely thank Seven Rings Cement for supporting our
                 upcoming program and joining us in building a stronger future.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mt-8 overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-md md:p-12">
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-emerald-100/60 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-blue-100/70 blur-3xl" />
+
+          <div className="relative grid items-center gap-8 md:grid-cols-2">
+            <Link
+              href="https://www.ruet.ac.bd/section/IQAC"
+              isExternal
+              className="flex min-h-[180px] items-center justify-center rounded-2xl border border-gray-100 bg-white p-8 shadow-sm"
+            >
+              <Image
+                src={iqac.src}
+                alt="Institutional Quality Assurance Cell, RUET"
+                className="max-h-40 w-auto object-contain"
+              />
+            </Link>
+
+            <div className="text-center md:text-left">
+              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
+                Proudly Supporting Us
+              </p>
+              <h2 className="mt-3 text-3xl font-bold text-[#083b66] md:text-4xl">
+                IQAC, RUET
+              </h2>
+              <p className="mt-5 leading-7 text-gray-600">
+                We sincerely thank the Institutional Quality Assurance Cell of
+                RUET for sponsoring our upcoming program and supporting our
+                commitment to excellence.
               </p>
             </div>
           </div>
