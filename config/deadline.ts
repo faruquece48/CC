@@ -1,10 +1,12 @@
-export const REGISTRATION_START_DATE = "August 15, 2026 00:00:00";
-export const REGISTRATION_TEST_START_DATE = "August 5, 2026 00:00:00";
+// Keep registration timing fixed to Bangladesh Standard Time, regardless of
+// the deployment server's timezone.
+export const REGISTRATION_START_DATE = "2026-08-15T00:00:00+06:00";
+export const REGISTRATION_TEST_START_DATE = "2026-08-05T00:00:00+06:00";
 
 export const REGISTRATION_DEADLINES = [
-  "September 15, 2026 23:59:59",
-  "September 20, 2026 23:59:59",
-  "September 20, 2026 23:59:59",
+  "2026-09-15T23:59:59+06:00",
+  "2026-09-20T23:59:59+06:00",
+  "2026-09-20T23:59:59+06:00",
 ] as const;
 
 export type RegistrationPhase = "not_started" | 1 | 2 | 3 | "closed";
@@ -42,7 +44,8 @@ export function getRegistrationImpactMessage(
     const formattedStartDate = new Intl.DateTimeFormat("en-US", {
       month: "long",
       day: "numeric",
-      year: "numeric"
+      year: "numeric",
+      timeZone: "Asia/Dhaka"
     }).format(new Date(startDate));
     return `Registration will open on ${formattedStartDate} at 12:00 AM.`;
   }
