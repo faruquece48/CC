@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import ImageSlideShow from "@/components/slideshow";
 import Timeline from "@/components/timeline";
@@ -20,6 +21,17 @@ import {
 } from "react-icons/md";
 
 export default function Home() {
+  const [registrationStats, setRegistrationStats] = useState({ participants: 0, universities: 0 });
+
+  useEffect(() => {
+    fetch("/api/registration-stats", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data) => setRegistrationStats({
+        participants: Number(data.participants) || 0,
+        universities: Number(data.universities) || 0
+      }))
+      .catch(() => undefined);
+  }, []);
   const registrationPhase = getRegistrationPhase();
   const isRegistrationOpen = typeof registrationPhase === "number";
   const extensionMessage =
@@ -43,12 +55,12 @@ export default function Home() {
     },
     {
       icon: <MdPeople size={24} />,
-      value: "600+",
+      value: registrationStats.participants.toLocaleString(),
       label: "Participants",
     },
     {
       icon: <MdSchool size={24} />,
-      value: "20+",
+      value: registrationStats.universities.toLocaleString(),
       label: "Universities",
     },
     {

@@ -36,6 +36,7 @@ interface VisitorData {
 }
 
 function FooterSection() {
+  const [registrationStats, setRegistrationStats] = useState({ participants: 0, universities: 0 });
   const [visitors, setVisitors] = useState<VisitorData>({
     total: 0,
     todayCount: 0,
@@ -95,6 +96,16 @@ function FooterSection() {
       clearInterval(interval);
       window.removeEventListener("beforeunload", handleLeave);
     };
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/registration-stats", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data) => setRegistrationStats({
+        participants: Number(data.participants) || 0,
+        universities: Number(data.universities) || 0
+      }))
+      .catch(() => undefined);
   }, []);
 
   const visitorStats = [
@@ -426,13 +437,13 @@ function FooterSection() {
                     },
                     {
                       icon: <Users className="text-yellow-400 w-4 h-4" />,
-                      text: "600+ Participants",
+                      text: `${registrationStats.participants.toLocaleString()} Participants`,
                     },
                     {
                       icon: (
                         <GraduationCap className="text-yellow-400 w-4 h-4" />
                       ),
-                      text: "20+ Universities",
+                      text: `${registrationStats.universities.toLocaleString()} Universities`,
                     },
                     {
                       icon: (
