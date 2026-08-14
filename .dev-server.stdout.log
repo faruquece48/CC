@@ -10,3 +10,10 @@
  ○ Compiling /sponsors ...
  ✓ Compiled /sponsors in 11.6s (2903 modules)
  ✓ Compiled in 982ms (1448 modules)
+ ○ Compiling /api/registration-stats ...
+ ✓ Compiled /api/registration-stats in 792ms (1471 modules)
+ ✓ Compiled (1509 modules)
+ ○ Compiling /registration ...
+ ✓ Compiled /registration in 3.9s (3136 modules)
+ ✓ Compiled /api/registration-stats in 317ms (1673 modules)
+ ✓ Compiled in 1368ms (3136 modules)

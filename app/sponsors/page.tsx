@@ -102,23 +102,23 @@ export default function SponsorsPage() {
       </section>
 
       {/* CURRENT SPONSOR */}
-      <section className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
+      <section className="max-w-4xl mx-auto px-4 md:px-8 py-10 md:py-12">
         <SectionTitle text="CONFIRMED SPONSORS" />
 
-        <div className="relative mt-6 overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-md md:p-12">
+        <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
           <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/60 blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-orange-100/70 blur-3xl" />
 
-          <div className="relative grid items-center gap-8 md:grid-cols-2">
+          <div className="relative grid items-center gap-6 md:grid-cols-2">
             <Link
               href="https://sevenringscement.com/"
               isExternal
-              className="flex min-h-[180px] items-center justify-center rounded-2xl border border-gray-100 bg-white p-8 shadow-sm"
+              className="flex min-h-[140px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
             >
               <Image
                 src={sevenring.src}
                 alt="Seven Rings Cement"
-                className="max-h-32 w-auto object-contain"
+                className="max-h-24 w-auto object-contain"
               />
             </Link>
 
@@ -126,10 +126,10 @@ export default function SponsorsPage() {
               <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
                 Proudly Supporting Us
               </p>
-              <h2 className="mt-3 text-3xl font-bold text-[#083b66] md:text-4xl">
+              <h2 className="mt-2 text-2xl font-bold text-[#083b66] md:text-3xl">
                 Seven Rings Cement
               </h2>
-              <p className="mt-5 leading-7 text-gray-600">
+              <p className="mt-3 text-sm leading-6 text-gray-600">
                 We sincerely thank Seven Rings Cement for supporting our
                 upcoming program and joining us in building a stronger future.
               </p>
@@ -137,20 +137,20 @@ export default function SponsorsPage() {
           </div>
         </div>
 
-        <div className="relative mt-8 overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-md md:p-12">
+        <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
           <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-emerald-100/60 blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-blue-100/70 blur-3xl" />
 
-          <div className="relative grid items-center gap-8 md:grid-cols-2">
+          <div className="relative grid items-center gap-6 md:grid-cols-2">
             <Link
               href="https://www.ruet.ac.bd/section/IQAC"
               isExternal
-              className="flex min-h-[180px] items-center justify-center rounded-2xl border border-gray-100 bg-white p-8 shadow-sm"
+              className="flex min-h-[140px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
             >
               <Image
                 src={iqac.src}
                 alt="Institutional Quality Assurance Cell, RUET"
-                className="max-h-40 w-auto object-contain"
+                className="max-h-28 w-auto object-contain"
               />
             </Link>
 
@@ -158,10 +158,10 @@ export default function SponsorsPage() {
               <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
                 Proudly Supporting Us
               </p>
-              <h2 className="mt-3 text-3xl font-bold text-[#083b66] md:text-4xl">
+              <h2 className="mt-2 text-2xl font-bold text-[#083b66] md:text-3xl">
                 IQAC, RUET
               </h2>
-              <p className="mt-5 leading-7 text-gray-600">
+              <p className="mt-3 text-sm leading-6 text-gray-600">
                 We sincerely thank the Institutional Quality Assurance Cell of
                 RUET for sponsoring our upcoming program and supporting our
                 commitment to excellence.
