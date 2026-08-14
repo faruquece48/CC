@@ -127,13 +127,13 @@ export default function RegistrationFormV2({
     };
 
     useEffect(() => {
-        if (!hasTeamEvents) return;
+        if (!hasTeamEvents || !hasIndividualEvents) return;
 
         setTeamMembers((current) => ({
             truss: [individual, ...current.truss.slice(1)],
             poster: [individual, ...current.poster.slice(1)]
         }));
-    }, [hasTeamEvents, individual]);
+    }, [hasTeamEvents, hasIndividualEvents, individual]);
 
     useEffect(() => {
         const previousEvents = new Set(individual.previousEvents || []);
@@ -215,6 +215,18 @@ export default function RegistrationFormV2({
 
     const calculateFee = () => forcedTotalFee ??
         calculateParticipantFee() + (enabledTeamEvents.includes("truss") ? TRUSS_COURIER_FEE : 0);
+
+    const handleIndividualEventsChange = (values: string[]) => {
+        if (!hasIndividualEvents && hasTeamEvents && values.length > 0 && firstTeamEvent) {
+            setIndividual({ ...teamMembers[firstTeamEvent][0] });
+            setIndividualEvents(values);
+            setError("");
+            return;
+        }
+
+        setError("");
+        setIndividualEvents(values);
+    };
 
     const submit = async () => {
         setError("");
@@ -304,7 +316,7 @@ export default function RegistrationFormV2({
                     }
                 >
                     <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
-                        <CheckboxGroup isDisabled={isPrimaryVerificationPending} label="Individual Events" value={individualEvents} onValueChange={setIndividualEvents} orientation="horizontal">
+                        <CheckboxGroup isDisabled={isPrimaryVerificationPending} label="Individual Events" value={individualEvents} onValueChange={handleIndividualEventsChange} orientation="horizontal">
                             {!individual.previousEvents?.includes("cad") && <Checkbox value="cad">CAD Expert</Checkbox>}
                             {!individual.previousEvents?.includes("mechamind") && <Checkbox value="mechamind">Mechamind</Checkbox>}
                             {!individual.previousEvents?.includes("management") && <Checkbox value="management">Management Maestro</Checkbox>}
@@ -368,7 +380,7 @@ export default function RegistrationFormV2({
                     }}
                     onAdd={() => setTeamMembers({ ...teamMembers, [event]: [...teamMembers[event], emptyPerson()] })}
                     onRemove={() => setTeamMembers({ ...teamMembers, [event]: teamMembers[event].slice(0, -1) })}
-                    lockFirstMember
+                    lockFirstMember={hasIndividualEvents}
                     showCopyPrevious={eventIndex === 1}
                     copyPrevious={eventIndex === 1 && copyPreviousTeam}
                     onCopyPreviousChange={setCopyPreviousTeam}
@@ -629,7 +641,7 @@ function TeamCard({ event, teamName, members, onTeamNameChange, onMemberChange, 
                             ? "Copied from the individual participant card"
                             : `${eventNames[event]} team member`}
                         person={member}
-                        allowPriorRegistration={allowPriorRegistration && index > 0}
+                        allowPriorRegistration={allowPriorRegistration && (!lockFirstMember || index > 0)}
                         registrationEvent={event}
                         otpValidityMinutes={otpValidityMinutes}
                         isReadOnly={copyPrevious || (lockFirstMember && index === 0)}
