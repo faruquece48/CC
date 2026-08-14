@@ -170,6 +170,38 @@ export default function SponsorsPage() {
           </div>
         </div>
 
+        <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-sky-100/60 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-amber-100/70 blur-3xl" />
+
+          <div className="relative grid items-center gap-6 md:grid-cols-2">
+            <Link
+              href="https://www.tamzidgroup.com/"
+              isExternal
+              className="flex min-h-[140px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
+            >
+              <Image
+                src={platinumsponsor.src}
+                alt="Tamzid Group of Industries"
+                className="max-h-24 w-auto object-contain"
+              />
+            </Link>
+
+            <div className="text-center md:text-left">
+              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
+                Proudly Supporting Us
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-[#083b66] md:text-3xl">
+                Tamzid Group of Industries
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                Proudly supporting innovation, engineering excellence, and
+                academic development through sponsorship and collaboration.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="mt-8 rounded-2xl border border-dashed border-[#6d87a8] bg-white/70 px-6 py-6 text-center">
           <h3 className="text-xl font-semibold text-[#083b66]">
             More sponsorship opportunities are available

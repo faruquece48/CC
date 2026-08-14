@@ -184,3 +184,135 @@ REGISTRATION STATS ERROR: NeonDbError: Error connecting to database: fetch faile
 }
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+REGISTRATION STATS ERROR: NeonDbError: Error connecting to database: fetch failed
+    at execute (webpack-internal:///(rsc)/./node_modules/@neondatabase/serverless/index.mjs:1547:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GET (webpack-internal:///(rsc)/./app/api/registration-stats/route.ts:13:24)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:63809
+    at async eU.execute (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53964)
+    at async eU.handle (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:65062)
+    at async doRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1317:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1539:28)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1447:28)
+    at async DevServer.renderPageComponent (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1844:24)
+    at async DevServer.renderToResponseImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1882:32)
+    at async DevServer.pipeImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:895:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\next-server.js:269:17)
+    at async DevServer.handleRequestImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:791:17)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:331:20
+    at async Span.traceAsyncFn (C:\Users\HP\Downloads\CC\node_modules\next\dist\trace\trace.js:151:20)
+    at async DevServer.handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:328:24)
+    at async invokeRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\start-server.js:140:13) {
+  code: null,
+  sourceError: [TypeError: fetch failed] {
+    [cause]: AggregateError [EACCES]: 
+        at internalConnectMultiple (node:net:1193:18)
+        at afterConnectMultiple (node:net:1783:7) {
+      code: 'EACCES',
+      [errors]: [Array]
+    }
+  }
+}
+REGISTRATION STATS ERROR: NeonDbError: Error connecting to database: fetch failed
+    at execute (webpack-internal:///(rsc)/./node_modules/@neondatabase/serverless/index.mjs:1547:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GET (webpack-internal:///(rsc)/./app/api/registration-stats/route.ts:13:24)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:63809
+    at async eU.execute (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53964)
+    at async eU.handle (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:65062)
+    at async doRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1317:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1539:28)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1447:28)
+    at async DevServer.renderPageComponent (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1844:24)
+    at async DevServer.renderToResponseImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1882:32)
+    at async DevServer.pipeImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:895:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\next-server.js:269:17)
+    at async DevServer.handleRequestImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:791:17)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:331:20
+    at async Span.traceAsyncFn (C:\Users\HP\Downloads\CC\node_modules\next\dist\trace\trace.js:151:20)
+    at async DevServer.handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:328:24)
+    at async invokeRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\start-server.js:140:13) {
+  code: null,
+  sourceError: [TypeError: fetch failed] {
+    [cause]: AggregateError [EACCES]: 
+        at internalConnectMultiple (node:net:1193:18)
+        at afterConnectMultiple (node:net:1783:7) {
+      code: 'EACCES',
+      [errors]: [Array]
+    }
+  }
+}
+REGISTRATION STATS ERROR: NeonDbError: Error connecting to database: fetch failed
+    at execute (webpack-internal:///(rsc)/./node_modules/@neondatabase/serverless/index.mjs:1547:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GET (webpack-internal:///(rsc)/./app/api/registration-stats/route.ts:13:24)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:63809
+    at async eU.execute (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53964)
+    at async eU.handle (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:65062)
+    at async doRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1317:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1539:28)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1447:28)
+    at async DevServer.renderPageComponent (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1844:24)
+    at async DevServer.renderToResponseImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1882:32)
+    at async DevServer.pipeImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:895:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\next-server.js:269:17)
+    at async DevServer.handleRequestImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:791:17)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:331:20
+    at async Span.traceAsyncFn (C:\Users\HP\Downloads\CC\node_modules\next\dist\trace\trace.js:151:20)
+    at async DevServer.handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:328:24)
+    at async invokeRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\start-server.js:140:13) {
+  code: null,
+  sourceError: [TypeError: fetch failed] {
+    [cause]: AggregateError [EACCES]: 
+        at internalConnectMultiple (node:net:1193:18)
+        at afterConnectMultiple (node:net:1783:7) {
+      code: 'EACCES',
+      [errors]: [Array]
+    }
+  }
+}
+REGISTRATION STATS ERROR: NeonDbError: Error connecting to database: fetch failed
+    at execute (webpack-internal:///(rsc)/./node_modules/@neondatabase/serverless/index.mjs:1547:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GET (webpack-internal:///(rsc)/./app/api/registration-stats/route.ts:13:24)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:63809
+    at async eU.execute (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53964)
+    at async eU.handle (C:\Users\HP\Downloads\CC\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:65062)
+    at async doRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1317:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1539:28)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1447:28)
+    at async DevServer.renderPageComponent (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1844:24)
+    at async DevServer.renderToResponseImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:1882:32)
+    at async DevServer.pipeImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:895:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\next-server.js:269:17)
+    at async DevServer.handleRequestImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\base-server.js:791:17)
+    at async C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:331:20
+    at async Span.traceAsyncFn (C:\Users\HP\Downloads\CC\node_modules\next\dist\trace\trace.js:151:20)
+    at async DevServer.handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\dev\next-dev-server.js:328:24)
+    at async invokeRender (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\HP\Downloads\CC\node_modules\next\dist\server\lib\start-server.js:140:13) {
+  code: null,
+  sourceError: [TypeError: fetch failed] {
+    [cause]: AggregateError [EACCES]: 
+        at internalConnectMultiple (node:net:1193:18)
+        at afterConnectMultiple (node:net:1783:7) {
+      code: 'EACCES',
+      [errors]: [Array]
+    }
+  }
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
