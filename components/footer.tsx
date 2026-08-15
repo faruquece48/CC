@@ -18,7 +18,6 @@ import {
 import {
   FacebookIcon,
   InstagramIcon,
-  LinkedInIcon,
   YoutubeIcon,
 } from "@/components/icons";
 
@@ -204,7 +203,9 @@ function FooterSection() {
                 <div className="flex items-center gap-2 mt-5">
 
                   <Link
-                    href="#"
+                    href="https://www.facebook.com/profile.php?id=61567513587222"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="
                       w-9
                       h-9
@@ -239,25 +240,6 @@ function FooterSection() {
                     "
                   >
                     <InstagramIcon />
-                  </Link>
-
-                  <Link
-                    href="#"
-                    className="
-                      w-9
-                      h-9
-                      rounded-full
-                      border
-                      border-white/30
-                      flex
-                      items-center
-                      justify-center
-                      hover:bg-white
-                      hover:text-black
-                      transition-all
-                    "
-                  >
-                    <LinkedInIcon />
                   </Link>
 
                   <Link
