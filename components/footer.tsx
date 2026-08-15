@@ -8,11 +8,6 @@ import {
   Mail,
   Phone,
   ChevronRight,
-  Trophy,
-  Users,
-  GraduationCap,
-  CalendarDays,
-  Briefcase,
   Eye,
   Radio,
   Sun,
@@ -28,6 +23,7 @@ import {
 } from "@/components/icons";
 
 import FooterAdvertisement from "@/components/FooterAdvertisement";
+import EventHighlights from "@/components/EventHighlights";
 
 interface VisitorData {
   total: number;
@@ -36,7 +32,6 @@ interface VisitorData {
 }
 
 function FooterSection() {
-  const [registrationStats, setRegistrationStats] = useState({ participants: 0, universities: 0 });
   const [visitors, setVisitors] = useState<VisitorData>({
     total: 0,
     todayCount: 0,
@@ -96,16 +91,6 @@ function FooterSection() {
       clearInterval(interval);
       window.removeEventListener("beforeunload", handleLeave);
     };
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/registration-stats", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data) => setRegistrationStats({
-        participants: Number(data.participants) || 0,
-        universities: Number(data.universities) || 0
-      }))
-      .catch(() => undefined);
   }, []);
 
   const visitorStats = [
@@ -423,62 +408,7 @@ function FooterSection() {
 
               {/* COLUMN 3 */}
               <div className="lg:px-1">
-
-                <h3 className="text-xl font-bold mb-4">
-                  Event Highlights
-                </h3>
-
-                <div className="space-y-2">
-
-                  {[
-                    {
-                      icon: <Trophy className="text-yellow-400 w-4 h-4" />,
-                      text: "5+ Events",
-                    },
-                    {
-                      icon: <Users className="text-yellow-400 w-4 h-4" />,
-                      text: `${registrationStats.participants.toLocaleString()} Participants`,
-                    },
-                    {
-                      icon: (
-                        <GraduationCap className="text-yellow-400 w-4 h-4" />
-                      ),
-                      text: `${registrationStats.universities.toLocaleString()} Universities`,
-                    },
-                    {
-                      icon: (
-                        <CalendarDays className="text-yellow-400 w-4 h-4" />
-                      ),
-                      text: "2-Day Festival",
-                    },
-                    {
-                      icon: <Briefcase className="text-yellow-400 w-4 h-4" />,
-                      text: "National Networking Opportunity",
-                    },
-                  ].map((item, index) => (
-                    <div
-                      key={index}
-                      className="
-                        flex
-                        items-center
-                        gap-3
-                        bg-white/10
-                        rounded-lg
-                        px-3
-                        py-2.5
-                        backdrop-blur-sm
-                        text-sm
-                      "
-                    >
-
-                      {item.icon}
-
-                      <span>{item.text}</span>
-
-                    </div>
-                  ))}
-
-                </div>
+                <EventHighlights />
               </div>
 
               {/* COLUMN 4 */}

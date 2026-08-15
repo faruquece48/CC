@@ -1,6 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Test registration card treatment */
 .registration-form-advanced {
   gap: 18px;

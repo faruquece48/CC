@@ -1,0 +1,286 @@
+.section {
+  width: 100%;
+  padding: 36px 16px 8px;
+  background: #fff;
+}
+
+.wrapper {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 30px 28px 34px;
+  border: 1px solid #edf1f1;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #f7fbfa 0%, #fff 52%, #f9fbfb 100%);
+  box-shadow: 0 8px 28px rgba(5, 62, 52, 0.06);
+}
+
+.heading {
+  margin-bottom: 34px;
+  text-align: center;
+}
+
+.eyebrow,
+.taglineRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.eyebrowText {
+  color: #344052;
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.smallLine,
+.tagLine {
+  width: 58px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff7a00);
+}
+
+.smallLine:last-child,
+.tagLine:last-child {
+  background: linear-gradient(90deg, #ff7a00, transparent);
+}
+
+.dot,
+.tagDot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #ff7300;
+}
+
+.tagDot {
+  border-radius: 50%;
+  background: #ff7300;
+}
+
+.wordDiamond {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 7px 1px;
+  border-radius: 1px;
+  background: #c59a2f;
+  transform: rotate(45deg);
+}
+
+.title {
+  margin: 6px 0 5px;
+  color: #075044;
+  font-size: clamp(40px, 4vw, 58px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+}
+
+.title span {
+  display: inline-block;
+  margin-right: -0.12em;
+  padding-right: 0.12em;
+  background: linear-gradient(90deg, #9f8500, #db571d);
+  background-clip: text;
+  color: transparent;
+}
+
+.taglineRow p {
+  margin: 0;
+  color: #465062;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.card {
+  --theme-color: #075744;
+  position: relative;
+  min-height: 340px;
+  overflow: hidden;
+  padding: 26px 22px 36px;
+  border: 1px solid #e8ebec;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(23, 42, 48, 0.12);
+  text-align: center;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 28px rgba(23, 42, 48, 0.16);
+}
+
+.forest {
+  --theme-color: #35685f;
+}
+
+.blue {
+  --theme-color: #a15f4f;
+}
+
+.olive {
+  --theme-color: #6f7750;
+}
+
+.plum {
+  --theme-color: #8b526e;
+}
+
+.cornerNumber {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 62px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px 10px 0;
+  border-radius: 0 0 100% 0;
+  background: var(--theme-color);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.iconOuter {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.iconCircle {
+  display: flex;
+  width: 114px;
+  height: 114px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--theme-color);
+  border-right-color: #e5e9e8;
+  border-bottom-color: #e5e9e8;
+  border-radius: 50%;
+  color: var(--theme-color);
+  transform: rotate(-10deg);
+}
+
+.iconCircle svg {
+  transform: rotate(10deg);
+}
+
+.card h3 {
+  margin: 0;
+  color: var(--theme-color);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.titleUnderline {
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 14px auto 16px;
+  border-radius: 99px;
+  background: var(--theme-color);
+}
+
+.card p {
+  margin: 0;
+  color: #505663;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.bottomAccent {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 5px;
+  background: var(--theme-color);
+}
+
+@media (max-width: 1150px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card {
+    min-height: 315px;
+  }
+}
+
+@media (max-width: 650px) {
+  .section {
+    padding: 18px 12px 8px;
+  }
+
+  .wrapper {
+    padding: 28px 14px 22px;
+    border-radius: 22px;
+  }
+
+  .heading {
+    margin-bottom: 27px;
+  }
+
+  .title {
+    font-size: 38px;
+    letter-spacing: -1px;
+  }
+
+  .eyebrowText {
+    font-size: 16px;
+  }
+
+  .smallLine {
+    width: 35px;
+  }
+
+  .tagLine {
+    width: 30px;
+  }
+
+  .taglineRow {
+    gap: 7px;
+  }
+
+  .taglineRow p {
+    font-size: 14px;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .card {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 400px) {
+  .title {
+    font-size: 32px;
+  }
+
+  .tagLine {
+    display: none;
+  }
+
+  .tagDot {
+    width: 6px;
+    height: 6px;
+  }
+}

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import ImageSlideShow from "@/components/slideshow";
 import Timeline from "@/components/timeline";
+import WhyJoinSection from "@/components/WhyJoinSection";
 import {
   getRegistrationImpactMessage,
   getRegistrationPhase,
@@ -13,25 +13,7 @@ import { galleryAsset } from "@/config/assets";
 
 import Marquee from "react-fast-marquee";
 
-import {
-  MdAccessTime,
-  MdPeople,
-  MdSchool,
-  MdEmojiEvents,
-} from "react-icons/md";
-
 export default function Home() {
-  const [registrationStats, setRegistrationStats] = useState({ participants: 0, universities: 0 });
-
-  useEffect(() => {
-    fetch("/api/registration-stats", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data) => setRegistrationStats({
-        participants: Number(data.participants) || 0,
-        universities: Number(data.universities) || 0
-      }))
-      .catch(() => undefined);
-  }, []);
   const registrationPhase = getRegistrationPhase();
   const isRegistrationOpen = typeof registrationPhase === "number";
   const extensionMessage =
@@ -45,29 +27,6 @@ export default function Home() {
     galleryAsset("image_13.JPG"),
     galleryAsset("image_14.JPG"),
     galleryAsset("image_151.JPG"),
-  ];
-
-  const stats = [
-    {
-      icon: <MdAccessTime size={24} />,
-      value: "2 Days",
-      label: "Event Duration",
-    },
-    {
-      icon: <MdPeople size={24} />,
-      value: registrationStats.participants.toLocaleString(),
-      label: "Participants",
-    },
-    {
-      icon: <MdSchool size={24} />,
-      value: registrationStats.universities.toLocaleString(),
-      label: "Universities",
-    },
-    {
-      icon: <MdEmojiEvents size={24} />,
-      value: "5+",
-      label: "Events",
-    },
   ];
 
   return (
@@ -262,75 +221,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ================= STATS ================= */}
-          <div
-            className="
-              grid
-              grid-cols-2
-              lg:grid-cols-4
-              gap-5
-              mt-10
-            "
-          >
-            {stats.map((stat, i) => (
-              <div
-                key={i}
-                className="
-                  bg-white
-                  rounded-3xl
-                  border
-                  border-gray-200
-                  shadow-sm
-                  p-6
-                  flex
-                  items-center
-                  gap-4
-                  hover:shadow-md
-                  transition-all
-                "
-              >
-                <div
-                  className="
-                    w-12
-                    h-12
-                    rounded-full
-                    bg-[#063f35]
-                    text-white
-                    flex
-                    items-center
-                    justify-center
-                    shrink-0
-                  "
-                >
-                  {stat.icon}
-                </div>
-
-                <div>
-                  <h3
-                    className="
-                      text-2xl
-                      font-bold
-                      text-[#063f35]
-                    "
-                  >
-                    {stat.value}
-                  </h3>
-
-                  <p
-                    className="
-                      text-gray-500
-                      mt-1
-                      text-sm
-                    "
-                  >
-                    {stat.label}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
+
+      <WhyJoinSection />
 
       {/* ================= MOVING NOTICE ================= */}
       <section className="w-full px-4 lg:px-10 mt-10 bg-white">

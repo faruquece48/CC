@@ -1,15 +1,17 @@
 import "@/styles/globals.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/inter/800.css";
 import { Metadata } from "next";
 import Script from "next/script";
 
 import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/navbar";
 import FooterSection from "@/components/footer";
 import PopunderAd from "@/components/PopunderAd";
-
-import clsx from "clsx";
 
 export const metadata: Metadata = {
   title: siteConfig.name,
@@ -54,10 +56,7 @@ export default function RootLayout({
       </head>
 
       <body
-        className={clsx(
-          "min-h-screen bg-background font-sans antialiased m-0 p-0 overflow-x-hidden",
-          fontSans.variable
-        )}
+        className="min-h-screen bg-background font-sans antialiased m-0 p-0 overflow-x-hidden"
       >
         <Providers
           themeProps={{
