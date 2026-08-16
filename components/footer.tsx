@@ -224,7 +224,9 @@ function FooterSection() {
                   </Link>
 
                   <Link
-                    href="#"
+                    href="https://www.instagram.com/constructcarnival"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="
                       w-9
                       h-9
