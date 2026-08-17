@@ -15,6 +15,27 @@ const eventNames: Record<string, string> = {
 
 type PaymentFilter = "paid" | "all";
 
+function getPaidSegmentAmount(rows: any[]) {
+    const registrations = new Map<string, number>();
+
+    rows.forEach((row) => {
+        if (!row.ispaid) return;
+
+        const registrationId = String(row.registration_id);
+        const fee = Number(row.total_fee);
+
+        if (!registrations.has(registrationId) && Number.isFinite(fee)) {
+            registrations.set(registrationId, fee);
+        }
+    });
+
+    return Array.from(registrations.values()).reduce((total, fee) => total + fee, 0);
+}
+
+function formatAmount(amount: number) {
+    return `${amount.toLocaleString("en-BD")} TK`;
+}
+
 function downloadExcel(rows: Record<string, unknown>[], fileName: string) {
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
@@ -34,6 +55,7 @@ export default function EventRegistrationTables({ password }: { password: string
     const [uniqueParticipantRows, setUniqueParticipantRows] = useState<any[]>([]);
     const [supportRows, setSupportRows] = useState<any[]>([]);
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
     const [singlePaymentFilter, setSinglePaymentFilter] = useState<PaymentFilter>("all");
     const [teamPaymentFilter, setTeamPaymentFilter] = useState<PaymentFilter>("all");
     const [uniquePaymentFilter, setUniquePaymentFilter] = useState<PaymentFilter>("all");
@@ -52,8 +74,14 @@ export default function EventRegistrationTables({ password }: { password: string
             setSupportRows(support.data.data);
         }).catch((requestError) => {
             setError(requestError.response?.data?.message || "Unable to load registration data");
+        }).finally(() => {
+            setIsLoading(false);
         });
     }, [password]);
+
+    const individualAmount = getPaidSegmentAmount(singleRows);
+    const teamAmount = getPaidSegmentAmount(teamRows);
+    const totalAmount = individualAmount + teamAmount;
 
     const filteredSingleRows = singlePaymentFilter === "paid"
         ? singleRows.filter((row) => row.ispaid)
@@ -71,6 +99,18 @@ export default function EventRegistrationTables({ password }: { password: string
     return (
         <div className="space-y-14">
             {error && <p className="rounded-xl bg-red-50 p-4 text-center font-semibold text-red-600">{error}</p>}
+
+            <section aria-label="Paid registration amount summary">
+                <div className="mb-4">
+                    <h1 className="text-3xl font-bold text-[#083b66]">Registration Summary</h1>
+                    <p className="mt-1 text-sm text-gray-500">Paid registration amounts by segment</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                    <SummaryCard label="Individual Segment Amount" amount={individualAmount} loading={isLoading} color="blue" />
+                    <SummaryCard label="Team Segment Amount" amount={teamAmount} loading={isLoading} color="orange" />
+                    <SummaryCard label="Total Amount" amount={totalAmount} loading={isLoading} color="emerald" />
+                </div>
+            </section>
 
             <DataSection
                 title="Individual Event Registrations"
@@ -225,6 +265,28 @@ export default function EventRegistrationTables({ password }: { password: string
                     ))}</tbody>
                 </table>
             </DataSection>
+        </div>
+    );
+}
+
+function SummaryCard({ label, amount, loading, color }: {
+    label: string;
+    amount: number;
+    loading: boolean;
+    color: "blue" | "orange" | "emerald";
+}) {
+    const styles = {
+        blue: "border-blue-200 bg-blue-50 text-[#083b66]",
+        orange: "border-orange-200 bg-orange-50 text-orange-700",
+        emerald: "border-emerald-200 bg-emerald-50 text-emerald-700"
+    };
+
+    return (
+        <div className={`rounded-2xl border p-5 shadow-sm ${styles[color]}`}>
+            <p className="text-sm font-semibold uppercase tracking-wide opacity-75">{label}</p>
+            <p className="mt-2 text-3xl font-bold" aria-busy={loading}>
+                {loading ? "Loading..." : formatAmount(amount)}
+            </p>
         </div>
     );
 }
