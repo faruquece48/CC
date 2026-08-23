@@ -1,4 +1,4 @@
-import { Award, CalendarDays, Coffee, Cpu, MapPin, PackageCheck, Presentation, Sparkles, Trophy, UtensilsCrossed, Users, Wrench } from "lucide-react";
+import { Award, CalendarDays, Coffee, Cpu, MapPin, PackageCheck, Presentation, ShieldCheck, Sparkles, Trophy, UtensilsCrossed, Users, Wrench } from "lucide-react";
 
 const morning = [
   { time: "8:00 AM — 9:00 AM", title: "Kit Collection & Participant Check-in", place: "RUET Auditorium", icon: PackageCheck, color: "from-sky-500 to-cyan-400" },
@@ -61,6 +61,11 @@ export default function SchedulePage() {
 
         <article className="relative mt-6 overflow-hidden rounded-[2rem] bg-[#f5b72e] p-7 text-[#173b35] shadow-xl md:p-10"><div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle,rgba(7,63,55,.14)_2px,transparent_2px)] [background-size:18px_18px] md:block" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div className="flex items-center gap-5"><div className="rounded-2xl bg-[#073f37] p-4 text-amber-300"><Award size={32} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.2em]">Grand Finale</p><h2 className="mt-1 text-2xl font-extrabold md:text-3xl">Prize Giving & Closing Ceremony</h2><p className="mt-2 flex items-center gap-1.5 text-sm font-semibold opacity-70"><MapPin size={15} /> RUET Auditorium</p></div></div><div className="rounded-2xl bg-white/55 px-6 py-4 text-center backdrop-blur"><p className="text-xs font-bold uppercase tracking-widest opacity-60">Evening</p><p className="mt-1 text-xl font-extrabold">7:30 PM — 8:45 PM</p></div></div></article>
         <article className="mt-6 flex flex-col items-start justify-between gap-5 rounded-[2rem] border border-dashed border-teal-500/40 bg-teal-50 p-7 sm:flex-row sm:items-center md:p-9"><div className="flex items-center gap-4"><div className="rounded-2xl bg-white p-4 text-teal-700 shadow-sm"><Coffee size={26} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-600">Contingency</p><h2 className="mt-1 text-2xl font-extrabold text-[#073f37]">Reserved Day</h2></div></div><div className="text-left sm:text-right"><p className="text-2xl font-extrabold text-[#073f37]">03 October 2026</p><p className="mt-1 text-sm font-medium text-slate-500">Saturday · Kept free for contingency</p></div></article>
+
+        <aside className="mt-6 flex items-start gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 text-left shadow-sm md:px-7" aria-label="Schedule notice">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#073f37] text-amber-300"><ShieldCheck size={21} /></div>
+          <div><h2 className="text-sm font-extrabold uppercase tracking-[0.16em] text-[#073f37]">Schedule Notice</h2><p className="mt-1.5 text-sm leading-6 text-slate-600">The Event Organizing Committee reserves the right to modify, reschedule, or cancel any program when necessary. All decisions made by the committee regarding the event schedule shall be considered final.</p></div>
+        </aside>
       </section>
     </main>
   );
