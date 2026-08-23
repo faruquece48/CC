@@ -1,30 +1,38 @@
 
 > next-app-template@0.0.1 dev
-> next dev
+> next dev -p 3000
 
    ▲ Next.js 14.1.4
    - Local:        http://localhost:3000
    - Environments: .env.local
 
- ✓ Ready in 3.1s
- ○ Compiling /sponsors ...
- ✓ Compiled /sponsors in 11.6s (2903 modules)
- ✓ Compiled in 982ms (1448 modules)
- ○ Compiling /api/registration-stats ...
- ✓ Compiled /api/registration-stats in 792ms (1471 modules)
- ✓ Compiled (1509 modules)
- ○ Compiling /registration ...
- ✓ Compiled /registration in 3.9s (3136 modules)
- ✓ Compiled /api/registration-stats in 317ms (1673 modules)
- ✓ Compiled in 1368ms (3136 modules)
- ✓ Compiled /api/visitors-leave in 475ms (1673 modules)
- ✓ Compiled /api/registration-stats in 437ms (1675 modules)
- ✓ Compiled in 977ms (3126 modules)
- ✓ Compiled in 588ms (3126 modules)
- ✓ Compiled in 833ms (3126 modules)
- ✓ Compiled in 602ms (3126 modules)
- ✓ Compiled in 1617ms (3136 modules)
- ✓ Compiled /api/visitors-leave in 311ms (1673 modules)
- ✓ Compiled /api/registration-stats in 457ms (1675 modules)
- ✓ Compiled in 1910ms (3136 modules)
- ✓ Compiled in 888ms (3122 modules)
+ ✓ Ready in 2.8s
+ ○ Compiling / ...
+ ✓ Compiled / in 23.9s (2997 modules)
+ ✓ Compiled in 2.9s (1510 modules)
+ ○ Compiling /important_dates ...
+ ✓ Compiled /important_dates in 3.3s (2994 modules)
+ ○ Compiling /api/visitors ...
+ ✓ Compiled /api/visitors in 790ms (1528 modules)
+ ○ Compiling /ss ...
+ ✓ Compiled /ss in 753ms (3057 modules)
+ ○ Compiling /api/visitors-leave ...
+ ✓ Compiled /api/visitors-leave in 1023ms (1482 modules)
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 3.7s (2971 modules)
+ ✓ Compiled in 1602ms (2971 modules)
+ ○ Compiling /ss ...
+ ✓ Compiled /ss in 6.7s (3009 modules)
+ ✓ Compiled in 1788ms (3002 modules)
+ ✓ Compiled in 1364ms (3002 modules)
+ ✓ Compiled in 1731ms (3002 modules)
+ ○ Compiling /schedule ...
+ ✓ Compiled /schedule in 1705ms (2991 modules)
+ ✓ Compiled in 1016ms (3005 modules)
+ ✓ Compiled in 1580ms (3005 modules)
+ ✓ Compiled in 1576ms (3005 modules)
+ ✓ Compiled in 1320ms (3005 modules)
+ ✓ Compiled in 1392ms (3005 modules)
+ ✓ Compiled in 1301ms (3005 modules)
+ ✓ Compiled in 902ms (3005 modules)
+ ✓ Compiled in 2.1s (3005 modules)

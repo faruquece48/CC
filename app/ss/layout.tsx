@@ -1,13 +1,10 @@
-export default function AboutLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
-	return (
-		<section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-			<div className="inline-block max-w-7xl text-center justify-center">
-				{children}
-			</div>
-		</section>
-	);
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Event Schedule | CE Carnival",
+  description: "The complete CE Carnival event schedule and session timings.",
+};
+
+export default function ScheduleLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }
