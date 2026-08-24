@@ -9,10 +9,10 @@ const morning = [
 ];
 
 const competitions = [
-  { time: "3:00 PM — 3:40 PM", title: "CAD", icon: Cpu },
-  { time: "4:00 PM — 4:40 PM", title: "MechaMind", icon: Sparkles },
-  { time: "5:00 PM — 5:40 PM", title: "Management", icon: Users },
-  { time: "6:00 PM — 6:40 PM", title: "Truss", icon: Wrench },
+  { time: "3:00 PM — 3:40 PM", title: "CAD Expert", icon: Cpu },
+  { time: "4:00 PM — 4:40 PM", title: "Mechamind", icon: Sparkles },
+  { time: "5:00 PM — 5:40 PM", title: "Management Maestro", icon: Users },
+  { time: "6:00 PM — 6:40 PM", title: "Truss Combat", icon: Wrench },
 ];
 
 export default function SchedulePage() {

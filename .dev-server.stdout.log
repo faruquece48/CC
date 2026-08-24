@@ -36,3 +36,14 @@
  ✓ Compiled in 1301ms (3005 modules)
  ✓ Compiled in 902ms (3005 modules)
  ✓ Compiled in 2.1s (3005 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1671ms (1554 modules)
+ ○ Compiling /api/visitors-leave ...
+ ✓ Compiled /api/visitors-leave in 1182ms (1492 modules)
+ ✓ Compiled in 1946ms (3008 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 2.1s (1521 modules)
+ ○ Compiling /api/visitors ...
+ ✓ Compiled /api/visitors in 810ms (1555 modules)
+ ✓ Compiled /api/visitors-leave in 507ms (1557 modules)
+[?25h
