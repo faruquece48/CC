@@ -9,10 +9,10 @@ const morning = [
 ];
 
 const competitions = [
-  { time: "3:00 PM — 3:40 PM", title: "CAD Expert", icon: Cpu },
-  { time: "4:00 PM — 4:40 PM", title: "Mechamind", icon: Sparkles },
-  { time: "5:00 PM — 5:40 PM", title: "Management Maestro", icon: Users },
-  { time: "6:00 PM — 6:40 PM", title: "Truss Combat", icon: Wrench },
+  { time: "2:30 PM — 3:10 PM", title: "CAD Expert", icon: Cpu },
+  { time: "3:30 PM — 4:10 PM", title: "Mechamind", icon: Sparkles },
+  { time: "4:30 PM — 5:10 PM", title: "Management Maestro", icon: Users },
+  { time: "5:30 PM — 6:10 PM", title: "Truss Combat", icon: Wrench },
 ];
 
 export default function SchedulePage() {
@@ -59,7 +59,7 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        <article className="relative mt-6 overflow-hidden rounded-[2rem] bg-[#f5b72e] p-7 text-[#173b35] shadow-xl md:p-10"><div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle,rgba(7,63,55,.14)_2px,transparent_2px)] [background-size:18px_18px] md:block" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div className="flex items-center gap-5"><div className="rounded-2xl bg-[#073f37] p-4 text-amber-300"><Award size={32} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.2em]">Grand Finale</p><h2 className="mt-1 text-2xl font-extrabold md:text-3xl">Prize Giving & Closing Ceremony</h2><p className="mt-2 flex items-center gap-1.5 text-sm font-semibold opacity-70"><MapPin size={15} /> RUET Auditorium</p></div></div><div className="rounded-2xl bg-white/55 px-6 py-4 text-center backdrop-blur"><p className="text-xs font-bold uppercase tracking-widest opacity-60">Evening</p><p className="mt-1 text-xl font-extrabold">7:30 PM — 8:45 PM</p></div></div></article>
+        <article className="relative mt-6 overflow-hidden rounded-[2rem] bg-[#f5b72e] p-7 text-[#173b35] shadow-xl md:p-10"><div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle,rgba(7,63,55,.14)_2px,transparent_2px)] [background-size:18px_18px] md:block" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div className="flex items-center gap-5"><div className="rounded-2xl bg-[#073f37] p-4 text-amber-300"><Award size={32} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.2em]">Grand Finale</p><h2 className="mt-1 text-2xl font-extrabold md:text-3xl">Prize Giving & Closing Ceremony</h2><p className="mt-2 flex items-center gap-1.5 text-sm font-semibold opacity-70"><MapPin size={15} /> RUET Auditorium</p></div></div><div className="rounded-2xl bg-white/55 px-6 py-4 text-center backdrop-blur"><p className="text-xs font-bold uppercase tracking-widest opacity-60">Evening</p><p className="mt-1 text-xl font-extrabold">7:00 PM — 8:15 PM</p></div></div></article>
         <article className="mt-6 flex flex-col items-start justify-between gap-5 rounded-[2rem] border border-dashed border-teal-500/40 bg-teal-50 p-7 sm:flex-row sm:items-center md:p-9"><div className="flex items-center gap-4"><div className="rounded-2xl bg-white p-4 text-teal-700 shadow-sm"><Coffee size={26} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-600">Contingency</p><h2 className="mt-1 text-2xl font-extrabold text-[#073f37]">Reserved Day</h2></div></div><div className="text-left sm:text-right"><p className="text-2xl font-extrabold text-[#073f37]">03 October 2026</p><p className="mt-1 text-sm font-medium text-slate-500">Saturday · Kept free for contingency</p></div></article>
 
         <aside className="mt-6 flex items-start gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 text-left shadow-sm md:px-7" aria-label="Schedule notice">
