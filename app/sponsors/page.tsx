@@ -4,12 +4,9 @@ import { Image, Link } from "@nextui-org/react";
 
 import sponsorBg from "@/public/images/sponsor_background.png";
 
-import platinumsponsor from "@/public/sponsors/platinum_sponsors.png";
-
 import bsrm from "@/public/sponsors/bsrm1.png";
 import rainbow from "@/public/sponsors/rainbow.png";
 
-import sevenring from "@/public/sponsors/sevenring.png";
 import modern from "@/public/sponsors/modern.png";
 import innovate from "@/public/sponsors/innovate.png";
 import newvision from "@/public/sponsors/newvison.png";
@@ -106,38 +103,6 @@ export default function SponsorsPage() {
         <SectionTitle text="CONFIRMED SPONSORS" />
 
         <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
-          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-blue-100/60 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-orange-100/70 blur-3xl" />
-
-          <div className="relative grid items-center gap-6 md:grid-cols-2">
-            <Link
-              href="https://sevenringscement.com/"
-              isExternal
-              className="flex min-h-[140px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
-            >
-              <Image
-                src={sevenring.src}
-                alt="Seven Rings Cement"
-                className="max-h-24 w-auto object-contain"
-              />
-            </Link>
-
-            <div className="text-center md:text-left">
-              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
-                Proudly Supporting Us
-              </p>
-              <h2 className="mt-2 text-2xl font-bold text-[#083b66] md:text-3xl">
-                Seven Rings Cement
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                We sincerely thank Seven Rings Cement for supporting our
-                upcoming program and joining us in building a stronger future.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
           <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-emerald-100/60 blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-blue-100/70 blur-3xl" />
 
@@ -170,38 +135,6 @@ export default function SponsorsPage() {
           </div>
         </div>
 
-        <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
-          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-sky-100/60 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-amber-100/70 blur-3xl" />
-
-          <div className="relative grid items-center gap-6 md:grid-cols-2">
-            <Link
-              href="https://www.tamzidgroup.com/"
-              isExternal
-              className="flex min-h-[140px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
-            >
-              <Image
-                src={platinumsponsor.src}
-                alt="Tamzid Group of Industries"
-                className="max-h-24 w-auto object-contain"
-              />
-            </Link>
-
-            <div className="text-center md:text-left">
-              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
-                Proudly Supporting Us
-              </p>
-              <h2 className="mt-2 text-2xl font-bold text-[#083b66] md:text-3xl">
-                Tamzid Group of Industries
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-gray-600">
-                Proudly supporting innovation, engineering excellence, and
-                academic development through sponsorship and collaboration.
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-8 rounded-2xl border border-dashed border-[#6d87a8] bg-white/70 px-6 py-6 text-center">
           <h3 className="text-xl font-semibold text-[#083b66]">
             More sponsorship opportunities are available
@@ -217,88 +150,6 @@ export default function SponsorsPage() {
       <section
         className={`${showPreviousSponsors ? "block" : "hidden"} max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-10`}
       >
-
-        {/* PLATINUM */}
-        <div>
-
-          <SectionTitle text="PLATINUM SPONSOR" />
-
-          <div
-            className="
-              bg-white
-              border border-gray-200
-              rounded-3xl
-              shadow-md
-              p-6
-              mt-4
-            "
-          >
-            <div className="grid md:grid-cols-3 gap-6 items-center">
-
-              <div className="flex justify-center">
-                <Link href="https://www.tamzidgroup.com/" isExternal>
-                  <Image
-                    src={platinumsponsor.src}
-                    alt="Platinum Sponsor"
-                    className="object-contain max-h-24 w-auto"
-                  />
-                </Link>
-              </div>
-
-              <div className="md:col-span-2 text-center md:text-left">
-
-                <h2 className="text-2xl md:text-3xl font-bold text-[#083b66]">
-                  Tamzid Group of Industries
-                </h2>
-
-                <div className="flex items-center mt-3 mb-4 justify-center md:justify-start gap-3">
-
-                  <div
-                    className="
-                      w-30 md:w-44
-                      h-[2px]
-                      bg-gradient-to-r
-                      from-transparent
-                      via-[#7dd3fc]
-                      to-[#38bdf8]
-                      rounded-full
-                    "
-                  />
-
-                  <div
-                    className="
-                      w-3 h-3
-                      rotate-45
-                      bg-gradient-to-br
-                      from-[#7dd3fc]
-                      to-[#38bdf8]
-                    "
-                  />
-
-                  <div
-                    className="
-                      w-30 md:w-44
-                      h-[2px]
-                      bg-gradient-to-l
-                      from-transparent
-                      via-[#7dd3fc]
-                      to-[#38bdf8]
-                      rounded-full
-                    "
-                  />
-
-                </div>
-
-                <p className="text-gray-600 leading-relaxed text-sm md:text-base">
-                  Proudly supporting innovation, engineering excellence,
-                  and academic development through sponsorship and collaboration.
-                </p>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
 
         {/* GOLD */}
         <div>
@@ -326,11 +177,6 @@ export default function SponsorsPage() {
           <SectionTitle text="ASSOCIATING SPONSORS" />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-
-            <SmallSponsorCard
-              href="https://sevenringscement.com/"
-              image={sevenring.src}
-            />
 
             <SmallSponsorCard
               href="http://modernstructuresltd.com/"
