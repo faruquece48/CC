@@ -29,7 +29,10 @@ function emailHtml(name: string, code: string) {
 
 export async function POST(request: Request) {
   try {
-    const { action, codes } = await request.json();
+    const { password, action, codes } = await request.json();
+    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
     if (action === "list") return NextResponse.json({ ambassadors, subject });
     if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return NextResponse.json({ message: "Email service is not configured" }, { status: 500 });
     const selected = ambassadors.filter(({ code }) => Array.isArray(codes) && codes.includes(code));
