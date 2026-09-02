@@ -4,6 +4,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { ambassadors } from "@/lib/ambassadors";
 
 const eventNames: Record<string, string> = {
     cad: "CAD Expert",
@@ -54,6 +55,7 @@ export default function EventRegistrationTables({ password }: { password: string
     const [teamRows, setTeamRows] = useState<any[]>([]);
     const [uniqueParticipantRows, setUniqueParticipantRows] = useState<any[]>([]);
     const [supportRows, setSupportRows] = useState<any[]>([]);
+    const [ambassadorStats, setAmbassadorStats] = useState<any[]>([]);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [singlePaymentFilter, setSinglePaymentFilter] = useState<PaymentFilter>("all");
@@ -66,12 +68,14 @@ export default function EventRegistrationTables({ password }: { password: string
             axios.post("/api/fetchRegData", { password, table: "singleRegistration" }),
             axios.post("/api/fetchRegData", { password, table: "teamRegistration" }),
             axios.post("/api/fetchRegData", { password, table: "uniqueParticipants" }),
-            axios.post("/api/fetchRegData", { password, table: "support" })
-        ]).then(([single, team, uniqueParticipants, support]) => {
+            axios.post("/api/fetchRegData", { password, table: "support" }),
+            axios.post("/api/fetchRegData", { password, table: "ambassadorStats" })
+        ]).then(([single, team, uniqueParticipants, support, stats]) => {
             setSingleRows(single.data.data);
             setTeamRows(team.data.data);
             setUniqueParticipantRows(uniqueParticipants.data.data);
             setSupportRows(support.data.data);
+            setAmbassadorStats(stats.data.data);
         }).catch((requestError) => {
             setError(requestError.response?.data?.message || "Unable to load registration data");
         }).finally(() => {
@@ -226,6 +230,31 @@ export default function EventRegistrationTables({ password }: { password: string
                     ))}</tbody>
                 </table>
             </DataSection>
+
+            <section className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-xl">
+                <div className="p-6">
+                    <h2 className="text-2xl font-bold text-[#083b66]">Campus Ambassador Referrals</h2>
+                    <p className="mt-1 text-sm text-gray-500">Unique students with completed paid registrations. Each distinct team member is counted once.</p>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse text-sm">
+                        <thead className="bg-emerald-700 text-white"><tr>
+                            {["Code", "Ambassador", "University", "Department", "Completed students"].map((heading) =>
+                                <th key={heading} className="whitespace-nowrap border border-emerald-800 p-3 text-left">{heading}</th>)}
+                        </tr></thead>
+                        <tbody>{ambassadors.map((ambassador) => {
+                            const count = Number(ambassadorStats.find((row) => row.reference_code === ambassador.code)?.participant_count || 0);
+                            return <tr key={ambassador.code} className="even:bg-emerald-50/50">
+                                <Cell>{ambassador.code}</Cell>
+                                <Cell>{ambassador.name} <span className="ml-2 rounded-full bg-emerald-100 px-2 py-1 font-bold text-emerald-800">{count}</span></Cell>
+                                <Cell>{ambassador.university}</Cell>
+                                <Cell>{ambassador.department}</Cell>
+                                <Cell>{count}</Cell>
+                            </tr>;
+                        })}</tbody>
+                    </table>
+                </div>
+            </section>
 
             <DataSection
                 title="Support Contributions"

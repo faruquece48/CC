@@ -18,6 +18,11 @@ export async function POST(request: Request) {
 
         let data;
 
+        await sql`
+            ALTER TABLE registrationData
+            ADD COLUMN IF NOT EXISTS reference_code VARCHAR(4)
+        `;
+
         // ===================== REGISTRATION TABLE =====================
         if (table === "registration") {
 
@@ -49,6 +54,27 @@ export async function POST(request: Request) {
                 ORDER BY team_data.id DESC
             `;
 
+        } else if (table === "ambassadorStats") {
+            data = await sql`
+                WITH referred_people AS (
+                    SELECT master.reference_code, LOWER(single_data.email) AS participant
+                    FROM registrationData AS master
+                    JOIN singleRegistrationData AS single_data
+                      ON single_data.registration_id = master.id
+                    WHERE master.ispaid = TRUE AND master.reference_code IS NOT NULL
+                    UNION
+                    SELECT master.reference_code, LOWER(member->>'email') AS participant
+                    FROM registrationData AS master
+                    JOIN teamRegistrationData AS team_data
+                      ON team_data.registration_id = master.id
+                    CROSS JOIN LATERAL JSONB_ARRAY_ELEMENTS(team_data.members) AS member
+                    WHERE master.ispaid = TRUE AND master.reference_code IS NOT NULL
+                )
+                SELECT reference_code, COUNT(DISTINCT participant)::INTEGER AS participant_count
+                FROM referred_people
+                WHERE participant IS NOT NULL AND participant <> ''
+                GROUP BY reference_code
+            `;
         } else if (table === "uniqueParticipants") {
 
             data = await sql`

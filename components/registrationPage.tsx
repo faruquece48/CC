@@ -22,6 +22,7 @@ import {
 import { cookies } from "next/headers";
 import { ADMIN_SESSION_COOKIE, isValidAdminSession } from "@/lib/adminSession";
 import { findPriorParticipant } from "@/lib/priorRegistration";
+import { ambassadorCodes } from "@/lib/ambassadors";
 import { TRUSS_COURIER_FEE } from "@/config/registrationFee";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,12 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
         const teamRegistrations = Array.isArray(formData.teamRegistrations)
             ? formData.teamRegistrations
             : [];
+        const referenceCode = typeof formData.referenceCode === "string"
+            ? formData.referenceCode.trim().toUpperCase()
+            : "";
+        if (referenceCode && !ambassadorCodes.has(referenceCode)) {
+            return { status: 400, message: "Enter a valid ambassador reference code", url: "" };
+        }
         const validIndividualEvents = ["cad", "mechamind", "management"];
         const validTeamEvents = ["truss", "poster"];
         const isPersonComplete = (person: any) => person &&
@@ -197,6 +204,10 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
                 ALTER TABLE teamRegistrationData
                 ADD COLUMN IF NOT EXISTS delivery_address TEXT NOT NULL DEFAULT ''
             `;
+            await sql`
+                ALTER TABLE registrationData
+                ADD COLUMN IF NOT EXISTS reference_code VARCHAR(4)
+            `;
 
             // GENERATE TRANSACTION ID
             const _tran_id =
@@ -269,7 +280,8 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
 
                     ispaid,
 
-                    tran_id
+                    tran_id,
+                    reference_code
 
                 )
 
@@ -317,7 +329,8 @@ export default function RegistrationPage({ testMode = false }: { testMode?: bool
 
                     false,
 
-                    ${tran_id}
+                    ${tran_id},
+                    ${referenceCode || null}
 
                 )
 

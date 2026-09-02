@@ -60,6 +60,7 @@ export default function RegistrationFormV2({
     const [enabledTeamEvents, setEnabledTeamEvents] = useState<TeamEventKey[]>([]);
     const [teamNames, setTeamNames] = useState<Record<TeamEventKey, string>>({ truss: "", poster: "" });
     const [trussDeliveryAddress, setTrussDeliveryAddress] = useState("");
+    const [referenceCode, setReferenceCode] = useState("");
     const [teamMembers, setTeamMembers] = useState<Record<TeamEventKey, Person[]>>({
         truss: [emptyPerson(), emptyPerson()],
         poster: [emptyPerson(), emptyPerson()]
@@ -88,6 +89,7 @@ export default function RegistrationFormV2({
                 if (draft.teamNames) setTeamNames(draft.teamNames);
                 if (draft.teamMembers) setTeamMembers(draft.teamMembers);
                 if (typeof draft.trussDeliveryAddress === "string") setTrussDeliveryAddress(draft.trussDeliveryAddress);
+                if (typeof draft.referenceCode === "string") setReferenceCode(draft.referenceCode);
                 if (typeof draft.copyPreviousTeam === "boolean") setCopyPreviousTeam(draft.copyPreviousTeam);
             }
         } catch {
@@ -106,9 +108,10 @@ export default function RegistrationFormV2({
             teamNames,
             teamMembers,
             trussDeliveryAddress,
+            referenceCode,
             copyPreviousTeam
         }));
-    }, [draftLoaded, individual, individualEvents, enabledTeamEvents, teamNames, teamMembers, trussDeliveryAddress, copyPreviousTeam]);
+    }, [draftLoaded, individual, individualEvents, enabledTeamEvents, teamNames, teamMembers, trussDeliveryAddress, referenceCode, copyPreviousTeam]);
 
     const clearAllData = () => {
         setIndividual(emptyPerson());
@@ -116,6 +119,7 @@ export default function RegistrationFormV2({
         setEnabledTeamEvents([]);
         setTeamNames({ truss: "", poster: "" });
         setTrussDeliveryAddress("");
+        setReferenceCode("");
         setTeamMembers({
             truss: [emptyPerson(), emptyPerson()],
             poster: [emptyPerson(), emptyPerson()]
@@ -273,6 +277,7 @@ export default function RegistrationFormV2({
                     deliveryAddress: event === "truss" ? trussDeliveryAddress.trim() : "",
                     members: teamMembers[event]
                 })),
+            referenceCode: referenceCode.trim().toUpperCase(),
             fee: calculateFee()
         });
         if (response.status === 200 && response.url) {
@@ -286,6 +291,33 @@ export default function RegistrationFormV2({
 
     return (
         <form className={`registration-form mx-auto mt-5 flex w-full max-w-6xl flex-col gap-5 px-3 sm:px-5 ${advancedDesign ? "registration-form-advanced" : ""}`} onSubmit={(event) => { event.preventDefault(); submit(); }}>
+            <section className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-white via-emerald-50/80 to-teal-50 p-5 shadow-[0_12px_35px_rgba(5,150,105,0.10)] sm:p-6">
+                <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-emerald-200/30 blur-2xl" />
+                <div className="relative grid gap-5 md:grid-cols-[1fr_260px] md:items-center">
+                    <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-xl font-black text-white shadow-lg shadow-emerald-200">
+                            CC
+                        </div>
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-lg font-extrabold text-slate-800">Ambassador referral</h2>
+                                <span className="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Optional</span>
+                            </div>
+                        </div>
+                    </div>
+                    <Input
+                        label="Reference code"
+                        value={referenceCode}
+                        maxLength={4}
+                        onValueChange={(value) => setReferenceCode(value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                        classNames={{
+                            inputWrapper: "h-14 border-2 border-emerald-200 bg-white shadow-sm transition-colors data-[hover=true]:border-emerald-400 group-data-[focus=true]:border-emerald-600",
+                            input: "text-lg font-extrabold uppercase tracking-[0.18em] text-slate-800 placeholder:text-slate-300",
+                            label: "font-semibold text-slate-600"
+                        }}
+                    />
+                </div>
+            </section>
             {(
                 <ParticipantCard
                     title="Individual Participant"
