@@ -26,7 +26,7 @@ export default function SchedulePage() {
           <h1 className="text-5xl font-extrabold leading-none tracking-tight sm:text-6xl md:text-7xl">Event <span className="text-amber-300">Schedule</span></h1>
           <div className="mt-7 flex w-full max-w-xl items-center gap-4" aria-hidden="true"><span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-300/70" /><span className="h-2.5 w-2.5 rotate-45 border border-amber-200 bg-amber-300" /><span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-300/70" /></div>
           <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:gap-5">
-            <span className="text-xs font-extrabold uppercase tracking-[0.35em] text-teal-200">Official Event Day</span>
+            <span className="text-base font-extrabold uppercase tracking-[0.35em] text-teal-200 sm:text-lg">Official Event Day</span>
             <span className="hidden h-5 w-px bg-white/25 sm:block" />
             <div className="flex items-center gap-3"><CalendarDays className="text-amber-300" size={21} /><p className="text-base font-semibold uppercase tracking-[0.16em] text-white sm:text-lg"><span className="text-amber-300">Friday</span><span className="mx-2 text-white/35">·</span>02 October 2026</p></div>
           </div>
