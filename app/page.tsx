@@ -5,6 +5,7 @@ import Link from "next/link";
 import ImageSlideShow from "@/components/slideshow";
 import Timeline from "@/components/timeline";
 import WhyJoinSection from "@/components/WhyJoinSection";
+import PrizePoolPromo from "@/components/PrizePoolPromo";
 import {
   getRegistrationImpactMessage,
   getRegistrationPhase,
@@ -73,6 +74,7 @@ export default function Home() {
             </div>
           </div>
 
+          <PrizePoolPromo />
           {/* ================= MAIN CONTENT ================= */}
           <div
             className="

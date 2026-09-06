@@ -38,7 +38,7 @@ const features = [
     number: "04",
     title: "Certificates & Recognition",
     description:
-      "Earn certificates, win exciting prizes, and get recognized for your achievements.",
+      "Earn certificates, compete for a 100K+ BDT prize pool, and get recognized for your achievements.",
     icon: Award,
     theme: "plum",
   },
