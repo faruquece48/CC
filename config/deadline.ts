@@ -5,8 +5,8 @@ export const REGISTRATION_TEST_START_DATE = "2026-08-05T00:00:00+06:00";
 
 export const REGISTRATION_DEADLINES = [
   "2026-09-10T23:59:59+06:00",
-  "2026-09-15T23:59:59+06:00",
-  "2026-09-15T23:59:59+06:00",
+  "2026-09-20T23:59:59+06:00",
+  "2026-09-20T23:59:59+06:00",
 ] as const;
 
 export type RegistrationPhase = "not_started" | 1 | 2 | 3 | "closed";
