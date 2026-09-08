@@ -58,10 +58,11 @@ export default function EventRegistrationTables({ password }: { password: string
     const [ambassadorStats, setAmbassadorStats] = useState<any[]>([]);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const [singlePaymentFilter, setSinglePaymentFilter] = useState<PaymentFilter>("all");
-    const [teamPaymentFilter, setTeamPaymentFilter] = useState<PaymentFilter>("all");
-    const [uniquePaymentFilter, setUniquePaymentFilter] = useState<PaymentFilter>("all");
-    const [supportPaymentFilter, setSupportPaymentFilter] = useState<PaymentFilter>("all");
+    const [singlePaymentFilter, setSinglePaymentFilter] = useState<PaymentFilter>("paid");
+    const [teamPaymentFilter, setTeamPaymentFilter] = useState<PaymentFilter>("paid");
+    const [uniquePaymentFilter, setUniquePaymentFilter] = useState<PaymentFilter>("paid");
+    const [supportPaymentFilter, setSupportPaymentFilter] = useState<PaymentFilter>("paid");
+    const [ambassadorExpanded, setAmbassadorExpanded] = useState(false);
 
     useEffect(() => {
         Promise.all([
@@ -231,20 +232,42 @@ export default function EventRegistrationTables({ password }: { password: string
                 </table>
             </DataSection>
 
+            <section aria-label="Participants by segment" className="space-y-6">
+                <div>
+                    <h2 className="text-3xl font-bold text-[#083b66]">Segment Participants</h2>
+                    <p className="mt-1 text-sm text-gray-500">Paid participants are shown by default. Each segment has its own expandable table and download.</p>
+                </div>
+                {Object.entries(eventNames).map(([eventKey, eventName]) => (
+                    <SegmentParticipantSection key={eventKey} eventKey={eventKey} eventName={eventName} singleRows={singleRows} teamRows={teamRows} />
+                ))}
+            </section>
             <section className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-xl">
                 <div className="p-6">
                     <h2 className="text-2xl font-bold text-[#083b66]">Campus Ambassador Referrals</h2>
                     <p className="mt-1 text-sm text-gray-500">Unique students with completed paid registrations. Each distinct team member is counted once.</p>
+                    <button type="button" onClick={() => setAmbassadorExpanded((expanded) => !expanded)} className="mt-4 rounded-lg bg-[#083b66] px-4 py-2 text-sm font-bold text-white hover:bg-blue-900" aria-expanded={ambassadorExpanded}>{ambassadorExpanded ? "Minimize" : "Expand"}</button>
                 </div>
-                <div className="overflow-x-auto">
+                {ambassadorExpanded && <div className="overflow-x-auto">
                     <table className="min-w-full border-collapse text-sm">
                         <thead className="bg-emerald-700 text-white"><tr>
-                            {["Code", "Ambassador", "University", "Department", "Completed students"].map((heading) =>
+                            {["Rank", "Code", "Ambassador", "University", "Department", "Referral Number"].map((heading) =>
                                 <th key={heading} className="whitespace-nowrap border border-emerald-800 p-3 text-left">{heading}</th>)}
                         </tr></thead>
                         <tbody>{ambassadors.map((ambassador) => {
-                            const count = Number(ambassadorStats.find((row) => row.reference_code === ambassador.code)?.participant_count || 0);
+                            const stats = ambassadorStats.find((row) => row.reference_code === ambassador.code);
+                            return {
+                                ...ambassador,
+                                count: Number(stats?.participant_count || 0),
+                                reachedTotalAt: stats?.reached_total_at ? new Date(stats.reached_total_at).getTime() : Number.POSITIVE_INFINITY
+                            };
+                        }).sort((a, b) =>
+                            b.count - a.count ||
+                            a.reachedTotalAt - b.reachedTotalAt ||
+                            a.code.localeCompare(b.code)
+                        ).map((ambassador, index) => {
+                            const count = ambassador.count;
                             return <tr key={ambassador.code} className="even:bg-emerald-50/50">
+                                <Cell>{index + 1}</Cell>
                                 <Cell>{ambassador.code}</Cell>
                                 <Cell>{ambassador.name} <span className="ml-2 rounded-full bg-emerald-100 px-2 py-1 font-bold text-emerald-800">{count}</span></Cell>
                                 <Cell>{ambassador.university}</Cell>
@@ -253,7 +276,7 @@ export default function EventRegistrationTables({ password }: { password: string
                             </tr>;
                         })}</tbody>
                     </table>
-                </div>
+                </div>}
             </section>
 
             <DataSection
@@ -298,6 +321,55 @@ export default function EventRegistrationTables({ password }: { password: string
     );
 }
 
+function SegmentParticipantSection({ eventKey, eventName, singleRows, teamRows }: {
+    eventKey: string;
+    eventName: string;
+    singleRows: any[];
+    teamRows: any[];
+}) {
+    const [filter, setFilter] = useState<PaymentFilter>("paid");
+    const participantRows = [
+        ...singleRows.filter((row) => row.events?.includes(eventKey)).map((row) => ({
+            registration_id: row.registration_id, name: row.name, email: row.email,
+            phonenumber: row.phonenumber, department: row.department, university: row.university,
+            teamname: "", total_fee: row.total_fee, ispaid: row.ispaid
+        })),
+        ...teamRows.filter((row) => row.event === eventKey).flatMap((row) =>
+            (row.members || []).map((member: any) => ({
+                registration_id: row.registration_id, name: member.name, email: member.email,
+                phonenumber: member.phoneNumber, department: member.department, university: member.university,
+                teamname: row.teamname, total_fee: row.total_fee, ispaid: row.ispaid
+            }))
+        )
+    ];
+    const visibleRows = filter === "paid" ? participantRows.filter((row) => row.ispaid) : participantRows;
+
+    return <DataSection
+        title={eventName + " Participants"}
+        count={visibleRows.length}
+        filter={filter}
+        onFilterChange={setFilter}
+        onDownload={() => downloadExcel(visibleRows.map((row) => ({
+            "Registration ID": row.registration_id, Participant: row.name, Email: row.email,
+            Phone: row.phonenumber, Department: row.department, University: row.university,
+            "Team Name": row.teamname, "Paid Amount": row.ispaid ? row.total_fee : 0,
+            Payment: row.ispaid ? "Paid" : "Unpaid"
+        })), eventKey + "-participants")}
+    >
+        <table className="min-w-full border-collapse text-sm">
+            <thead className="bg-[#083b66] text-white"><tr>
+                {["Registration ID", "Participant", "Email", "Phone", "Department", "University", "Team Name", "Paid Amount", "Payment"].map((heading) =>
+                    <th key={heading} className="whitespace-nowrap border border-blue-900 p-3 text-left">{heading}</th>)}
+            </tr></thead>
+            <tbody>{visibleRows.map((row, index) => <tr key={row.registration_id + "-" + row.email + "-" + index} className="even:bg-blue-50/50">
+                <Cell>{row.registration_id}</Cell><Cell>{row.name}</Cell><Cell>{row.email}</Cell>
+                <Cell>{row.phonenumber}</Cell><Cell>{row.department}</Cell><Cell>{row.university}</Cell>
+                <Cell>{row.teamname}</Cell><Cell>{row.ispaid ? row.total_fee + " TK" : "0 TK"}</Cell>
+                <Cell><PaymentStatus paid={row.ispaid} /></Cell>
+            </tr>)}</tbody>
+        </table>
+    </DataSection>;
+}
 function SummaryCard({ label, amount, loading, color }: {
     label: string;
     amount: number;
@@ -328,6 +400,8 @@ function DataSection({ title, count, filter, onFilterChange, onDownload, childre
     onDownload: () => void;
     children: React.ReactNode;
 }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+
     return <section className="w-full min-w-0 max-w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl">
         <div className="flex flex-col justify-between gap-4 p-6 md:flex-row md:items-center">
             <div>
@@ -347,9 +421,17 @@ function DataSection({ title, count, filter, onFilterChange, onDownload, childre
                 >
                     Download Excel
                 </button>
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded((expanded) => !expanded)}
+                    className="rounded-lg bg-[#083b66] px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-900"
+                    aria-expanded={isExpanded}
+                >
+                    {isExpanded ? "Minimize" : "Expand"}
+                </button>
             </div>
         </div>
-        <div className="w-full min-w-0 max-w-full overflow-x-auto">{children}</div>
+        {isExpanded && <div className="w-full min-w-0 max-w-full overflow-x-auto">{children}</div>}
     </section>;
 }
 

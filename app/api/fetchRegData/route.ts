@@ -56,23 +56,32 @@ export async function POST(request: Request) {
 
         } else if (table === "ambassadorStats") {
             data = await sql`
-                WITH referred_people AS (
-                    SELECT master.reference_code, LOWER(single_data.email) AS participant
+                WITH raw_referred_people AS (
+                    SELECT master.reference_code, LOWER(single_data.email) AS participant,
+                           single_data.created_at AS referred_at
                     FROM registrationData AS master
                     JOIN singleRegistrationData AS single_data
                       ON single_data.registration_id = master.id
                     WHERE master.ispaid = TRUE AND master.reference_code IS NOT NULL
-                    UNION
-                    SELECT master.reference_code, LOWER(member->>'email') AS participant
+                    UNION ALL
+                    SELECT master.reference_code, LOWER(member->>'email') AS participant,
+                           team_data.created_at AS referred_at
                     FROM registrationData AS master
                     JOIN teamRegistrationData AS team_data
                       ON team_data.registration_id = master.id
                     CROSS JOIN LATERAL JSONB_ARRAY_ELEMENTS(team_data.members) AS member
                     WHERE master.ispaid = TRUE AND master.reference_code IS NOT NULL
+                ),
+                referred_people AS (
+                    SELECT reference_code, participant, MIN(referred_at) AS first_referred_at
+                    FROM raw_referred_people
+                    WHERE participant IS NOT NULL AND participant <> ''
+                    GROUP BY reference_code, participant
                 )
-                SELECT reference_code, COUNT(DISTINCT participant)::INTEGER AS participant_count
+                SELECT reference_code,
+                       COUNT(*)::INTEGER AS participant_count,
+                       MAX(first_referred_at) AS reached_total_at
                 FROM referred_people
-                WHERE participant IS NOT NULL AND participant <> ''
                 GROUP BY reference_code
             `;
         } else if (table === "uniqueParticipants") {

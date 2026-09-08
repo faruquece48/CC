@@ -41,6 +41,9 @@ const rows = [
  ['CC37','Abdullah Jubair','ajubair2530002@bseee.uiu.ac.bd','UIU','EEE'],
  ['CC38','Md Nafiur Rahman Nafi','Nafiurrahmannafi7@gmail.com','UU','Civil'],
  ['CC39','Md. Sakib','farhan200335@gmail.com','UU','Civil'],
+ ['CC40','MD Sabbir','sabbirgisa@gmail.com','ICE','Civil'],
+ ['CC41','Maruf Ahmed','marufahmed24@iut-dhaka.edu','IUT','CEE'],
+ ['CC42','Md. Sabbir Hossain','soyad2946@gmail.com','RUET','CE'],
 ] as const;
 
 export const ambassadors: Ambassador[] = rows.map(([code,name,email,university,department]) => ({code,name,email,university,department}));
