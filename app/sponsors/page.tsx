@@ -1,6 +1,7 @@
 "use client";
 
 import { Image, Link } from "@nextui-org/react";
+import NextImage from "next/image";
 
 import sponsorBg from "@/public/images/sponsor_background.png";
 
@@ -16,6 +17,8 @@ import brack from "@/public/sponsors/brack1.png";
 
 import somoy from "@/public/sponsors/somoy.png";
 import iqac from "@/public/sponsors/IQAC.png";
+import samakal from "@/public/logo/samakal.png";
+import akij from "@/public/logo/Akij.jpeg";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
 
@@ -100,52 +103,72 @@ export default function SponsorsPage() {
 
       {/* CURRENT SPONSOR */}
       <section className="max-w-4xl mx-auto px-4 md:px-8 py-10 md:py-12">
-        <SectionTitle text="CONFIRMED SPONSORS" />
+        <SectionTitle text="TITLE SPONSOR" />
 
-        <div className="relative mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:p-8">
-          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-emerald-100/60 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-blue-100/70 blur-3xl" />
+        <div className="relative mt-6 overflow-hidden rounded-2xl border border-amber-200 bg-white p-6 shadow-md md:p-8">
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-amber-100/70 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-orange-100/70 blur-3xl" />
 
-          <div className="relative grid items-center gap-6 md:grid-cols-2">
-            <Link
-              href="https://www.ruet.ac.bd/section/IQAC"
-              isExternal
-              className="flex min-h-[140px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
-            >
-              <Image
-                src={iqac.src}
-                alt="Institutional Quality Assurance Cell, RUET"
-                className="max-h-28 w-auto object-contain"
+          <div className="relative grid items-center gap-8 md:grid-cols-2">
+            <Link href="https://akijceramics.net/" isExternal className="flex min-h-[190px] w-full items-center justify-center border border-amber-100 bg-white p-4 shadow-sm transition hover:shadow-md">
+              <NextImage
+                src={akij}
+                alt="Akij Ceramics"
+                className="h-auto w-full max-w-[290px] object-contain"
+                sizes="(max-width: 768px) 75vw, 290px"
               />
             </Link>
 
             <div className="text-center md:text-left">
-              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#0b4d8a]">
+              <p className="text-sm font-semibold uppercase tracking-[4px] text-[#c4471b]">
                 Proudly Supporting Us
               </p>
               <h2 className="mt-2 text-2xl font-bold text-[#083b66] md:text-3xl">
-                IQAC, RUET
+                AKIJ CERAMICS
               </h2>
               <p className="mt-3 text-sm leading-6 text-gray-600">
-                We sincerely thank the Institutional Quality Assurance Cell of
-                RUET for sponsoring our upcoming program and supporting our
-                commitment to excellence.
+                We sincerely thank Akij Ceramics, our Title Sponsor, for
+                supporting Construct Carnival 2.0 and helping us create an
+                inspiring platform for future professionals.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-dashed border-[#6d87a8] bg-white/70 px-6 py-6 text-center">
-          <h3 className="text-xl font-semibold text-[#083b66]">
-            More sponsorship opportunities are available
-          </h3>
-          <p className="mx-auto mt-2 max-w-2xl leading-7 text-gray-600">
-            Additional sponsors and partners will be announced as they are
-            confirmed.
-          </p>
+        <div className="mt-12">
+          <SectionTitle text="ASSOCIATING SPONSOR" />
         </div>
+
+        <Link
+          href="https://www.ruet.ac.bd/section/IQAC"
+          isExternal
+          className="mx-auto mt-6 flex min-h-[170px] max-w-[360px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+        >
+          <Image
+            src={iqac.src}
+            alt="Institutional Quality Assurance Cell, RUET"
+            className="max-h-[130px] max-w-full object-contain"
+          />
+        </Link>
+
+
       </section>
 
+      <section className="mx-auto max-w-4xl px-4 pb-10 md:px-8 md:pb-12">
+        <SectionTitle text="MEDIA PARTNER" />
+
+        <Link
+          href="https://samakal.com/"
+          isExternal
+          className="mx-auto mt-6 flex h-[170px] max-w-[360px] items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+        >
+          <Image
+            src={samakal.src}
+            alt="Samakal"
+            className="max-h-[110px] max-w-full scale-[2.25] object-contain"
+          />
+        </Link>
+      </section>
       {/* PREVIOUS SPONSOR LIST — preserved for future use */}
       <section
         className={`${showPreviousSponsors ? "block" : "hidden"} max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-10`}

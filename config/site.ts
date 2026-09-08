@@ -48,6 +48,10 @@ export const siteConfig: SiteConfig = {
       href: "/sponsors",
     },
     {
+      label: "Media",
+      href: "/media",
+    },
+    {
       label: "Archive",
       href: "/archive",
     },
@@ -85,6 +89,10 @@ export const siteConfig: SiteConfig = {
     {
       label: "Sponsors",
       href: "/sponsors",
+    },
+    {
+      label: "Media",
+      href: "/media",
     },
     {
       label: "Archive",
