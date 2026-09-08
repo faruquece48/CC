@@ -16,7 +16,7 @@ const faqs = [
   ["How many members are required for a team event?", "Each team event requires two or three members. All members must provide complete participant information."],
   ["Can the same team participate in multiple team events?", "Yes. The same members may participate in multiple eligible team events. Use the same email address for each member so the system calculates the fee correctly."],
   ["Why is Member 1 the same across team events?", "Member 1 is the primary participant entered at the top of the registration form. Their information is shared across all selected team events."],
-  ["Can a previously registered member join my team?", "Yes. For Member 2 or Member 3, select Registered earlier and complete OTP verification. The system loads their information and calculates the applicable additional fee."],
+  ["Can a previously registered participant join an individual or team event?", "Yes. For an individual event, select Registered earlier and complete OTP verification using the previously registered email. For a team event, Member 2 or Member 3 can do the same. The system loads the participant's information, shows the remaining eligible events, and calculates the applicable additional fee."],
   ["Can a participant join the same team event again?", "No. If a participant has already registered for that event, the system blocks OTP verification and prevents duplicate participation."],
   ["How do I know whether my registration was successful?", "After successful payment, you will receive a confirmation email containing your registration and payment information."],
   ["What happens if payment fails?", "The registration is not confirmed until payment succeeds. Return to the Registration page and submit the registration again."],
