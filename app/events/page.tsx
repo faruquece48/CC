@@ -63,35 +63,35 @@ export default function App() {
 		{
 			title: "CAD Expert",
 			img: "/images/cad.png",
-			ruleBook: rulebookAsset("CAD_Expert.pdf"),
+			ruleBook: rulebookAsset("rulebook_CAD_Expert.pdf"),
 			value: "cad",
 		},
 
 		{
 			title: "Mechamind",
 			img: "/images/mechamind.png",
-			ruleBook: rulebookAsset("Mechamind.pdf"),
+			ruleBook: rulebookAsset("rulebook_Mechamind.pdf"),
 			value: "mechamind",
 		},
 
 		{
 			title: "Truss Combat",
 			img: "/images/truss.png",
-			ruleBook: rulebookAsset("Truss_Combat.pdf"),
+			ruleBook: rulebookAsset("rulebook_Truss_Combat.pdf"),
 			value: "truss",
 		},
 
 		{
 			title: "Management Maestro",
 			img: "/images/management.png",
-			ruleBook: rulebookAsset("Management_Maestro.pdf"),
+			ruleBook: rulebookAsset("rulebook_Management_Maestro.pdf"),
 			value: "management",
 		},
 
 		{
 			title: "Poster Presentation",
 			img: "/images/poster.png",
-			ruleBook: rulebookAsset("Poster_Presentation.pdf"),
+			ruleBook: rulebookAsset("rulebook_Poster_Presentation.pdf"),
 			value: "poster",
 		}
 

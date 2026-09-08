@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import FacebookFeaturedVideo from "@/components/facebookFeaturedVideo";
+import { mediaAsset } from "@/config/assets";
+import FeaturedVideo from "@/components/featuredVideo";
 import {
   ArrowUpRight,
   Megaphone,
@@ -8,7 +9,7 @@ import {
 } from "lucide-react";
 
 const facebookUrl = "https://www.facebook.com/profile.php?id=61567513587222";
-const featuredReelUrl = "https://www.facebook.com/reel/2418414685354036";
+const featuredVideoUrl = mediaAsset("CC.mp4");
 const samakalArticleUrl =
   "https://samakal.com/rajshahi/article/371302/%E0%A6%B0%E0%A7%81%E0%A7%9F%E0%A7%87%E0%A6%9F%E0%A7%87-%E0%A6%B6%E0%A7%81%E0%A6%B0%E0%A7%81-%E0%A6%B9%E0%A6%9A%E0%A7%8D%E0%A6%9B%E0%A7%87-%E2%80%98%E0%A6%95%E0%A6%A8%E0%A6%B8%E0%A7%8D%E0%A6%9F%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%95%E0%A7%8D%E0%A6%9F-%E0%A6%95%E0%A6%BE%E0%A6%B0%E0%A7%8D%E0%A6%A8%E0%A6%BF%E0%A6%AD%E0%A6%BE%E0%A6%B2-%E0%A7%A8-%E0%A7%A6%E2%80%99";
 
@@ -45,10 +46,7 @@ export default function MediaPage() {
       </section>
       <section id="featured-video" className="relative mx-auto mt-10 max-w-6xl scroll-mt-24 px-4 md:mt-14">
         <div className="overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-35px_rgba(8,59,102,0.65)]">
-          <FacebookFeaturedVideo
-            reelUrl={featuredReelUrl}
-            title="Construct Carnival 2.0 featured Facebook Reel"
-          />
+          <FeaturedVideo src={featuredVideoUrl} />
 
           <div className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center md:px-8 md:py-6">
             <div>
@@ -58,12 +56,12 @@ export default function MediaPage() {
               <p className="mt-1 text-sm text-slate-600">Watch the official program highlight.</p>
             </div>
             <Link
-              href={featuredReelUrl}
+              href={featuredVideoUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#1877f2] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
             >
-              Watch on Facebook <ArrowUpRight size={17} />
+              Open video <ArrowUpRight size={17} />
             </Link>
           </div>
         </div>
