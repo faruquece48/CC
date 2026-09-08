@@ -92,7 +92,7 @@ export default function MediaPage() {
       </section>
 
       <section id="facebook" className="scroll-mt-24 border-y border-slate-200 bg-white/70 px-4 pt-8 pb-20 md:pt-10 md:pb-28">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <h2 className="text-3xl font-black tracking-tight text-[#083b66] md:text-5xl">
