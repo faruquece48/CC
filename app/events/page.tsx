@@ -65,6 +65,7 @@ export default function App() {
 			img: "/images/cad.png",
 			ruleBook: rulebookAsset("rulebook_CAD_Expert.pdf"),
 			value: "cad",
+			prizes: ["8K", "6K", "4K"],
 		},
 
 		{
@@ -72,6 +73,7 @@ export default function App() {
 			img: "/images/mechamind.png",
 			ruleBook: rulebookAsset("rulebook_Mechamind.pdf"),
 			value: "mechamind",
+			prizes: ["8K", "6K", "4K"],
 		},
 
 		{
@@ -79,6 +81,7 @@ export default function App() {
 			img: "/images/truss.png",
 			ruleBook: rulebookAsset("rulebook_Truss_Combat.pdf"),
 			value: "truss",
+			prizes: ["12K", "8K", "5K"],
 		},
 
 		{
@@ -86,6 +89,7 @@ export default function App() {
 			img: "/images/management.png",
 			ruleBook: rulebookAsset("rulebook_Management_Maestro.pdf"),
 			value: "management",
+			prizes: ["8K", "6K", "4K"],
 		},
 
 		{
@@ -93,6 +97,7 @@ export default function App() {
 			img: "/images/poster.png",
 			ruleBook: rulebookAsset("rulebook_Poster_Presentation.pdf"),
 			value: "poster",
+			prizes: ["8K", "6K", "4K"],
 		}
 
 	];
@@ -135,100 +140,31 @@ export default function App() {
 
 			{/* HERO TITLE SECTION */}
 
-<section
-	className="
-		relative
-		w-full
-		py-8
-		md:py-20
-		mb-10
-		bg-gradient-to-br
-		from-[#002d62]
-		via-[#0b4d8a]
-		to-[#001B24]
-		overflow-hidden
-	"
->
+<section className="relative mx-4 mb-10 mt-5 overflow-hidden rounded-[2rem] border border-white/20 bg-gradient-to-br from-[#002d62] via-[#075a72] to-[#003b32] px-5 py-8 shadow-[0_24px_65px_rgba(0,45,66,0.28)] ring-1 ring-[#0b4d8a]/10 md:mx-8 md:rounded-[2.75rem] md:px-8 md:py-11 lg:mx-auto lg:max-w-7xl">
+	<div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(255,255,255,0.17),transparent_27%),radial-gradient(circle_at_86%_82%,rgba(52,211,153,0.18),transparent_30%)]" />
+	<div className="absolute -left-16 -top-20 h-56 w-56 rounded-full border border-white/10" />
+	<div className="absolute -bottom-24 -right-16 h-64 w-64 rounded-full border border-amber-300/15" />
 
-	{/* Overlay */}
-
-	<div className="absolute inset-0 bg-black/15" />
-
-	<div className="relative z-10 max-w-7xl mx-auto px-6 text-center text-white">
-
-		{/* TITLE */}
-
-		<h1 className="text-3xl md:text-5xl font-extrabold tracking-wide">
-
+	<div className="relative z-10 mx-auto max-w-4xl text-center text-white">
+		<h1 className="text-3xl font-extrabold tracking-wide md:text-5xl">
 			OUR EVENTS
-
 		</h1>
 
-		{/* DIVIDER */}
-
-		<div className="flex items-center justify-center mt-3 gap-5">
-
-			{/* LEFT */}
-
-			<div
-				className="
-					w-24 md:w-44
-					h-[2px]
-					bg-gradient-to-r
-					from-transparent
-					via-[#dbe4ea]
-					to-[#ffffff]
-					rounded-full
-				"
-			/>
-
-			{/* CENTER */}
-
+		<div className="mt-3 flex items-center justify-center gap-5">
+			<div className="h-[2px] w-24 rounded-full bg-gradient-to-r from-transparent via-[#dbe4ea] to-white md:w-44" />
 			<div className="relative flex items-center justify-center">
-
-				<div className="absolute w-8 h-8 rounded-full bg-white/20 blur-lg" />
-
-				<div
-					className="
-						w-4 h-4
-						rotate-45
-						bg-gradient-to-br
-						from-white
-						to-[#cbd5e1]
-						border border-white/70
-					"
-				/>
-
+				<div className="absolute h-8 w-8 rounded-full bg-white/20 blur-lg" />
+				<div className="h-4 w-4 rotate-45 border border-white/70 bg-gradient-to-br from-white to-[#cbd5e1]" />
 			</div>
-
-			{/* RIGHT */}
-
-			<div
-				className="
-					w-24 md:w-44
-					h-[2px]
-					bg-gradient-to-l
-					from-transparent
-					via-[#dbe4ea]
-					to-[#ffffff]
-					rounded-full
-				"
-			/>
-
+			<div className="h-[2px] w-24 rounded-full bg-gradient-to-l from-transparent via-[#dbe4ea] to-white md:w-44" />
 		</div>
 
-		{/* TEXT */}
-
-		<p className="mt-2 text-xs md:text-base text-gray-200 leading-relaxed">
-
-			Showcasing creativity, engineering skills,
-			innovation, and competitive excellence.
-
+		<p className="mt-2 text-xs leading-relaxed text-gray-200 md:text-base">
+			Showcasing creativity, engineering skills, innovation, and competitive excellence.
 		</p>
-
 	</div>
-
 </section>
+
 
 			{/* Events Grid */}
 
@@ -277,6 +213,24 @@ export default function App() {
 									{item.title}
 
 								</b>
+
+								<div className="w-full rounded-2xl border border-amber-200/70 bg-gradient-to-r from-amber-50 via-white to-amber-50 p-3 shadow-inner">
+									<p className="mb-2 text-center text-[10px] font-black uppercase tracking-[0.2em] text-[#075346]">Prize Pool</p>
+									<div className="grid grid-cols-3 gap-2">
+										{item.prizes.map((prize, prizeIndex) => (
+											<div key={prize} className="flex flex-col items-center rounded-xl bg-white px-1 py-2 shadow-sm ring-1 ring-black/5">
+												<span
+													className="mb-1 block h-[46px] w-[44px] bg-[url('/images/prize-medals.png')] bg-[length:300%_100%] bg-no-repeat drop-shadow-[0_5px_5px_rgba(0,0,0,0.24)] transition-transform duration-300 hover:-translate-y-1 hover:scale-105"
+													style={{ backgroundPosition: `${prizeIndex * 50}% center` }}
+													aria-label={`${prizeIndex + 1}${prizeIndex === 0 ? "st" : prizeIndex === 1 ? "nd" : "rd"} position`}
+													role="img"
+												/>
+												<span className="text-lg font-black leading-tight text-slate-800">{prize}</span>
+												<span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">BDT</span>
+											</div>
+										))}
+									</div>
+								</div>
 
 								<div className="flex flex-row w-full mt-4 gap-3">
 
