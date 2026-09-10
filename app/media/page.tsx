@@ -14,6 +14,7 @@ const samakalArticleUrl =
   "https://samakal.com/rajshahi/article/371302/%E0%A6%B0%E0%A7%81%E0%A7%9F%E0%A7%87%E0%A6%9F%E0%A7%87-%E0%A6%B6%E0%A7%81%E0%A6%B0%E0%A7%81-%E0%A6%B9%E0%A6%9A%E0%A7%8D%E0%A6%9B%E0%A7%87-%E2%80%98%E0%A6%95%E0%A6%A8%E0%A6%B8%E0%A7%8D%E0%A6%9F%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%95%E0%A7%8D%E0%A6%9F-%E0%A6%95%E0%A6%BE%E0%A6%B0%E0%A7%8D%E0%A6%A8%E0%A6%BF%E0%A6%AD%E0%A6%BE%E0%A6%B2-%E0%A7%A8-%E0%A7%A6%E2%80%99";
 
 const promotionPosts = [
+  { title: "Construct Carnival 2.0 featured on Facebook", date: "September 2026", publisher: "Facebook", href: "https://www.facebook.com/share/p/1CWrSjzkf3/" },
   { title: "Akij Ceramics joins as Title Sponsor of Construct Carnival 2.0", date: "September 2026", image: "/media/facebook-post-8.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0PkDdYMT1NbtquGhuG89kVejQBuPKryKbGaAMncUqcNMTwkbQdcS2uTWraNNNT1Vul" },
   { title: "Campus Ambassador recruitment across Bangladesh", date: "September 2026", image: "/media/facebook-post-1.jpg", publisher: "Construct Carnival", href: "https://www.facebook.com/permalink.php?story_fbid=pfbid0F921sVGz7k1GZYD8t8rywerqFseoGa6KkmvabGrUoejrNvpJgmm6BSDVA6jSLxNXl&id=61567513587222" },
   { title: "Celebrating the Best Campus Ambassador", date: "September 2026", image: "/media/facebook-post-2.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0BZxQ5EJHvkFZMY3Lvg77mbQ8oEdduVov6LRidXVTFUYC34ySoK7xhKCGpsv7Tpz7l" },
@@ -113,7 +114,13 @@ export default function MediaPage() {
                 className="group grid gap-4 border-b border-slate-200 bg-white p-3 transition hover:bg-blue-50/50 sm:grid-cols-[170px_1fr] sm:items-center sm:p-4"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                  <Image src={post.image} alt="" fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, 170px" />
+                  {"image" in post && post.image ? (
+                    <Image src={post.image} alt="" fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, 170px" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-[#1877f2] px-5 text-center text-lg font-black text-white">
+                      Facebook Post
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 py-1 sm:pr-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1877f2]">{post.publisher}</p>
