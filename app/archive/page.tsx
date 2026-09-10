@@ -43,18 +43,22 @@ const archiveEvents = [
 export default function ArchivePage() {
   const [selectedEventIndex, setSelectedEventIndex] = useState(0);
   const [activePhoto, setActivePhoto] = useState<number | null>(null);
+  const [isMagazineOpen, setIsMagazineOpen] = useState(false);
   const selectedEvent = archiveEvents[selectedEventIndex];
 
   useEffect(() => {
-    if (activePhoto === null) return;
+    if (activePhoto === null && !isMagazineOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setActivePhoto(null);
-      if (event.key === "ArrowRight") {
+      if (event.key === "Escape") {
+        setActivePhoto(null);
+        setIsMagazineOpen(false);
+      }
+      if (activePhoto !== null && event.key === "ArrowRight") {
         setActivePhoto((current) =>
           current === null ? null : (current + 1) % selectedEvent.photos.length
         );
       }
-      if (event.key === "ArrowLeft") {
+      if (activePhoto !== null && event.key === "ArrowLeft") {
         setActivePhoto((current) =>
           current === null
             ? null
@@ -68,7 +72,7 @@ export default function ArchivePage() {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activePhoto, selectedEvent.photos.length]);
+  }, [activePhoto, isMagazineOpen, selectedEvent.photos.length]);
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f7f2] text-[#082c27]">
@@ -166,13 +170,19 @@ export default function ArchivePage() {
               })}
             </div>
 
-            <a href={galleryAsset("magazine.pdf")} target="_blank" rel="noopener noreferrer" className="mt-10 flex flex-col justify-between gap-5 rounded-3xl bg-orange-400 p-7 text-[#173d36] shadow-lg transition hover:-translate-y-1 hover:shadow-xl sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => setIsMagazineOpen(true)}
+              className="mt-10 flex w-full flex-col justify-between gap-5 rounded-3xl bg-orange-400 p-7 text-left text-[#173d36] shadow-lg transition hover:-translate-y-1 hover:shadow-xl sm:flex-row sm:items-center"
+              aria-haspopup="dialog"
+            >
               <div>
                 <p className="text-sm font-bold uppercase tracking-[3px]">Official Publication</p>
-                <h3 className="mt-1 text-2xl font-black">Read the Carnival Magazine</h3>
+                <h3 className="mt-1 text-2xl font-black">Carnival Magazine</h3>
+                <p className="mt-2 text-sm font-semibold text-[#173d36]/75">Click to read in A4 page view.</p>
               </div>
-              <span className="flex items-center gap-2 font-bold">Open PDF <ArrowUpRight size={20} /></span>
-            </a>
+              <span className="flex items-center gap-2 font-bold">Read Magazine <ArrowUpRight size={20} /></span>
+            </button>
           </>
         ) : (
           <div className="relative mt-10 overflow-hidden rounded-[36px] bg-[#06483d] px-6 py-20 text-center text-white shadow-xl md:px-12">
@@ -183,6 +193,19 @@ export default function ArchivePage() {
           </div>
         )}
       </section>
+
+      {isMagazineOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#021b17]/95 p-3" role="dialog" aria-modal="true" aria-label="Carnival magazine reader" onClick={() => setIsMagazineOpen(false)}>
+          <button type="button" onClick={() => setIsMagazineOpen(false)} className="absolute right-3 top-3 z-10 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20 md:right-5 md:top-5" aria-label="Close magazine"><X /></button>
+          <div className="aspect-[210/297] h-[90vh] max-h-[90vh] max-w-[88vw] overflow-hidden bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <iframe
+              src={`${galleryAsset("magazine.pdf")}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&page=1`}
+              title="Construct Carnival magazine in A4 view"
+              className="h-full w-full"
+            />
+          </div>
+        </div>
+      )}
 
       {activePhoto !== null && selectedEvent.photos[activePhoto] && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#021b17]/95 p-4" role="dialog" aria-modal="true" aria-label="Archive image viewer" onClick={() => setActivePhoto(null)}>
