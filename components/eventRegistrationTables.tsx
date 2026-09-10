@@ -16,21 +16,40 @@ const eventNames: Record<string, string> = {
 
 type PaymentFilter = "paid" | "all";
 
-function getPaidSegmentAmount(rows: any[]) {
-    const registrations = new Map<string, number>();
+function getPaidRegistrationSummary(singleRows: any[], teamRows: any[]) {
+    const registrations = new Map<string, { fee: number; hasTeamEvent: boolean }>();
 
-    rows.forEach((row) => {
+    const addRegistration = (row: any, hasTeamEvent: boolean) => {
         if (!row.ispaid) return;
 
         const registrationId = String(row.registration_id);
         const fee = Number(row.total_fee);
+        if (!Number.isFinite(fee)) return;
 
-        if (!registrations.has(registrationId) && Number.isFinite(fee)) {
-            registrations.set(registrationId, fee);
-        }
+        const existing = registrations.get(registrationId);
+        registrations.set(registrationId, {
+            fee,
+            hasTeamEvent: hasTeamEvent || existing?.hasTeamEvent || false
+        });
+    };
+
+    singleRows.forEach((row) => addRegistration(row, false));
+    teamRows.forEach((row) => addRegistration(row, true));
+
+    let individualAmount = 0;
+    let teamAmount = 0;
+    registrations.forEach(({ fee, hasTeamEvent }) => {
+        // A mixed registration is placed in the team bucket so its full order fee
+        // is represented once, rather than once in each segment.
+        if (hasTeamEvent) teamAmount += fee;
+        else individualAmount += fee;
     });
 
-    return Array.from(registrations.values()).reduce((total, fee) => total + fee, 0);
+    return {
+        individualAmount,
+        teamAmount,
+        totalAmount: individualAmount + teamAmount
+    };
 }
 
 function formatAmount(amount: number) {
@@ -84,9 +103,7 @@ export default function EventRegistrationTables({ password }: { password: string
         });
     }, [password]);
 
-    const individualAmount = getPaidSegmentAmount(singleRows);
-    const teamAmount = getPaidSegmentAmount(teamRows);
-    const totalAmount = individualAmount + teamAmount;
+    const { individualAmount, teamAmount, totalAmount } = getPaidRegistrationSummary(singleRows, teamRows);
 
     const filteredSingleRows = singlePaymentFilter === "paid"
         ? singleRows.filter((row) => row.ispaid)
@@ -111,8 +128,8 @@ export default function EventRegistrationTables({ password }: { password: string
                     <p className="mt-1 text-sm text-gray-500">Paid registration amounts by segment</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <SummaryCard label="Individual Segment Amount" amount={individualAmount} loading={isLoading} color="blue" />
-                    <SummaryCard label="Team Segment Amount" amount={teamAmount} loading={isLoading} color="orange" />
+                    <SummaryCard label="Individual-only Amount" amount={individualAmount} loading={isLoading} color="blue" />
+                    <SummaryCard label="Team-including Amount" amount={teamAmount} loading={isLoading} color="orange" />
                     <SummaryCard label="Total Amount" amount={totalAmount} loading={isLoading} color="emerald" />
                 </div>
             </section>
