@@ -14,7 +14,7 @@ const samakalArticleUrl =
   "https://samakal.com/rajshahi/article/371302/%E0%A6%B0%E0%A7%81%E0%A7%9F%E0%A7%87%E0%A6%9F%E0%A7%87-%E0%A6%B6%E0%A7%81%E0%A6%B0%E0%A7%81-%E0%A6%B9%E0%A6%9A%E0%A7%8D%E0%A6%9B%E0%A7%87-%E2%80%98%E0%A6%95%E0%A6%A8%E0%A6%B8%E0%A7%8D%E0%A6%9F%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%95%E0%A7%8D%E0%A6%9F-%E0%A6%95%E0%A6%BE%E0%A6%B0%E0%A7%8D%E0%A6%A8%E0%A6%BF%E0%A6%AD%E0%A6%BE%E0%A6%B2-%E0%A7%A8-%E0%A7%A6%E2%80%99";
 
 const promotionPosts = [
-  { title: "Construct Carnival 2.0 featured on Facebook", date: "September 2026", publisher: "Facebook", href: "https://www.facebook.com/share/p/1CWrSjzkf3/" },
+  { title: "Berger Fosroc joins as Silver Sponsor of Construct Carnival 2.0", date: "September 2026", image: "/media/facebook-post-9.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/share/p/1CWrSjzkf3/" },
   { title: "Akij Ceramics joins as Title Sponsor of Construct Carnival 2.0", date: "September 2026", image: "/media/facebook-post-8.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0PkDdYMT1NbtquGhuG89kVejQBuPKryKbGaAMncUqcNMTwkbQdcS2uTWraNNNT1Vul" },
   { title: "Campus Ambassador recruitment across Bangladesh", date: "September 2026", image: "/media/facebook-post-1.jpg", publisher: "Construct Carnival", href: "https://www.facebook.com/permalink.php?story_fbid=pfbid0F921sVGz7k1GZYD8t8rywerqFseoGa6KkmvabGrUoejrNvpJgmm6BSDVA6jSLxNXl&id=61567513587222" },
   { title: "Celebrating the Best Campus Ambassador", date: "September 2026", image: "/media/facebook-post-2.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0BZxQ5EJHvkFZMY3Lvg77mbQ8oEdduVov6LRidXVTFUYC34ySoK7xhKCGpsv7Tpz7l" },
