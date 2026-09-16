@@ -59,10 +59,10 @@ export default function CertificatePage() {
   );
 
   useEffect(() => {
-    const previewParticipants = selectedEmails
-      .map((email) => participants.find((participant) => participant.normalized_email === email))
-      .filter((participant): participant is DatabaseParticipant => Boolean(participant));
-    if (previewParticipants.length === 0 || !adminPassword) {
+    const previewParticipant = participants.find(
+      (participant) => participant.normalized_email === selectedEmail,
+    );
+    if (!previewParticipant || !adminPassword) {
       setPdfPreviewUrl("");
       return;
     }
@@ -77,11 +77,11 @@ export default function CertificatePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         password: adminPassword,
-        participants: previewParticipants.map((participant) => ({
-          name: participant.name,
-          email: participant.email,
-          events: participant.events,
-        })),
+        participants: [{
+          name: previewParticipant.name,
+          email: previewParticipant.email,
+          events: previewParticipant.events,
+        }],
       }),
     })
       .then(async (response) => {
@@ -107,7 +107,7 @@ export default function CertificatePage() {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [adminPassword, participants, pdfPreviewRevision, selectedEmails]);
+  }, [adminPassword, participants, pdfPreviewRevision, selectedEmail]);
 
   const loadParticipants = async () => {
     setLoadingParticipants(true);
@@ -471,18 +471,14 @@ export default function CertificatePage() {
         <div>
           <h2 className="text-lg font-extrabold text-[#102b25]">Email PDF preview</h2>
           <p className="text-sm text-slate-600">
-            {selectedEmails.length > 1
-              ? `${selectedEmails.length}-page PDF with one certificate per selected participant.`
-              : "Exact A4 PDF attached to the selected participant's email."}
+            Exact A4 PDF for the participant currently selected in the preview list.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {pdfPreviewUrl && (
             <a
               href={pdfPreviewUrl}
-              download={selectedEmails.length > 1
-                ? `Construct-Carnival-Certificates-${selectedEmails.length}-participants.pdf`
-                : `Construct-Carnival-Certificate-${certificateId}.pdf`}
+              download={`Construct-Carnival-Certificate-${certificateId}.pdf`}
               className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700"
             >
               <Download size={16} /> Download PDF

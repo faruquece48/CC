@@ -29,8 +29,11 @@ export async function POST(request: Request) {
       typeof participant?.name === "string"
       && typeof participant?.email === "string"
       && Array.isArray(participant?.events));
-    if (validParticipants.length === 0 || validParticipants.length !== requestedParticipants.length) {
-      return NextResponse.json({ success: false, message: "Invalid participant data." }, { status: 400 });
+    if (validParticipants.length !== 1 || validParticipants.length !== requestedParticipants.length) {
+      return NextResponse.json(
+        { success: false, message: "PDF preview requires exactly one participant." },
+        { status: 400 },
+      );
     }
 
     const certificatePdfs = await Promise.all(validParticipants.map((participant) =>

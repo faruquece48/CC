@@ -26,7 +26,9 @@ export async function POST(request: Request) {
         LOWER(REGEXP_REPLACE(TRIM(single_data.email), '\s+', '', 'g')) AS normalized_email, single_data.email,
         LOWER(TRIM(individual_event.event)) AS event, single_data.created_at
       FROM singleRegistrationData AS single_data
+      JOIN registrationData AS master ON master.id = single_data.registration_id
       CROSS JOIN LATERAL UNNEST(single_data.events) AS individual_event(event)
+      WHERE master.ispaid = TRUE
 
       UNION ALL
 
@@ -34,7 +36,9 @@ export async function POST(request: Request) {
         LOWER(REGEXP_REPLACE(TRIM(member->>'email'), '\s+', '', 'g')) AS normalized_email, member->>'email' AS email,
         LOWER(TRIM(team_data.event)), team_data.created_at
       FROM teamRegistrationData AS team_data
+      JOIN registrationData AS master ON master.id = team_data.registration_id
       CROSS JOIN LATERAL JSONB_ARRAY_ELEMENTS(team_data.members) AS member
+      WHERE master.ispaid = TRUE
     ), unique_people AS (
       SELECT normalized_email,
         (ARRAY_AGG(registration_id ORDER BY created_at DESC, registration_id DESC))[1] AS registration_id,
@@ -59,13 +63,17 @@ export async function POST(request: Request) {
           LOWER(REGEXP_REPLACE(TRIM(single_data.email), '\s+', '', 'g')) AS normalized_email, single_data.email,
           LOWER(TRIM(individual_event.event)) AS event, single_data.created_at
         FROM singleRegistrationData AS single_data
+        JOIN registrationData AS master ON master.id = single_data.registration_id
         CROSS JOIN LATERAL UNNEST(single_data.events) AS individual_event(event)
+        WHERE master.ispaid = TRUE
         UNION ALL
         SELECT team_data.registration_id, member->>'name',
           LOWER(REGEXP_REPLACE(TRIM(member->>'email'), '\s+', '', 'g')), member->>'email',
           LOWER(TRIM(team_data.event)), team_data.created_at
         FROM teamRegistrationData AS team_data
+        JOIN registrationData AS master ON master.id = team_data.registration_id
         CROSS JOIN LATERAL JSONB_ARRAY_ELEMENTS(team_data.members) AS member
+        WHERE master.ispaid = TRUE
       )
       SELECT
         (ARRAY_AGG(registration_id ORDER BY created_at DESC, registration_id DESC))[1] AS registration_id,

@@ -84,12 +84,16 @@ export default function EventRegistrationTables({ password }: { password: string
     const [ambassadorExpanded, setAmbassadorExpanded] = useState(false);
 
     useEffect(() => {
+        const requestConfig = {
+            headers: { "Cache-Control": "no-cache", Pragma: "no-cache" }
+        };
+
         Promise.all([
-            axios.post("/api/fetchRegData", { password, table: "singleRegistration" }),
-            axios.post("/api/fetchRegData", { password, table: "teamRegistration" }),
-            axios.post("/api/fetchRegData", { password, table: "uniqueParticipants" }),
-            axios.post("/api/fetchRegData", { password, table: "support" }),
-            axios.post("/api/fetchRegData", { password, table: "ambassadorStats" })
+            axios.post("/api/fetchRegData", { password, table: "singleRegistration" }, requestConfig),
+            axios.post("/api/fetchRegData", { password, table: "teamRegistration" }, requestConfig),
+            axios.post("/api/fetchRegData", { password, table: "uniqueParticipants" }, requestConfig),
+            axios.post("/api/fetchRegData", { password, table: "support" }, requestConfig),
+            axios.post("/api/fetchRegData", { password, table: "ambassadorStats" }, requestConfig)
         ]).then(([single, team, uniqueParticipants, support, stats]) => {
             setSingleRows(single.data.data);
             setTeamRows(team.data.data);
@@ -359,11 +363,19 @@ function SegmentParticipantSection({ eventKey, eventName, singleRows, teamRows }
             }))
         )
     ];
+    const eventTeamRows = teamRows.filter((row) => row.event === eventKey);
+    const visibleTeamRows = filter === "paid"
+        ? eventTeamRows.filter((row) => row.ispaid)
+        : eventTeamRows;
+    const teamCount = eventTeamRows.length > 0 ? visibleTeamRows.length : undefined;
     const visibleRows = filter === "paid" ? participantRows.filter((row) => row.ispaid) : participantRows;
 
     return <DataSection
         title={eventName + " Participants"}
         count={visibleRows.length}
+        countLabel="participants"
+        secondaryCount={teamCount}
+        secondaryCountLabel="teams"
         filter={filter}
         onFilterChange={setFilter}
         onDownload={() => downloadExcel(visibleRows.map((row) => ({
@@ -409,9 +421,22 @@ function SummaryCard({ label, amount, loading, color }: {
     );
 }
 
-function DataSection({ title, count, filter, onFilterChange, onDownload, children }: {
+function DataSection({
+    title,
+    count,
+    countLabel = "records",
+    secondaryCount,
+    secondaryCountLabel,
+    filter,
+    onFilterChange,
+    onDownload,
+    children
+}: {
     title: string;
     count: number;
+    countLabel?: string;
+    secondaryCount?: number;
+    secondaryCountLabel?: string;
     filter: PaymentFilter;
     onFilterChange: (filter: PaymentFilter) => void;
     onDownload: () => void;
@@ -429,7 +454,14 @@ function DataSection({ title, count, filter, onFilterChange, onDownload, childre
                 </div>
             </div>
             <div className="flex items-center gap-3">
-                <span className="rounded-full bg-blue-50 px-4 py-2 font-semibold text-[#083b66]">{count} records</span>
+                <span className="rounded-full bg-blue-50 px-4 py-2 font-semibold text-[#083b66]">
+                    {count} {countLabel}
+                </span>
+                {secondaryCount !== undefined && secondaryCountLabel && (
+                    <span className="rounded-full bg-orange-50 px-4 py-2 font-semibold text-orange-700">
+                        {secondaryCount} {secondaryCountLabel}
+                    </span>
+                )}
                 <button
                     type="button"
                     onClick={onDownload}
