@@ -52,6 +52,7 @@ export default function CertificatePage() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
   const [pdfPreviewError, setPdfPreviewError] = useState("");
   const [loadingPdfPreview, setLoadingPdfPreview] = useState(false);
+  const [downloadingCertificates, setDownloadingCertificates] = useState(false);
   const [pdfPreviewRevision, setPdfPreviewRevision] = useState(0);
   const certificateId = useMemo(
     () => makeCertificateId(participantName || "Participant Name", participantEmail || eventName),
@@ -162,6 +163,51 @@ export default function CertificatePage() {
     setSelectedEmails((current) => current.includes(email)
       ? current.filter((selected) => selected !== email)
       : [...current, email]);
+  };
+
+  const downloadSelectedCertificates = async () => {
+    const selectedParticipants = selectedEmails
+      .map((email) => participants.find((participant) => participant.normalized_email === email))
+      .filter((participant): participant is DatabaseParticipant => Boolean(participant));
+    if (selectedParticipants.length === 0 || downloadingCertificates) return;
+
+    setDownloadingCertificates(true);
+    setDeliveryStatus(`Generating ${selectedParticipants.length} certificates for download. This may take a few minutes &`);
+    try {
+      const response = await fetch("/api/certificate-preview-pdf", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: adminPassword,
+          mode: "bulk",
+          participants: selectedParticipants.map((participant) => ({
+            name: participant.name,
+            email: participant.email,
+            events: participant.events,
+          })),
+        }),
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.message || "Unable to generate the certificate download.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Construct-Carnival-Certificates-${selectedParticipants.length}-participants.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setDeliveryStatus(`${selectedParticipants.length} certificates downloaded successfully.`);
+    } catch (error) {
+      setDeliveryStatus(error instanceof Error ? error.message : "Unable to download certificates.");
+    } finally {
+      setDownloadingCertificates(false);
+    }
   };
 
   const sendCertificate = async () => {
@@ -475,13 +521,26 @@ export default function CertificatePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={downloadSelectedCertificates}
+            disabled={selectedEmails.length === 0 || downloadingCertificates}
+            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {downloadingCertificates
+              ? <Loader2 size={16} className="animate-spin" />
+              : <Download size={16} />}
+            {downloadingCertificates
+              ? "Generating selected PDFs &"
+              : `Download ${selectedEmails.length} selected`}
+          </button>
           {pdfPreviewUrl && (
             <a
               href={pdfPreviewUrl}
               download={`Construct-Carnival-Certificate-${certificateId}.pdf`}
-              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
             >
-              <Download size={16} /> Download PDF
+              <Download size={16} /> Download preview
             </a>
           )}
           <button

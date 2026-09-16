@@ -18,7 +18,7 @@ function authorized(password: unknown, request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { password, name, email, events, participants } = await request.json();
+    const { password, name, email, events, participants, mode } = await request.json();
     if (!authorized(password, request)) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
@@ -29,30 +29,47 @@ export async function POST(request: Request) {
       typeof participant?.name === "string"
       && typeof participant?.email === "string"
       && Array.isArray(participant?.events));
-    if (validParticipants.length !== 1 || validParticipants.length !== requestedParticipants.length) {
+    const isBulkDownload = mode === "bulk";
+    const maximumParticipants = isBulkDownload ? 500 : 1;
+    if (
+      validParticipants.length === 0
+      || validParticipants.length !== requestedParticipants.length
+      || validParticipants.length > maximumParticipants
+    ) {
       return NextResponse.json(
-        { success: false, message: "PDF preview requires exactly one participant." },
+        {
+          success: false,
+          message: isBulkDownload
+            ? "Bulk download supports between 1 and 500 participants."
+            : "PDF preview requires exactly one participant.",
+        },
         { status: 400 },
       );
     }
 
-    const certificatePdfs = await Promise.all(validParticipants.map((participant) =>
-      createParticipationCertificatePdf({
+    const combinedPdf = await PDFDocument.create();
+    for (let index = 0; index < validParticipants.length; index += 1) {
+      const participant = validParticipants[index];
+      const certificatePdf = await createParticipationCertificatePdf({
         name: participant.name.trim() || "Participant Name",
         email: participant.email.trim(),
         events: participant.events.map(String),
-      }, { protect: false })));
-    const combinedPdf = await PDFDocument.create();
-    for (const certificatePdf of certificatePdfs) {
+      }, { protect: false });
       const sourcePdf = await PDFDocument.load(certificatePdf);
       const [page] = await combinedPdf.copyPages(sourcePdf, [0]);
       combinedPdf.addPage(page);
+
+      if (isBulkDownload && index % 5 === 4) {
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
     }
     const pdf = await combinedPdf.save();
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": "inline; filename=certificate-preview.pdf",
+        "Content-Disposition": isBulkDownload
+          ? `attachment; filename=construct-carnival-certificates-${validParticipants.length}.pdf`
+          : "inline; filename=certificate-preview.pdf",
         "Cache-Control": "no-store",
       },
     });
