@@ -68,7 +68,7 @@ export async function sendParticipationCertificate(participant: {
       to: participant.email,
       subject: "Certificate of Participation — Construct Carnival 2.0",
       attachments: [{
-        filename: `Construct-Carnival-Certificate-${certificateId}.pdf`,
+        filename: `${participant.registrationId}.pdf`,
         content: certificate,
         contentType: "application/pdf",
       }],

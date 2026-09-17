@@ -96,7 +96,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to connect to the participant database. Check the local server's database connection and retry.",
+        message: process.env.NODE_ENV === "development"
+          ? `Unable to load participants: ${String(error)}`
+          : "Unable to connect to the participant database. Check the server database connection and retry.",
       },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );

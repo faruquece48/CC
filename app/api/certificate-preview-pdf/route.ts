@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       && typeof participant?.email === "string"
       && Array.isArray(participant?.events));
     const isBulkDownload = mode === "bulk";
-    const maximumParticipants = isBulkDownload ? 500 : 1;
+    const maximumParticipants = isBulkDownload ? 600 : 1;
     if (
       validParticipants.length === 0
       || validParticipants.length !== requestedParticipants.length
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
         {
           success: false,
           message: isBulkDownload
-            ? "Bulk download supports between 1 and 500 participants."
+            ? "Bulk download supports between 1 and 600 participants."
             : "PDF preview requires exactly one participant.",
         },
         { status: 400 },

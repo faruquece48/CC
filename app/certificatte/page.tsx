@@ -45,6 +45,8 @@ export default function CertificatePage() {
   const [participants, setParticipants] = useState<DatabaseParticipant[]>([]);
   const [selectedEmail, setSelectedEmail] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
+  const [registrationIdSearch, setRegistrationIdSearch] = useState("");
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [sendingCertificate, setSendingCertificate] = useState(false);
   const [forceResend, setForceResend] = useState(false);
@@ -54,6 +56,35 @@ export default function CertificatePage() {
   const [loadingPdfPreview, setLoadingPdfPreview] = useState(false);
   const [downloadingCertificates, setDownloadingCertificates] = useState(false);
   const [pdfPreviewRevision, setPdfPreviewRevision] = useState(0);
+  const participantSlots = useMemo(() => {
+    const registrationIds = Array.from(new Set(participants.map((participant) => Number(participant.registration_id))))
+      .filter(Number.isFinite)
+      .sort((left, right) => left - right);
+
+    return Array.from({ length: Math.ceil(registrationIds.length / 50) }, (_, slotIndex) => {
+      const ids = registrationIds.slice(slotIndex * 50, (slotIndex + 1) * 50);
+      const idSet = new Set(ids);
+      return {
+        startId: ids[0],
+        endId: ids[ids.length - 1],
+        participants: participants
+          .filter((participant) => idSet.has(Number(participant.registration_id)))
+          .sort((left, right) => Number(left.registration_id) - Number(right.registration_id)),
+      };
+    });
+  }, [participants]);
+  const selectedSlot = participantSlots[selectedSlotIndex];
+  const selectedParticipant = participants.find(
+    (participant) => participant.normalized_email === selectedEmail,
+  );
+  const searchedParticipants = useMemo(() => {
+    const query = registrationIdSearch.trim();
+    if (!query) return [];
+    return participants.filter((participant) => String(participant.registration_id).includes(query));
+  }, [participants, registrationIdSearch]);
+  useEffect(() => {
+    setSelectedEmails(selectedSlot?.participants.map((participant) => participant.normalized_email) || []);
+  }, [selectedSlot]);
   const certificateId = useMemo(
     () => makeCertificateId(participantName || "Participant Name", participantEmail || eventName),
     [participantEmail, participantName, eventName],
@@ -114,11 +145,16 @@ export default function CertificatePage() {
     setLoadingParticipants(true);
     setDeliveryStatus("");
     try {
-      const response = await fetch("/api/certificate-participants", {
+      const requestParticipants = () => fetch("/api/certificate-participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: adminPassword }),
       });
+      let response = await requestParticipants();
+      if (response.status === 503) {
+        await new Promise((resolve) => setTimeout(resolve, 750));
+        response = await requestParticipants();
+      }
       const responseText = await response.text();
       let result: any;
       try {
@@ -133,7 +169,7 @@ export default function CertificatePage() {
         name: formatParticipantName(participant.name),
       }));
       setParticipants(loadedParticipants);
-      setSelectedEmails(loadedParticipants.map((participant) => participant.normalized_email));
+      setSelectedSlotIndex(0);
       if (loadedParticipants[0]) {
         const first = loadedParticipants[0];
         setSelectedEmail(first.normalized_email);
@@ -141,7 +177,7 @@ export default function CertificatePage() {
         setParticipantEmail(first.email);
         setEventName(first.events.map((event) => eventLabels[event] || event).join(", "));
       }
-      setDeliveryStatus(`${loadedParticipants.length} unique participants loaded and selected.`);
+      setDeliveryStatus(`${loadedParticipants.length} unique participants loaded. Select a registration-ID range.`);
     } catch (error) {
       setDeliveryStatus(error instanceof Error ? error.message : "Unable to load participants.");
     } finally {
@@ -159,20 +195,13 @@ export default function CertificatePage() {
     setDeliveryStatus(participant.certificate_sent ? "This participant has already received a certificate." : "");
   };
 
-  const toggleParticipant = (email: string) => {
-    setSelectedEmails((current) => current.includes(email)
-      ? current.filter((selected) => selected !== email)
-      : [...current, email]);
-  };
 
   const downloadSelectedCertificates = async () => {
-    const selectedParticipants = selectedEmails
-      .map((email) => participants.find((participant) => participant.normalized_email === email))
-      .filter((participant): participant is DatabaseParticipant => Boolean(participant));
+    const selectedParticipants = selectedSlot?.participants || [];
     if (selectedParticipants.length === 0 || downloadingCertificates) return;
 
     setDownloadingCertificates(true);
-    setDeliveryStatus(`Generating ${selectedParticipants.length} certificates for download. This may take a few minutes &`);
+    setDeliveryStatus(`Generating certificates for registrations ${selectedSlot?.startId}-${selectedSlot?.endId}. This may take a few minutes.`);
     try {
       const response = await fetch("/api/certificate-preview-pdf", {
         method: "POST",
@@ -197,7 +226,7 @@ export default function CertificatePage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Construct-Carnival-Certificates-${selectedParticipants.length}-participants.pdf`;
+      link.download = `participants-${selectedSlot?.startId}-${selectedSlot?.endId}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -210,17 +239,17 @@ export default function CertificatePage() {
     }
   };
 
-  const sendCertificate = async () => {
-    if (selectedEmails.length === 0) return;
+  const sendCertificate = async (recipientEmails: string[] = selectedEmails) => {
+    if (recipientEmails.length === 0) return;
     setSendingCertificate(true);
     let sent = 0;
     let alreadySent = 0;
     let failed = 0;
     const failureMessages = new Set<string>();
 
-    for (let index = 0; index < selectedEmails.length; index += 1) {
-      const email = selectedEmails[index];
-      setDeliveryStatus(`Processing ${index + 1} of ${selectedEmails.length} certificates...`);
+    for (let index = 0; index < recipientEmails.length; index += 1) {
+      const email = recipientEmails[index];
+      setDeliveryStatus(`Processing ${index + 1} of ${recipientEmails.length} certificates...`);
       try {
         const response = await fetch("/api/send-certificate-email", {
           method: "POST",
@@ -323,68 +352,85 @@ export default function CertificatePage() {
             Load participants
           </button>
         </div>
-        {participants.length > 0 && (
-          <div className="mt-4">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-[#174f42]">
-                <input
-                  type="checkbox"
-                  checked={selectedEmails.length === participants.length}
-                  onChange={() => setSelectedEmails(
-                    selectedEmails.length === participants.length
-                      ? []
-                      : participants.map((participant) => participant.normalized_email),
-                  )}
-                  className="h-4 w-4 accent-emerald-700"
-                />
-                Select all participants
-              </label>
-              <span className="text-sm font-semibold text-slate-600">{selectedEmails.length} of {participants.length} selected</span>
+        {participants.length > 0 && selectedSlot && (
+          <div className="mt-4 space-y-4">
+            <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+              <select
+                value={selectedSlotIndex}
+                onChange={(event) => setSelectedSlotIndex(Number(event.target.value))}
+                className="rounded-xl border border-emerald-200 bg-white px-4 py-3 outline-none focus:border-emerald-600"
+              >
+                {participantSlots.map((slot, index) => (
+                  <option key={`${slot.startId}-${slot.endId}`} value={index}>
+                    Registration IDs {slot.startId}-{slot.endId} ({slot.participants.length} participants)
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => sendCertificate()}
+                disabled={selectedEmails.length === 0 || sendingCertificate}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sendingCertificate ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />}
+                Email range ({selectedEmails.length})
+              </button>
             </div>
+            <p className="text-sm font-semibold text-slate-600">
+              This slot contains up to 50 paid registration IDs and {selectedSlot.participants.length} individual participants.
+            </p>
             <div className="max-h-64 overflow-y-auto rounded-xl border border-emerald-200 bg-white">
-              {participants.map((participant) => (
-                <div key={participant.normalized_email} className={`flex items-center gap-3 border-b border-emerald-100 px-4 py-3 last:border-0 ${selectedEmail === participant.normalized_email ? "bg-emerald-50" : ""}`}>
-                  <input
-                    type="checkbox"
-                    checked={selectedEmails.includes(participant.normalized_email)}
-                    onChange={() => toggleParticipant(participant.normalized_email)}
-                    aria-label={`Select ${participant.name}`}
-                    className="h-4 w-4 shrink-0 accent-emerald-700"
-                  />
-                  <button type="button" onClick={() => chooseParticipant(participant.normalized_email)} className="min-w-0 flex-1 text-left">
+              {selectedSlot.participants.map((participant) => (
+                <button
+                  key={participant.normalized_email}
+                  type="button"
+                  onClick={() => chooseParticipant(participant.normalized_email)}
+                  className={`flex w-full items-center gap-3 border-b border-emerald-100 px-4 py-3 text-left last:border-0 ${selectedEmail === participant.normalized_email ? "bg-emerald-50" : ""}`}
+                >
+                  <span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">ID {participant.registration_id}</span>
+                  <span className="min-w-0 flex-1">
                     <span className="block font-bold text-slate-800">{participant.name}</span>
                     <span className="block truncate text-xs text-slate-500">{participant.email}</span>
-                  </button>
+                  </span>
                   {participant.certificate_sent && <span className="shrink-0 text-xs font-bold text-emerald-700">Sent</span>}
-                </div>
+                </button>
               ))}
             </div>
-          </div>
-        )}
-        {participants.length > 0 && (
-          <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-            <select
-              value={selectedEmail}
-              onChange={(event) => chooseParticipant(event.target.value)}
-              className="rounded-xl border border-emerald-200 bg-white px-4 py-3 outline-none focus:border-emerald-600"
-            >
-              <option value="">Select a unique participant…</option>
-              {participants.map((participant) => (
-                <option key={participant.normalized_email} value={participant.normalized_email}>
-                  {participant.certificate_sent ? "✓ " : ""}{participant.name} — {participant.email}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={sendCertificate}
-              disabled={selectedEmails.length === 0 || sendingCertificate}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {sendingCertificate ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />}
-              Send {selectedEmails.length} selected certificate{selectedEmails.length === 1 ? "" : "s"}
-            </button>
-            <label className="flex items-center gap-2 text-sm font-semibold text-amber-900 md:col-span-2">
+
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+              <label htmlFor="registration-id-search" className="text-sm font-bold text-sky-900">Search participant by registration ID</label>
+              <input
+                id="registration-id-search"
+                type="search"
+                inputMode="numeric"
+                value={registrationIdSearch}
+                onChange={(event) => setRegistrationIdSearch(event.target.value)}
+                placeholder="Enter registration ID"
+                className="mt-2 w-full rounded-xl border border-sky-200 bg-white px-4 py-3 outline-none focus:border-sky-600"
+              />
+              {registrationIdSearch.trim() && (
+                <div className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-sky-200 bg-white">
+                  {searchedParticipants.length > 0 ? searchedParticipants.map((participant) => (
+                    <div key={participant.normalized_email} className="flex flex-wrap items-center gap-3 border-b border-sky-100 px-3 py-3 last:border-0">
+                      <button type="button" onClick={() => chooseParticipant(participant.normalized_email)} className="min-w-0 flex-1 text-left">
+                        <span className="block font-bold text-slate-800">ID {participant.registration_id} — {participant.name}</span>
+                        <span className="block truncate text-xs text-slate-500">{participant.email}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => sendCertificate([participant.normalized_email])}
+                        disabled={sendingCertificate}
+                        className="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                      >
+                        Email participant
+                      </button>
+                    </div>
+                  )) : <p className="px-3 py-3 text-sm text-slate-500">No paid participant found for this registration ID.</p>}
+                </div>
+              )}
+            </div>
+
+            <label className="flex items-center gap-2 text-sm font-semibold text-amber-900">
               <input
                 type="checkbox"
                 checked={forceResend}
@@ -394,8 +440,7 @@ export default function CertificatePage() {
               Resend certificates already marked as delivered
             </label>
           </div>
-        )}
-        {deliveryStatus && <p className="mt-3 text-sm font-semibold text-[#174f42]">{deliveryStatus}</p>}
+        )}        {deliveryStatus && <p className="mt-3 text-sm font-semibold text-[#174f42]">{deliveryStatus}</p>}
       </section>
 
       <div className="hidden">
@@ -524,20 +569,20 @@ export default function CertificatePage() {
           <button
             type="button"
             onClick={downloadSelectedCertificates}
-            disabled={selectedEmails.length === 0 || downloadingCertificates}
+            disabled={!selectedSlot || downloadingCertificates}
             className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {downloadingCertificates
               ? <Loader2 size={16} className="animate-spin" />
               : <Download size={16} />}
             {downloadingCertificates
-              ? "Generating selected PDFs &"
-              : `Download ${selectedEmails.length} selected`}
+              ? "Generating range PDFs…"
+              : `Download IDs ${selectedSlot?.startId}-${selectedSlot?.endId}`}
           </button>
           {pdfPreviewUrl && (
             <a
               href={pdfPreviewUrl}
-              download={`Construct-Carnival-Certificate-${certificateId}.pdf`}
+              download={`${selectedParticipant?.registration_id || "certificate"}.pdf`}
               className="inline-flex items-center gap-2 rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
             >
               <Download size={16} /> Download preview
