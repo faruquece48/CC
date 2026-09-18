@@ -6,7 +6,10 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "qr:reset": "node --env-file=.env.local scripts/reset-qrcheck.mjs all",
+    "qr:reset:kit": "node --env-file=.env.local scripts/reset-qrcheck.mjs kit",
+    "qr:reset:lunch": "node --env-file=.env.local scripts/reset-qrcheck.mjs lunch"
   },
   "dependencies": {
     "@fontsource/great-vibes": "^5.2.6",

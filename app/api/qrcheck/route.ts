@@ -19,15 +19,20 @@ function ensureSchema() {
   return schemaPromise;
 }
 
-async function counts() {
+async function collectionSummary() {
   const result = await sql`
-    SELECT purpose, COUNT(*)::INTEGER AS count
+    SELECT purpose, registration_id, scanned_at
     FROM qrCollectionLog
-    GROUP BY purpose
+    ORDER BY scanned_at DESC
   `;
+  const kitRows = result.rows.filter((row) => row.purpose === "kit");
+  const lunchRows = result.rows.filter((row) => row.purpose === "lunch");
   return {
-    kit: Number(result.rows.find((row) => row.purpose === "kit")?.count || 0),
-    lunch: Number(result.rows.find((row) => row.purpose === "lunch")?.count || 0),
+    counts: { kit: kitRows.length, lunch: lunchRows.length },
+    scanned: {
+      kit: kitRows.map((row) => Number(row.registration_id)),
+      lunch: lunchRows.map((row) => Number(row.registration_id)),
+    },
   };
 }
 
@@ -38,7 +43,7 @@ export async function POST(request: Request) {
     await ensureSchema();
 
     if (body.action === "stats") {
-      return NextResponse.json({ success: true, counts: await counts() }, {
+      return NextResponse.json({ success: true, ...(await collectionSummary()) }, {
         headers: { "Cache-Control": "no-store" },
       });
     }
@@ -103,7 +108,7 @@ export async function POST(request: Request) {
         message: `${payload.purpose === "kit" ? "Kit" : "Lunch"} was already collected for this participant.`,
         registrationId: payload.registrationId,
         scannedAt: existing.rows[0]?.scanned_at,
-        counts: await counts(),
+        ...(await collectionSummary()),
       }, { status: 409 });
     }
 
@@ -112,7 +117,7 @@ export async function POST(request: Request) {
       message: `${payload.purpose === "kit" ? "Kit" : "Lunch"} collection recorded.`,
       registrationId: payload.registrationId,
       participantName: participant.rows[0].name,
-      counts: await counts(),
+      ...(await collectionSummary()),
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("QR CHECK ERROR:", error);
