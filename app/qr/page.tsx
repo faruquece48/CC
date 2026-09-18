@@ -17,22 +17,27 @@ export default function ParticipantQrPage() {
   const [adminPassword, setAdminPassword] = useState(process.env.NODE_ENV === "development" ? "local-development" : "");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [search, setSearch] = useState("");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [preview, setPreview] = useState<QrPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState("");
 
-  const selectedParticipant = participants.find((participant) => Number(participant.registration_id) === selectedId);
-  const searchResults = useMemo(() => {
+  const selectedParticipant = participants.find((participant) => participant.normalized_email === selectedEmail);
+  const visibleParticipants = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return [];
+    if (!query) return participants;
     return participants.filter((participant) =>
       String(participant.registration_id).includes(query)
       || participant.name.toLowerCase().includes(query)
-      || participant.email.toLowerCase().includes(query)).slice(0, 30);
+      || participant.email.toLowerCase().includes(query));
   }, [participants, search]);
+  const selectedRecipients = useMemo(() => {
+    const selected = new Set(selectedEmails);
+    return participants.filter((participant) => selected.has(participant.normalized_email));
+  }, [participants, selectedEmails]);
 
   const loadParticipants = async () => {
     setLoading(true);
@@ -46,14 +51,15 @@ export default function ParticipantQrPage() {
       if (!response.ok) throw new Error(result?.message || "Unable to load participants.");
       const loaded = (result.participants || []).map((participant: Participant) => ({ ...participant, name: formatParticipantName(participant.name) }));
       setParticipants(loaded);
-      setStatus(`${loaded.length} unique paid participants loaded.`);
+      setSelectedEmails(loaded.map((participant: Participant) => participant.normalized_email));
+      setStatus(`${loaded.length} unique paid participants loaded and selected.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load participants.");
     } finally { setLoading(false); }
   };
 
   const selectParticipant = async (participant: Participant) => {
-    setSelectedId(Number(participant.registration_id));
+    setSelectedEmail(participant.normalized_email);
     setGenerating(true);
     setPreview(null);
     setStatus(`Generating QR codes for registration ${participant.registration_id}…`);
@@ -108,12 +114,22 @@ export default function ParticipantQrPage() {
         <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-4">
           <label className="flex items-center gap-2 text-sm font-bold text-sky-900"><Search size={17} /> Search by registration ID, name, or email</label>
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Enter registration ID…" className="mt-2 w-full rounded-xl border border-sky-200 bg-white px-4 py-3 outline-none focus:border-sky-600" />
-          {search.trim() && <div className="mt-3 max-h-64 overflow-y-auto rounded-xl border border-sky-200 bg-white">{searchResults.length ? searchResults.map((participant) => <button key={`${participant.registration_id}-${participant.normalized_email}`} type="button" onClick={() => selectParticipant(participant)} className={`flex w-full items-center gap-3 border-b border-sky-100 px-4 py-3 text-left last:border-0 ${selectedId === Number(participant.registration_id) ? "bg-sky-100" : ""}`}><span className="rounded bg-slate-100 px-2 py-1 text-xs font-bold">ID {participant.registration_id}</span><span className="min-w-0"><span className="block font-bold">{participant.name}</span><span className="block truncate text-xs text-slate-500">{participant.email}</span></span></button>) : <p className="p-4 text-sm text-slate-500">No paid participant found.</p>}</div>}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <label className="inline-flex items-center gap-2 font-bold text-sky-900"><input type="checkbox" checked={selectedEmails.length === participants.length} ref={(input) => { if (input) input.indeterminate = selectedEmails.length > 0 && selectedEmails.length < participants.length; }} onChange={(event) => setSelectedEmails(event.target.checked ? participants.map((participant) => participant.normalized_email) : [])} className="h-5 w-5 accent-sky-700" /> Select all participants</label>
+            <span className="font-bold text-sky-800">{selectedEmails.length} of {participants.length} selected</span>
+          </div>
+          <div className="mt-3 max-h-96 overflow-y-auto rounded-xl border border-sky-200 bg-white">{visibleParticipants.length ? visibleParticipants.map((participant) => {
+            const checked = selectedEmails.includes(participant.normalized_email);
+            return <div key={`${participant.registration_id}-${participant.normalized_email}`} className={`flex items-center gap-3 border-b border-sky-100 px-4 py-3 last:border-0 ${selectedEmail === participant.normalized_email ? "bg-sky-100" : ""}`}>
+              <input type="checkbox" checked={checked} onChange={() => setSelectedEmails((current) => checked ? current.filter((email) => email !== participant.normalized_email) : [...current, participant.normalized_email])} aria-label={`Select registration ${participant.registration_id}`} className="h-5 w-5 shrink-0 accent-sky-700" />
+              <button type="button" onClick={() => selectParticipant(participant)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-bold">ID {participant.registration_id}</span><span className="min-w-0"><span className="block font-bold">{participant.name}</span><span className="block truncate text-xs text-slate-500">{participant.email}</span></span></button>
+            </div>;
+          }) : <p className="p-4 text-sm text-slate-500">No paid participant found.</p>}</div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" onClick={() => sendToParticipants(participants)} disabled={sending} className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white disabled:opacity-50">{sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} Email all {participants.length}</button>
-          <button type="button" onClick={() => selectedParticipant && sendToParticipants([selectedParticipant])} disabled={!selectedParticipant || sending} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 font-bold text-white disabled:opacity-50"><Mail size={18} /> Email selected participant</button>
+          <button type="button" onClick={() => sendToParticipants(selectedRecipients)} disabled={!selectedRecipients.length || sending} className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white disabled:opacity-50">{sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} Email selected {selectedRecipients.length}</button>
+          <button type="button" onClick={() => selectedParticipant && sendToParticipants([selectedParticipant])} disabled={!selectedParticipant || sending} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 font-bold text-white disabled:opacity-50"><Mail size={18} /> Email previewed participant</button>
         </div>
       </>}
 
