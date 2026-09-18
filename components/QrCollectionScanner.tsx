@@ -18,6 +18,7 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
   const [count, setCount] = useState(0);
   const [scannedIds, setScannedIds] = useState<number[]>([]);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [awaitingNext, setAwaitingNext] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -26,6 +27,7 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetectorInstance | null>(null);
   const scanningRef = useRef(false);
+  const cameraStartingRef = useRef(false);
   const processingRef = useRef(false);
   const awaitingNextRef = useRef(false);
 
@@ -80,16 +82,35 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
   }, []);
 
   const startCamera = async () => {
+    if (cameraStartingRef.current || streamRef.current) return;
+    cameraStartingRef.current = true;
+    setCameraStarting(true);
     setResult(null);
     setStatus("");
     const Detector = (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector;
-    if (!Detector) { setStatus("Camera QR scanning is not supported by this browser. Use Chrome on Android."); return; }
+    if (!Detector) {
+      setStatus("Camera QR scanning is not supported by this browser. Use Chrome on Android.");
+      cameraStartingRef.current = false;
+      setCameraStarting(false);
+      return;
+    }
     try {
       detectorRef.current = new Detector({ formats: ["qr_code"] });
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
       streamRef.current = stream;
-      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch (error) {
+          if (!(error instanceof DOMException) || error.name !== "AbortError") throw error;
+          await new Promise((resolve) => window.setTimeout(resolve, 150));
+          if (videoRef.current?.paused) await videoRef.current.play();
+        }
+      }
       setCameraActive(true);
+      cameraStartingRef.current = false;
+      setCameraStarting(false);
       scanningRef.current = true;
       const scan = async () => {
         if (!scanningRef.current) return;
@@ -102,7 +123,12 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
         if (scanningRef.current) window.setTimeout(scan, 140);
       };
       scan();
-    } catch (error) { setStatus(error instanceof Error ? `Unable to start camera: ${error.message}` : "Unable to start camera."); stopCamera(); }
+    } catch (error) {
+      cameraStartingRef.current = false;
+      setCameraStarting(false);
+      setStatus(error instanceof Error ? `Unable to start camera: ${error.message}` : "Unable to start camera.");
+      stopCamera();
+    }
   };
 
   const nextScan = () => {
@@ -128,7 +154,7 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
         {cameraActive && !awaitingNext && <div className={`pointer-events-none absolute inset-[16%] rounded-3xl border-2 ${isKit ? "border-emerald-400" : "border-amber-400"} shadow-[0_0_0_999px_rgba(0,0,0,.35)]`}><ScanLine className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${isKit ? "text-emerald-300" : "text-amber-300"}`} size={42} /></div>}
         {processing && <div className="absolute inset-0 grid place-items-center bg-black/65"><Loader2 className="animate-spin text-white" size={48} /></div>}
       </div>
-      <div className="mx-auto mt-4 grid w-full max-w-sm grid-cols-2 gap-3"><button type="button" onClick={startCamera} disabled={cameraActive} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold text-white disabled:opacity-40 ${isKit ? "bg-emerald-600" : "bg-amber-600"}`}><Camera size={18} /> Start camera</button><button type="button" onClick={stopCamera} disabled={!cameraActive} className="rounded-xl bg-slate-600 px-4 py-3 font-bold text-white disabled:opacity-40">Stop camera</button></div>
+      <div className="mx-auto mt-4 grid w-full max-w-sm grid-cols-2 gap-3"><button type="button" onClick={startCamera} disabled={cameraActive || cameraStarting} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold text-white disabled:opacity-40 ${isKit ? "bg-emerald-600" : "bg-amber-600"}`}>{cameraStarting ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />} {cameraStarting ? "Starting..." : "Start camera"}</button><button type="button" onClick={stopCamera} disabled={!cameraActive} className="rounded-xl bg-slate-600 px-4 py-3 font-bold text-white disabled:opacity-40">Stop camera</button></div>
 
       {result && <div className={`mt-5 rounded-2xl border p-5 text-center ${result.success ? "border-emerald-400 bg-emerald-50" : "border-red-400 bg-red-50"}`}>{result.success ? <CheckCircle2 className="mx-auto text-emerald-600" size={48} /> : <XCircle className="mx-auto text-red-600" size={48} />}<h2 className="mt-2 text-xl font-extrabold">{result.message}</h2>{result.registrationId && <p className="mt-2">Registration ID: <strong>{result.registrationId}</strong></p>}{result.participantName && <p className="mt-1 text-sm text-slate-700">{result.participantName}</p>}<button type="button" onClick={nextScan} className={`mt-5 w-full rounded-xl px-5 py-3 text-lg font-extrabold text-white ${isKit ? "bg-emerald-600" : "bg-amber-600"}`}>Next scan</button></div>}
 
