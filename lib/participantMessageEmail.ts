@@ -35,6 +35,10 @@ function escapeHtml(value: string) {
 
 function renderMessage(message: string) {
   return message.split(/\r?\n\s*\r?\n/).map((paragraph) => {
+    if (/^Note:\s*/i.test(paragraph.trim())) {
+      const noteText = paragraph.trim().replace(/^Note:\s*/i, "");
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f8fbfa;border:1px solid #dbe5e2;border-left:3px solid #d4a843"><tr><td style="padding:14px 16px"><p style="margin:0;font-size:13px;line-height:1.6;color:#073f37;text-align:justify">${escapeHtml(noteText).replace(/\r?\n/g, "<br>")}</p></td></tr></table>`;
+    }
     const lines = paragraph.split(/\r?\n/);
     if (lines.length > 1 && lines[0].trim().endsWith(":") && lines.slice(1).every((line) => /^\s*[•*-]\s+/.test(line))) {
       const entries = lines.slice(1).map((line, index) => {
@@ -47,7 +51,7 @@ function renderMessage(message: string) {
       }).join("");
       return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f8fbfa;border:1px solid #dbe5e2;border-left:3px solid #d4a843"><tr><td style="padding:14px 16px 2px"><h2 style="margin:0;color:#073f37;font-family:Georgia,Times New Roman,serif;font-size:20px;font-weight:normal">${escapeHtml(lines[0].trim().replace(/:$/, ""))}</h2></td></tr><tr><td style="padding:0 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${entries}</table></td></tr></table>`;
     }
-    return `<p style="margin:0 0 16px;line-height:1.65">${escapeHtml(paragraph).replace(/\r?\n/g, "<br>")}</p>`;
+    return `<p style="margin:0 0 16px;line-height:1.65;text-align:justify">${escapeHtml(paragraph).replace(/\r?\n/g, "<br>")}</p>`;
   }).join("");
 }
 

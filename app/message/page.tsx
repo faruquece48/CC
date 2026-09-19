@@ -44,10 +44,12 @@ export default function ParticipantMessagePage() {
 Due to the NESCO job recruitment examination being held on 2 October 2026, Construct Carnival 2.0 has been rescheduled to Saturday, 3 October 2026. This adjustment has been made to avoid a conflict and ensure that all participants can attend the event comfortably.
 
 Kit Collection:
-• Friday, 2 October 2026, 5:00 PM–6:00 PM at the Department of BECM
-• Saturday, 3 October 2026, 8:00 AM–9:00 AM at RUET Auditorium for participants who cannot collect their kits on the first day; participant check-in will also take place during this session
+• Friday, 2 October 2026, 5:00 PM–6:00 PM
+• Saturday, 3 October 2026, 8:00 AM–9:00 AM
 
 The main event program will take place on Saturday, 3 October 2026. We regret any inconvenience this change may cause and sincerely appreciate your understanding and cooperation.
+
+Note: For Truss Combat participants who are also registered in other segments, truss loading times will be coordinated with their other event schedules to avoid timing conflicts.
 
 We look forward to welcoming you to Construct Carnival 2.0.`);
   const [loading, setLoading] = useState(false);
