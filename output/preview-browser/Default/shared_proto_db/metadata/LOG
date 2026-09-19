@@ -1,2 +1,3 @@
-2026/09/19-15:01:14.912 140c Creating DB C:\Users\Windows 11\Downloads\CC\output\preview-browser\Default\shared_proto_db\metadata since it was missing.
-2026/09/19-15:01:14.915 140c Reusing MANIFEST C:\Users\Windows 11\Downloads\CC\output\preview-browser\Default\shared_proto_db\metadata/MANIFEST-000001
+2026/09/19-17:27:04.277 3bf0 Reusing MANIFEST C:\Users\Windows 11\Downloads\CC\output\preview-browser\Default\shared_proto_db\metadata/MANIFEST-000001
+2026/09/19-17:27:04.278 3bf0 Recovering log #3
+2026/09/19-17:27:04.278 3bf0 Reusing old log C:\Users\Windows 11\Downloads\CC\output\preview-browser\Default\shared_proto_db\metadata/000003.log 
