@@ -1,7 +1,7 @@
 "use client";
 
 import { Database, Loader2, Mail, Search, Send, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
 import { buildParticipantMessageEmail } from "@/lib/participantMessageEmail";
 
@@ -24,6 +24,9 @@ type Audience = "all" | "team" | "individual";
 type TeamScope = "one" | "truss" | "poster" | "both";
 type IndividualScope = "all" | "one";
 
+type MessageBatch = { subject: string; message: string; includeSchedule: boolean; remaining: string[]; sent: number };
+const batchStorageKey = "participant-message-pending-batch";
+
 export default function ParticipantMessagePage() {
   const [adminPassword, setAdminPassword] = useState(
     process.env.NODE_ENV === "development" ? "local-development" : "",
@@ -38,7 +41,7 @@ export default function ParticipantMessagePage() {
   const [selectedIndividual, setSelectedIndividual] = useState("");
   const [search, setSearch] = useState("");
   const [includeSchedule, setIncludeSchedule] = useState(true);
-  const [subject, setSubject] = useState("Important Schedule Update — Construct Carnival 2.0 Rescheduled");
+  const [subject, setSubject] = useState("Official Notice: Revised Event Schedule for Construct Carnival 2.0");
   const [message, setMessage] = useState(`We sincerely apologize for the change to the event schedule.
 
 Due to the NESCO job recruitment examination being held on 2 October 2026, Construct Carnival 2.0 has been rescheduled to Saturday, 3 October 2026. This adjustment has been made to avoid a conflict and ensure that all participants can attend the event comfortably.
@@ -55,6 +58,22 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState("");
+  const [pendingBatch, setPendingBatch] = useState<MessageBatch | null>(null);
+  const [previouslySentEmails, setPreviouslySentEmails] = useState("");
+  const [skipFirstCount, setSkipFirstCount] = useState(81);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(batchStorageKey) || "null");
+      if (saved && typeof saved.subject === "string" && typeof saved.message === "string"
+        && typeof saved.includeSchedule === "boolean" && Number.isInteger(saved.sent)
+        && Array.isArray(saved.remaining) && saved.remaining.every((email: unknown) => typeof email === "string")) setPendingBatch(saved);
+    } catch { /* A damaged or unavailable saved batch must not block the page. */ }
+  }, []);
+
+  const saveBatch = (batch: MessageBatch) => {
+    setPendingBatch(batch);
+    try { localStorage.setItem(batchStorageKey, JSON.stringify(batch)); } catch { /* Keep retry progress in memory if storage is unavailable. */ }
+  };
 
   const participantByEmail = useMemo(
     () => new Map(participants.map((participant) => [participant.normalized_email, participant])),
@@ -110,8 +129,14 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
     }
   };
 
-  const sendMessages = async () => {
-    if (!subject.trim() || !message.trim() || recipientEmails.length === 0 || sending) return;
+  const sendMessages = async (resume = false, skipFirst = 0) => {
+    if (sending || !adminPassword) return;
+    if (!Number.isInteger(skipFirst) || skipFirst < 0 || (!resume && skipFirst >= recipientEmails.length)) return;
+    const batch: MessageBatch = resume && pendingBatch
+      ? { ...pendingBatch, remaining: [...pendingBatch.remaining] }
+      : { subject: subject.trim(), message: message.trim(), includeSchedule, remaining: recipientEmails.slice(skipFirst).filter((email) => !previouslySentEmails.toLowerCase().split(/[\s,;]+/).includes(email)), sent: 0 };
+    if (!batch.subject || !batch.message || !batch.remaining.length) return;
+    if (!resume && pendingBatch?.remaining.length && !window.confirm("A batch still has unsent recipients. Starting a new batch replaces its saved retry list. Continue?")) return;
     const label = audience === "all"
       ? "all paid participants"
       : audience === "team"
@@ -123,15 +148,22 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
         : individualScope === "all"
           ? "all paid individual-registration participants"
           : participantByEmail.get(selectedIndividual)?.name || "the selected participant";
-    if (!window.confirm(`Send this message individually to ${recipientEmails.length} recipient(s) in ${label}?`)) return;
+    if (!window.confirm(resume
+      ? `Send the saved message to ${batch.remaining.length} remaining recipient(s) only? Previously successful recipients will be skipped. An interrupted request may already have been accepted by the mail server.`
+      : skipFirst > 0
+        ? `Skip the first ${skipFirst} recipients in the CURRENT selected list and send to ${batch.remaining.length} remaining recipients, starting at #${skipFirst + 1}? This assumes all skipped recipients already received the message and the list order has not changed.`
+        : `Send this message individually to ${batch.remaining.length} recipient(s) in ${label}?`)) return;
 
     setSending(true);
+    saveBatch(batch);
+    const targets = [...batch.remaining];
     let sent = 0;
     let failed = 0;
+    let consecutiveFailures = 0;
     const errors = new Set<string>();
-    for (let index = 0; index < recipientEmails.length; index += 1) {
-      const email = recipientEmails[index];
-      setStatus(`Sending ${index + 1} of ${recipientEmails.length}…`);
+    for (let index = 0; index < targets.length; index += 1) {
+      const email = targets[index];
+      setStatus(`Sending ${index + 1} of ${targets.length}…`);
       try {
         const response = await fetch("/api/participant-message", {
           method: "POST",
@@ -140,21 +172,30 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
             password: adminPassword,
             action: "send",
             email,
-            subject: subject.trim(),
-            message: message.trim(),
-            includeSchedule,
+            subject: batch.subject,
+            message: batch.message,
+            includeSchedule: batch.includeSchedule,
           }),
         });
         const result = await response.json().catch(() => null);
         if (!response.ok) throw new Error(result?.message || `Unable to message ${email}.`);
         sent += 1;
+        consecutiveFailures = 0;
+        batch.sent += 1;
+        batch.remaining = batch.remaining.filter((recipient) => recipient !== email);
+        saveBatch({ ...batch, remaining: [...batch.remaining] });
       } catch (error) {
         failed += 1;
+        consecutiveFailures += 1;
         errors.add(error instanceof Error ? error.message : "Unknown delivery error.");
+        if (consecutiveFailures >= 3) {
+          errors.add("Paused after three consecutive failures. Remaining recipients are saved for retry.");
+          break;
+        }
       }
     }
     const details = errors.size ? ` ${Array.from(errors).join(" ")}` : "";
-    setStatus(`${sent} sent, ${failed} failed.${details}`);
+    setStatus(`${sent} sent this attempt, ${failed} failed; ${batch.remaining.length} remaining. ${batch.sent} sent in this batch.${details}`);
     setSending(false);
   };
 
@@ -250,13 +291,31 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
 
             <div className="mt-6 flex flex-col justify-between gap-4 rounded-2xl bg-slate-50 p-4 sm:flex-row sm:items-center">
               <div className="flex items-center gap-2 font-bold text-slate-700"><Users size={19} /> {recipientEmails.length} recipient{recipientEmails.length === 1 ? "" : "s"}</div>
-              <button type="button" onClick={sendMessages} disabled={sending || !subject.trim() || !message.trim() || recipientEmails.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3 font-bold text-white hover:bg-amber-700 disabled:opacity-50">
+              <button type="button" onClick={() => sendMessages()} disabled={sending || !subject.trim() || !message.trim() || recipientEmails.length === 0} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3 font-bold text-white hover:bg-amber-700 disabled:opacity-50">
                 {sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} {sending ? "Sending…" : "Send message"}
               </button>
             </div>
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h3 className="font-bold text-slate-800">Send remaining by recipient number</h3>
+              <p className="mt-2 text-sm text-slate-600">Use this for the earlier batch if the first 81 recipients all received the message. This uses the current selected audience order, not verified delivery history.</p>
+              <label className="mt-3 block text-sm font-semibold">Skip first recipients
+                <input type="number" min={0} max={Math.max(0, recipientEmails.length - 1)} step={1} value={skipFirstCount} disabled={sending} onChange={(event) => setSkipFirstCount(event.target.valueAsNumber || 0)} className="ml-3 w-24 rounded-lg border border-slate-300 p-2" />
+              </label>
+              {Number.isInteger(skipFirstCount) && skipFirstCount >= 0 && skipFirstCount < recipientEmails.length && <p className="mt-2 text-sm text-slate-700">First recipient: #{skipFirstCount + 1} — {recipientEmails[skipFirstCount]}</p>}
+              <button type="button" onClick={() => sendMessages(false, skipFirstCount)} disabled={sending || !adminPassword || !subject.trim() || !message.trim() || !Number.isInteger(skipFirstCount) || skipFirstCount < 0 || skipFirstCount >= recipientEmails.length} className="mt-3 rounded-xl bg-emerald-800 px-5 py-3 font-bold text-white disabled:opacity-50">Send remaining only (skip first {skipFirstCount})</button>
+            </div>
+            <details className="mt-4 rounded-xl border border-slate-200 p-4">
+              <summary className="cursor-pointer font-semibold">Recover a batch sent before retry tracking was added</summary>
+              <p className="mt-2 text-sm text-slate-600">Paste the recipient email addresses confirmed in your Sent folder for this announcement. They will be excluded from a new send to the selected audience. A total such as “81 sent” cannot identify which recipients succeeded.</p>
+              <textarea aria-label="Previously successful recipient emails" value={previouslySentEmails} onChange={(event) => setPreviouslySentEmails(event.target.value)} rows={4} placeholder="Separate email addresses with spaces, commas, or new lines" className="mt-3 w-full rounded-xl border border-slate-300 p-3" />
+            </details>
           </>
         )}
 
+        {!!pendingBatch?.remaining.length && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-slate-700">Saved batch: {pendingBatch.subject}. {pendingBatch.sent} sent; {pendingBatch.remaining.length} remaining. Retry uses the saved message and recipient list.</p>
+          <button type="button" onClick={() => sendMessages(true)} disabled={sending || !adminPassword} className="mt-3 rounded-xl bg-emerald-800 px-5 py-3 font-bold text-white disabled:opacity-50">Send remaining only ({pendingBatch.remaining.length})</button>
+        </div>}
         {status && <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">{status}</p>}
       </section>
     </main>

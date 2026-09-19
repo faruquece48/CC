@@ -138,9 +138,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: `Message sent to ${participant.email}.` });
   } catch (error) {
     console.error("PARTICIPANT MESSAGE ERROR:", error);
+    const failure = error as { code?: string; responseCode?: number; response?: string };
+    let message = "Unable to process the participant message. Check the server logs for database or email-service errors.";
+    if (/daily|quota|sending limit|rate limit|too many/i.test(failure.response || "")) {
+      message = "The email provider reports a sending limit. Wait for the limit to reset before retrying remaining recipients.";
+    } else if (failure.code === "EAUTH") {
+      message = "The email provider rejected authentication. Check the configured sender credentials before retrying.";
+    } else if (["ETIMEDOUT", "ECONNECTION", "ESOCKET", "ECONNRESET"].includes(failure.code || "")) {
+      message = "The email connection failed or timed out. Check the sender's Sent folder before retrying: delivery may have completed without confirmation.";
+    } else if (failure.responseCode) {
+      message = `The email provider rejected this request (SMTP ${failure.responseCode}). Check server logs for the provider's reason before retrying.`;
+    }
     return NextResponse.json({
       success: false,
-      message: process.env.NODE_ENV === "development" ? `Unable to process message: ${String(error)}` : "Unable to process the participant message.",
+      message,
     }, { status: 500 });
   }
 }
