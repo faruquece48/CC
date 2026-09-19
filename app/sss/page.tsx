@@ -1,18 +1,18 @@
 import { Award, CalendarDays, Cpu, MapPin, PackageCheck, Presentation, ShieldCheck, Sparkles, Trophy, UtensilsCrossed, Users, Wrench } from "lucide-react";
 
 const morning = [
-  { time: "8:00 AM — 9:00 AM", title: "Kit Collection for Remaining Participants & Check-in", place: "RUET Auditorium", icon: PackageCheck, color: "from-sky-500 to-cyan-400" },
+  { time: "8:00 AM — 9:00 AM", title: "Kit Collection & Check-in", place: "RUET Auditorium", icon: PackageCheck, color: "from-sky-500 to-cyan-400" },
   { time: "9:00 AM — 9:30 AM", title: "Inauguration Ceremony", place: "RUET Auditorium", icon: Sparkles, color: "from-amber-500 to-orange-400" },
   { time: "9:30 AM — 11:00 AM", title: "Technical Workshop Session", place: "RUET Auditorium", icon: Wrench, color: "from-violet-500 to-fuchsia-400" },
-  { time: "11:00 AM — 12:00 PM", title: "Sponsor Talk & Industry Insights", place: "RUET Auditorium", icon: Presentation, color: "from-emerald-500 to-teal-400" },
-  { time: "12:30 PM — 1:00 PM", title: "Lunch Collection & Midday Break", place: "RUET Auditorium", icon: UtensilsCrossed, color: "from-rose-500 to-pink-400" },
+  { time: "11:00 AM — 12:30 PM", title: "Sponsor Talk & Industry Insights", place: "RUET Auditorium", icon: Presentation, color: "from-emerald-500 to-teal-400" },
+  { time: "12:30 PM — 2:00 PM", title: "Lunch Collection & Midday Break", place: "RUET Auditorium", icon: UtensilsCrossed, color: "from-rose-500 to-pink-400" },
 ];
 
 const competitions = [
-  { time: "2:30 PM — 3:10 PM", title: "Truss Combat", icon: Wrench },
-  { time: "3:30 PM — 4:10 PM", title: "CAD Expert", icon: Cpu },
-  { time: "4:30 PM — 5:10 PM", title: "Mechamind", icon: Sparkles },
-  { time: "5:30 PM — 6:10 PM", title: "Management Maestro", icon: Users },
+  { time: "2:00 PM — 6:00 PM", title: "Truss Combat", icon: Wrench },
+  { time: "2:00 PM — 2:40 PM", title: "CAD Expert", icon: Cpu },
+  { time: "3:00 PM — 3:40 PM", title: "Mechamind", icon: Sparkles },
+  { time: "4:00 PM — 4:40 PM", title: "Management Maestro", icon: Users },
 ];
 
 export default function SchedulePage() {
@@ -30,7 +30,7 @@ export default function SchedulePage() {
       </section>
 
       <section className="relative z-10 mx-auto mt-8 max-w-6xl px-4 pb-20 md:mt-10 md:px-8">
-        <article className="mt-6 flex flex-col items-start justify-between gap-5 rounded-[2rem] border border-dashed border-sky-500/40 bg-sky-50 p-7 sm:flex-row sm:items-center md:p-9"><div className="flex items-center gap-4"><div className="rounded-2xl bg-white p-4 text-sky-700 shadow-sm"><PackageCheck size={26} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-sky-600">Pre-event collection</p><h2 className="mt-1 text-2xl font-extrabold text-[#073f37]">Kit Collection &amp; Participant Check-in</h2></div></div><div className="text-left sm:text-right"><p className="text-2xl font-extrabold text-[#073f37]">02 October 2026</p><p className="mt-1 text-sm font-medium text-slate-500">Friday · 5:30 PM — 7:30 PM · Department of BECM</p></div></article>
+        <article className="mt-6 flex flex-col items-start justify-between gap-5 rounded-[2rem] border border-dashed border-sky-500/40 bg-sky-50 p-7 sm:flex-row sm:items-center md:p-9"><div className="flex items-center gap-4"><div className="rounded-2xl bg-white p-4 text-sky-700 shadow-sm"><PackageCheck size={26} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-sky-600">Pre-event collection</p><h2 className="mt-1 text-2xl font-extrabold text-[#073f37]">Kit Collection</h2></div></div><div className="text-left sm:text-right"><p className="text-2xl font-extrabold text-[#073f37]">02 October 2026</p><p className="mt-1 text-sm font-medium text-slate-500">Friday · 5:00 PM — 6:00 PM · Department of BECM</p></div></article>
 
         <div className="my-6 flex flex-col items-center justify-between gap-3 rounded-2xl bg-[#073f37] px-6 py-5 text-white shadow-lg sm:flex-row">
           <span className="text-base font-extrabold uppercase tracking-[0.28em] text-teal-200">Official Event Day</span>
@@ -54,7 +54,7 @@ export default function SchedulePage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[.82fr_1.18fr]">
           <article className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#102e5a] to-[#2855a0] p-7 text-white shadow-xl md:p-9">
             <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border-[28px] border-white/5" />
-            <div className="relative"><div className="mb-10 flex items-start justify-between"><div className="rounded-2xl bg-white/15 p-4"><Presentation size={28} /></div><span className="rounded-full bg-cyan-300 px-3 py-1.5 text-xs font-extrabold uppercase tracking-widest text-blue-950">Parallel Session</span></div><p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-300">9:30 AM — 12:30 PM</p><h2 className="mt-3 text-3xl font-extrabold">Poster Presentation</h2><p className="mt-4 flex items-center gap-2 text-white/70"><MapPin size={17} /> RUET Auditorium</p><p className="mt-8 border-t border-white/15 pt-6 text-sm leading-6 text-white/60">Runs alongside the workshop and sponsor talk.</p></div>
+            <div className="relative"><div className="mb-10 flex items-start justify-between"><div className="rounded-2xl bg-white/15 p-4"><Presentation size={28} /></div><span className="rounded-full bg-cyan-300 px-3 py-1.5 text-xs font-extrabold uppercase tracking-widest text-blue-950">Parallel Session</span></div><p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-300">9:30 AM — 12:30 PM</p><h2 className="mt-3 text-3xl font-extrabold">Poster Presentation</h2><p className="mt-4 flex items-center gap-2 text-white/70"><MapPin size={17} /> RUET Auditorium</p></div>
           </article>
           <div className="rounded-[2rem] border border-slate-200 bg-[#eaf1ef] p-6 md:p-8">
             <div className="mb-6 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.25em] text-orange-600">Afternoon Arena</p><h2 className="mt-2 text-3xl font-extrabold text-[#073f37]">Competition rounds</h2></div><Trophy className="hidden text-orange-500 sm:block" size={36} /></div>
@@ -62,7 +62,7 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        <article className="relative mt-6 overflow-hidden rounded-[2rem] bg-[#f5b72e] p-7 text-[#173b35] shadow-xl md:p-10"><div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle,rgba(7,63,55,.14)_2px,transparent_2px)] [background-size:18px_18px] md:block" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div className="flex items-center gap-5"><div className="rounded-2xl bg-[#073f37] p-4 text-amber-300"><Award size={32} /></div><div><p className="text-xs font-extrabold uppercase tracking-[0.2em]">Grand Finale</p><h2 className="mt-1 text-2xl font-extrabold md:text-3xl">Prize Giving & Closing Ceremony</h2><p className="mt-2 flex items-center gap-1.5 text-sm font-semibold opacity-70"><MapPin size={15} /> RUET Auditorium</p></div></div><div className="rounded-2xl bg-white/55 px-6 py-4 text-center backdrop-blur"><p className="text-xs font-bold uppercase tracking-widest opacity-60">Evening</p><p className="mt-1 text-xl font-extrabold">7:00 PM — 8:00 PM</p></div></div></article>
+        <article className="relative mt-6 overflow-hidden rounded-[2rem] bg-[#f5b72e] p-7 text-[#173b35] shadow-xl md:p-10"><div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle,rgba(7,63,55,.14)_2px,transparent_2px)] [background-size:18px_18px] md:block" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div className="flex items-center gap-5"><div className="rounded-2xl bg-[#073f37] p-4 text-amber-300"><Award size={32} /></div><div><h2 className="mt-1 text-2xl font-extrabold md:text-3xl">Prize Giving & Closing Ceremony</h2><p className="mt-2 flex items-center gap-1.5 text-sm font-semibold opacity-70"><MapPin size={15} /> RUET Auditorium</p></div></div><div className="rounded-2xl bg-white/55 px-6 py-4 text-center backdrop-blur"><p className="text-xs font-bold uppercase tracking-widest opacity-60">Evening</p><p className="mt-1 text-xl font-extrabold">6:30 PM — 8:00 PM</p></div></div></article>
 
 
         <aside className="mt-6 flex items-start gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 text-left shadow-sm md:px-7" aria-label="Schedule notice">

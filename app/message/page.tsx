@@ -3,6 +3,7 @@
 import { Database, Loader2, Mail, Search, Send, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
+import { buildParticipantMessageEmail } from "@/lib/participantMessageEmail";
 
 type Participant = {
   registration_id: number;
@@ -36,14 +37,15 @@ export default function ParticipantMessagePage() {
   const [individualScope, setIndividualScope] = useState<IndividualScope>("all");
   const [selectedIndividual, setSelectedIndividual] = useState("");
   const [search, setSearch] = useState("");
+  const [includeSchedule, setIncludeSchedule] = useState(true);
   const [subject, setSubject] = useState("Important Schedule Update — Construct Carnival 2.0 Rescheduled");
   const [message, setMessage] = useState(`We sincerely apologize for the change to the event schedule.
 
 Due to the NESCO job recruitment examination being held on 2 October 2026, Construct Carnival 2.0 has been rescheduled to Saturday, 3 October 2026. This adjustment has been made to avoid a conflict and ensure that all participants can attend the event comfortably.
 
-Kit Collection & Participant Check-in:
-• Friday, 2 October 2026, 5:30 PM–7:30 PM at the Department of BECM
-• Saturday, 3 October 2026, 8:00 AM–9:00 AM at RUET Auditorium for participants who cannot collect their kits on the first day
+Kit Collection:
+• Friday, 2 October 2026, 5:00 PM–6:00 PM at the Department of BECM
+• Saturday, 3 October 2026, 8:00 AM–9:00 AM at RUET Auditorium for participants who cannot collect their kits on the first day; participant check-in will also take place during this session
 
 The main event program will take place on Saturday, 3 October 2026. We regret any inconvenience this change may cause and sincerely appreciate your understanding and cooperation.
 
@@ -138,6 +140,7 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
             email,
             subject: subject.trim(),
             message: message.trim(),
+            includeSchedule,
           }),
         });
         const result = await response.json().catch(() => null);
@@ -233,6 +236,15 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
               <div className="flex items-center justify-between"><label className="font-bold text-slate-700">Message</label><span className="text-xs text-slate-500">{message.length}/10,000</span></div>
               <textarea value={message} maxLength={10_000} onChange={(event) => setMessage(event.target.value)} rows={9} placeholder="Write the participant message…" className="resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-600" />
             </div>
+
+            <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700">
+              <input type="checkbox" checked={includeSchedule} onChange={(event) => setIncludeSchedule(event.target.checked)} />
+              Include the full event schedule with this message
+            </label>
+            <details className="mt-4 rounded-2xl border border-slate-200 p-4">
+              <summary className="cursor-pointer font-bold text-slate-700">Preview email</summary>
+              <iframe title="Participant email preview" sandbox="" srcDoc={buildParticipantMessageEmail("Participant", subject, message, includeSchedule).html} className="mt-4 h-[720px] w-full rounded-xl border border-slate-200" />
+            </details>
 
             <div className="mt-6 flex flex-col justify-between gap-4 rounded-2xl bg-slate-50 p-4 sm:flex-row sm:items-center">
               <div className="flex items-center gap-2 font-bold text-slate-700"><Users size={19} /> {recipientEmails.length} recipient{recipientEmails.length === 1 ? "" : "s"}</div>

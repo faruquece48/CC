@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { sql } from "@vercel/postgres";
 import { formatParticipantName } from "@/lib/participantName";
+import { buildParticipantMessageEmail, locationPinBase64 } from "@/lib/participantMessageEmail";
 
 function authorized(password: unknown, request: Request) {
   const hostname = new URL(request.url).hostname;
@@ -19,12 +20,6 @@ function authorized(password: unknown, request: Request) {
 
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, "") : "";
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
-  })[character] || character);
 }
 
 async function paidParticipants() {
@@ -120,7 +115,7 @@ export async function POST(request: Request) {
     }
 
     const participantName = formatParticipantName(String(participant.name || "Participant"));
-    const safeMessage = escapeHtml(message).replace(/\r?\n/g, "<br>");
+    const emailContent = buildParticipantMessageEmail(participantName, subject, message, body.includeSchedule === true, "cid:location-pin");
     const transporter = nodemailer.createTransport({
       service: "gmail",
       connectionTimeout: 10_000,
@@ -132,8 +127,13 @@ export async function POST(request: Request) {
       from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
       to: participant.email,
       subject,
-      text: `Dear ${participantName},\n\n${message}\n\nBest regards,\nConstruct Carnival 2.0`,
-      html: `<div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;font-size:15px;line-height:1.7"><p><strong>Dear ${escapeHtml(participantName)},</strong></p><p>${safeMessage}</p><p style="margin-top:28px"><strong>Best regards,</strong><br>Construct Carnival 2.0<br>Department of BECM, RUET</p></div>`,
+      ...emailContent,
+      attachments: body.includeSchedule === true ? [{
+        filename: "location-pin.png",
+        content: Buffer.from(locationPinBase64, "base64"),
+        contentType: "image/png",
+        cid: "location-pin",
+      }] : [],
     });
     return NextResponse.json({ success: true, message: `Message sent to ${participant.email}.` });
   } catch (error) {
