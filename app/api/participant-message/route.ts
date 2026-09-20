@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { sql } from "@vercel/postgres";
+import { isMessageBatch } from "@/lib/messageBatch";
+import { claimMessageRecipient, finishMessageRecipient, importMessageBatch, loadMessageBatch, validBatchId } from "@/lib/messageBatchStore";
 import { formatParticipantName } from "@/lib/participantName";
 import { buildParticipantMessageEmail, locationPinBase64 } from "@/lib/participantMessageEmail";
 
@@ -52,12 +54,32 @@ async function paidParticipants() {
 }
 
 export async function POST(request: Request) {
+  let claimed: { id: string; email: string } | null = null;
+  let accepted = false;
   try {
     const body = await request.json();
     if (!authorized(body.password, request)) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
+    if (body.action === "load-batch") {
+      if (body.batchId !== undefined && !validBatchId(body.batchId)) return NextResponse.json({ message: "Invalid batch ID." }, { status: 400 });
+      return NextResponse.json({ success: true, batch: await loadMessageBatch(body.batchId) }, { headers: { "Cache-Control": "no-store" } });
+    }
+    if (body.action === "save-batch") {
+      if (!isMessageBatch(body.batch) || !validBatchId(body.batch.id)) return NextResponse.json({ message: "Invalid saved batch." }, { status: 400 });
+      return NextResponse.json({ success: true, batch: await importMessageBatch(body.batch) }, { headers: { "Cache-Control": "no-store" } });
+    }
+    if (body.action === "resolve-batch") {
+      if (!validBatchId(body.batchId) || typeof body.email !== "string" || typeof body.sent !== "boolean") return NextResponse.json({ message: "Invalid delivery review." }, { status: 400 });
+      const batch = await loadMessageBatch(body.batchId);
+      if (!batch || batch.sendingEmail !== body.email) return NextResponse.json({ message: "Reload the batch before reviewing this delivery." }, { status: 409 });
+      try {
+        return NextResponse.json({ success: true, batch: await finishMessageRecipient(body.batchId, body.email, body.sent, true) });
+      } catch {
+        return NextResponse.json({ message: "Delivery is still in progress or was already reviewed. Wait five minutes, then reload the online batch." }, { status: 409 });
+      }
+    }
     if (body.action === "list") {
       const [participantsResult, teamsResult, individualResult] = await Promise.all([
         paidParticipants(),
@@ -101,9 +123,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Email service is not configured." }, { status: 503 });
     }
 
+    if (!validBatchId(body.batchId)) return NextResponse.json({ message: "Save this batch online before sending. Refresh the message page if necessary." }, { status: 400 });
+    const batch = await loadMessageBatch(body.batchId);
+    if (!batch) return NextResponse.json({ message: "Saved batch not found." }, { status: 404 });
     const normalizedEmail = normalizeEmail(body.email);
-    const subject = typeof body.subject === "string" ? body.subject.trim() : "";
-    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const subject = batch.subject;
+    const message = batch.message;
+    if (!batch.remaining.includes(normalizedEmail)) return NextResponse.json({ success: true, batch, message: "Recipient is no longer pending." });
     if (!normalizedEmail || !subject || !message || subject.length > 200 || message.length > 10_000) {
       return NextResponse.json({ success: false, message: "A valid recipient, subject, and message are required." }, { status: 400 });
     }
@@ -115,7 +141,7 @@ export async function POST(request: Request) {
     }
 
     const participantName = formatParticipantName(String(participant.name || "Participant"));
-    const emailContent = buildParticipantMessageEmail(participantName, subject, message, body.includeSchedule === true, "cid:location-pin");
+    const emailContent = buildParticipantMessageEmail(participantName, subject, message, batch.includeSchedule, "cid:location-pin");
     const transporter = nodemailer.createTransport({
       service: "gmail",
       connectionTimeout: 10_000,
@@ -123,22 +149,30 @@ export async function POST(request: Request) {
       socketTimeout: 20_000,
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
     });
+    if (!await claimMessageRecipient(body.batchId, normalizedEmail)) return NextResponse.json({ message: "This batch has a delivery in progress or awaiting review. Load the online batch before retrying." }, { status: 409 });
+    claimed = { id: body.batchId, email: normalizedEmail };
     await transporter.sendMail({
       from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
       to: participant.email,
       subject,
       ...emailContent,
-      attachments: body.includeSchedule === true ? [{
+      attachments: batch.includeSchedule ? [{
         filename: "location-pin.png",
         content: Buffer.from(locationPinBase64, "base64"),
         contentType: "image/png",
         cid: "location-pin",
       }] : [],
     });
-    return NextResponse.json({ success: true, message: `Message sent to ${participant.email}.` });
+    accepted = true;
+    const updatedBatch = await finishMessageRecipient(body.batchId, normalizedEmail, true);
+    return NextResponse.json({ success: true, batch: updatedBatch, message: `Message sent to ${participant.email}.` });
   } catch (error) {
     console.error("PARTICIPANT MESSAGE ERROR:", error);
     const failure = error as { code?: string; responseCode?: number; response?: string };
+    // Ambiguous deliveries stay locked until reviewed to avoid duplicate emails.
+    if (claimed && !accepted && (failure.code === "EAUTH" || (failure.responseCode || 0) >= 400)) {
+      await finishMessageRecipient(claimed.id, claimed.email, false).catch(() => undefined);
+    }
     let message = "Unable to process the participant message. Check the server logs for database or email-service errors.";
     if (/daily|quota|sending limit|rate limit|too many/i.test(failure.response || "")) {
       message = "The email provider reports a sending limit. Wait for the limit to reset before retrying remaining recipients.";

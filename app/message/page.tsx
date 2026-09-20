@@ -4,6 +4,7 @@ import { Database, Loader2, Mail, Search, Send, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
 import { buildParticipantMessageEmail } from "@/lib/participantMessageEmail";
+import { isMessageBatch, type MessageBatch } from "@/lib/messageBatch";
 
 type Participant = {
   registration_id: number;
@@ -24,7 +25,6 @@ type Audience = "all" | "team" | "individual";
 type TeamScope = "one" | "truss" | "poster" | "both";
 type IndividualScope = "all" | "one";
 
-type MessageBatch = { subject: string; message: string; includeSchedule: boolean; remaining: string[]; sent: number };
 const batchStorageKey = "participant-message-pending-batch";
 
 export default function ParticipantMessagePage() {
@@ -57,6 +57,8 @@ Note: For Truss Combat participants who are also registered in other segments, t
 We look forward to welcoming you to Construct Carnival 2.0.`);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [onlineBatchId, setOnlineBatchId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [pendingBatch, setPendingBatch] = useState<MessageBatch | null>(null);
   const [previouslySentEmails, setPreviouslySentEmails] = useState("");
@@ -64,15 +66,59 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(batchStorageKey) || "null");
-      if (saved && typeof saved.subject === "string" && typeof saved.message === "string"
-        && typeof saved.includeSchedule === "boolean" && Number.isInteger(saved.sent)
-        && Array.isArray(saved.remaining) && saved.remaining.every((email: unknown) => typeof email === "string")) setPendingBatch(saved);
+      if (isMessageBatch(saved)) setPendingBatch(saved);
     } catch { /* A damaged or unavailable saved batch must not block the page. */ }
   }, []);
 
   const saveBatch = (batch: MessageBatch) => {
     setPendingBatch(batch);
     try { localStorage.setItem(batchStorageKey, JSON.stringify(batch)); } catch { /* Keep retry progress in memory if storage is unavailable. */ }
+  };
+
+  const batchRequest = async (body: Record<string, unknown>) => {
+    const response = await fetch("/api/participant-message", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, password: adminPassword }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(result?.message || "Unable to access the online batch.");
+    return result.batch as MessageBatch | null;
+  };
+
+  const uploadBatch = async (batch: MessageBatch) => {
+    const identified = { ...batch, id: batch.id || crypto.randomUUID() };
+    saveBatch(identified); // Preserve the same ID if the upload response is interrupted.
+    const saved = await batchRequest({ action: "save-batch", batch: identified });
+    if (!saved) throw new Error("The server did not return the saved batch.");
+    saveBatch(saved);
+    setOnlineBatchId(saved.id!);
+    return saved;
+  };
+
+  const syncBatch = async (upload: boolean) => {
+    if (sending || syncing || !adminPassword) return;
+    if (!upload && pendingBatch && onlineBatchId !== pendingBatch.id
+      && !window.confirm("Save this browser's batch online first if you need to keep it. Loading an online batch replaces the local copy. Continue?")) return;
+    setSyncing(true);
+    try {
+      const batch = upload && pendingBatch ? await uploadBatch(pendingBatch)
+        : await batchRequest({ action: "load-batch" });
+      if (batch) { saveBatch(batch); setOnlineBatchId(batch.id!); }
+      setStatus(batch ? `Batch saved online: ${batch.sent} sent; ${batch.remaining.length} remaining. No emails were sent.` : "No online batch found. Save this browser's batch online first.");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to sync batch."); }
+    finally { setSyncing(false); }
+  };
+
+  const reviewDelivery = async (sent: boolean) => {
+    if (!pendingBatch?.sendingEmail || sending || syncing) return;
+    if (!window.confirm(`Stop sending in other browsers and check the sender's Sent folder. Confirm that the email to ${pendingBatch.sendingEmail} ${sent ? "was sent" : "was NOT sent"}?`)) return;
+    setSyncing(true);
+    try {
+      const batch = await batchRequest({ action: "resolve-batch", batchId: pendingBatch.id, email: pendingBatch.sendingEmail, sent });
+      if (batch) saveBatch(batch);
+      setStatus("Delivery review saved online.");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to save review."); }
+    finally { setSyncing(false); }
   };
 
   const participantByEmail = useMemo(
@@ -130,9 +176,9 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
   };
 
   const sendMessages = async (resume = false, skipFirst = 0) => {
-    if (sending || !adminPassword) return;
+    if (sending || syncing || !adminPassword) return;
     if (!Number.isInteger(skipFirst) || skipFirst < 0 || (!resume && skipFirst >= recipientEmails.length)) return;
-    const batch: MessageBatch = resume && pendingBatch
+    let batch: MessageBatch = resume && pendingBatch
       ? { ...pendingBatch, remaining: [...pendingBatch.remaining] }
       : { subject: subject.trim(), message: message.trim(), includeSchedule, remaining: recipientEmails.slice(skipFirst).filter((email) => !previouslySentEmails.toLowerCase().split(/[\s,;]+/).includes(email)), sent: 0 };
     if (!batch.subject || !batch.message || !batch.remaining.length) return;
@@ -155,7 +201,14 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
         : `Send this message individually to ${batch.remaining.length} recipient(s) in ${label}?`)) return;
 
     setSending(true);
-    saveBatch(batch);
+    try {
+      batch = await uploadBatch(batch);
+      if (batch.sendingEmail) throw new Error(`Delivery to ${batch.sendingEmail} is in progress or needs review. Check the sender's Sent folder before retrying.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save batch online.");
+      setSending(false);
+      return;
+    }
     const targets = [...batch.remaining];
     let sent = 0;
     let failed = 0;
@@ -171,6 +224,7 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
           body: JSON.stringify({
             password: adminPassword,
             action: "send",
+            batchId: batch.id,
             email,
             subject: batch.subject,
             message: batch.message,
@@ -181,8 +235,8 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
         if (!response.ok) throw new Error(result?.message || `Unable to message ${email}.`);
         sent += 1;
         consecutiveFailures = 0;
-        batch.sent += 1;
-        batch.remaining = batch.remaining.filter((recipient) => recipient !== email);
+        if (!isMessageBatch(result.batch)) throw new Error("Delivery progress could not be confirmed. Load the online batch before retrying.");
+        batch = result.batch;
         saveBatch({ ...batch, remaining: [...batch.remaining] });
       } catch (error) {
         failed += 1;
@@ -194,6 +248,10 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
         }
       }
     }
+    try {
+      const latest = await batchRequest({ action: "load-batch", batchId: batch.id });
+      if (latest) { batch = latest; saveBatch(latest); }
+    } catch { errors.add("Could not refresh online progress. Load the online batch before retrying."); }
     const details = errors.size ? ` ${Array.from(errors).join(" ")}` : "";
     setStatus(`${sent} sent this attempt, ${failed} failed; ${batch.remaining.length} remaining. ${batch.sent} sent in this batch.${details}`);
     setSending(false);
@@ -312,9 +370,15 @@ We look forward to welcoming you to Construct Carnival 2.0.`);
           </>
         )}
 
-        {!!pendingBatch?.remaining.length && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button type="button" onClick={() => syncBatch(false)} disabled={sending || syncing || !adminPassword} className="rounded-xl bg-slate-700 px-5 py-3 font-bold text-white disabled:opacity-50">Load online batch</button>
+          {pendingBatch && <button type="button" onClick={() => syncBatch(true)} disabled={sending || syncing || !adminPassword} className="rounded-xl bg-emerald-800 px-5 py-3 font-bold text-white disabled:opacity-50">{syncing ? "Saving / loading…" : "Save this batch online"}</button>}
+        </div>
+        {pendingBatch && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="mb-2 text-sm font-bold">{onlineBatchId === pendingBatch.id ? "Saved online — available from other browsers" : "Browser copy — save online to share progress"}</p>
           <p className="text-sm text-slate-700">Saved batch: {pendingBatch.subject}. {pendingBatch.sent} sent; {pendingBatch.remaining.length} remaining. Retry uses the saved message and recipient list.</p>
-          <button type="button" onClick={() => sendMessages(true)} disabled={sending || !adminPassword} className="mt-3 rounded-xl bg-emerald-800 px-5 py-3 font-bold text-white disabled:opacity-50">Send remaining only ({pendingBatch.remaining.length})</button>
+          {pendingBatch.sendingEmail && <div className="mt-3 text-sm"><p>Delivery to {pendingBatch.sendingEmail} is in progress or needs review. If sending has stopped, check the sender’s Sent folder before continuing.</p><div className="mt-2 flex gap-3"><button disabled={sending || syncing} onClick={() => reviewDelivery(true)} className="rounded border p-2">Confirmed sent</button><button disabled={sending || syncing} onClick={() => reviewDelivery(false)} className="rounded border p-2">Confirmed not sent</button></div></div>}
+          <button type="button" onClick={() => sendMessages(true)} disabled={sending || syncing || !adminPassword || !pendingBatch.remaining.length || !!pendingBatch.sendingEmail} className="mt-3 rounded-xl bg-emerald-800 px-5 py-3 font-bold text-white disabled:opacity-50">Send remaining only ({pendingBatch.remaining.length})</button>
         </div>}
         {status && <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">{status}</p>}
       </section>
