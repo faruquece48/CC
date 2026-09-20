@@ -21,6 +21,7 @@ const faqs = [
   ["How do I know whether my registration was successful?", "After successful payment, you will receive a confirmation email containing your registration and payment information."],
   ["What happens if payment fails?", "The registration is not confirmed until payment succeeds. Return to the Registration page and submit the registration again."],
   ["Are registration fees refundable?", "Registration fees are generally non-refundable. Any exceptional refund or cancellation decision must be confirmed with the organizing committee."],
+  ["Will my payment be refunded if the event is rescheduled?", "No. If the event is rescheduled, no payment will be refunded. Your registration will remain valid for the rescheduled event date."],
   ["Where can I find the event rules?", "Rulebooks are available from the relevant event page. Review the rules, eligibility criteria, submission requirements, and deadlines before registering."],
   ["Whom should I contact for registration assistance?", "Use the Contact page to reach the organizing committee. Include your registered email and transaction ID when reporting a payment or registration issue."]
 ] as const;
