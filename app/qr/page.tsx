@@ -12,15 +12,18 @@ type Participant = {
 };
 
 type QrPreview = { kitQr: string; lunchQr: string };
+type QrDisplay = "kit" | "lunch" | "both";
 type SendRecord = { status: "sent" | "failed" | "pending"; updatedAt: string; error?: string };
 type SendHistory = Record<string, SendRecord>;
 const historyKey = "participant-qr-email-history-v1";
+const passwordKey = "participant-qr-admin-password-v1";
 const participantKey = (participant: Participant) => `${participant.registration_id}:${participant.normalized_email}`;
 
 export default function ParticipantQrPage() {
   const [adminPassword, setAdminPassword] = useState(process.env.NODE_ENV === "development" ? "local-development" : "");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [search, setSearch] = useState("");
+  const [qrDisplay, setQrDisplay] = useState<QrDisplay>("both");
   const [slotIndex, setSlotIndex] = useState(0);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
@@ -33,6 +36,8 @@ export default function ParticipantQrPage() {
   const [storageWarning, setStorageWarning] = useState("");
   useEffect(() => {
     try {
+      const savedPassword = localStorage.getItem(passwordKey);
+      if (savedPassword !== null) setAdminPassword(savedPassword);
       const saved = JSON.parse(localStorage.getItem(historyKey) || "{}");
       if (!saved || typeof saved !== "object" || Array.isArray(saved)) return;
       setSendHistory(Object.fromEntries(Object.entries(saved).filter(([, value]) => {
@@ -48,15 +53,15 @@ export default function ParticipantQrPage() {
   };
 
   const slotParticipants = useMemo(() => participants.slice(slotIndex * 100, (slotIndex + 1) * 100), [participants, slotIndex]);
-  const selectedParticipant = slotParticipants.find((participant) => participant.normalized_email === selectedEmail);
+  const selectedParticipant = participants.find((participant) => participant.normalized_email === selectedEmail);
   const visibleParticipants = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return slotParticipants;
-    return slotParticipants.filter((participant) =>
+    return participants.filter((participant) =>
       String(participant.registration_id).includes(query)
       || participant.name.toLowerCase().includes(query)
       || participant.email.toLowerCase().includes(query));
-  }, [slotParticipants, search]);
+  }, [participants, slotParticipants, search]);
   const selectedRecipients = useMemo(() => {
     const selected = new Set(selectedEmails);
     return slotParticipants.filter((participant) => selected.has(participant.normalized_email));
@@ -156,7 +161,7 @@ export default function ParticipantQrPage() {
     <section className="mx-auto max-w-5xl rounded-3xl border border-emerald-200 bg-white p-6 shadow-xl sm:p-8">
       <div className="flex items-start gap-4"><div className="rounded-2xl bg-[#073f37] p-3 text-amber-300"><QrCode size={28} /></div><div><p className="text-xs font-extrabold uppercase tracking-[.22em] text-emerald-700">All unique paid participants</p><h1 className="mt-1 text-3xl font-extrabold text-[#073f37]">Kit & Lunch QR Codes</h1><p className="mt-2 text-sm text-slate-600">Generate and email a distinct signed code for each collection purpose.</p></div></div>
       <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900"><strong>Participant notice:</strong> Do not share or forward QR codes. Each kit and lunch code is personal and can be accepted only once.</div>
-      <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]"><input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} placeholder="Admin password" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-600" /><button type="button" onClick={loadParticipants} disabled={!adminPassword || loading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#073f37] px-5 py-3 font-bold text-white disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={18} /> : <Database size={18} />} Load participants</button></div>
+      <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]"><input type="password" value={adminPassword} onChange={(event) => { const value = event.target.value; setAdminPassword(value); try { localStorage.setItem(passwordKey, value); } catch { setStorageWarning("The admin password could not be saved in this browser."); } }} placeholder="Admin password" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-600" /><button type="button" onClick={loadParticipants} disabled={!adminPassword || loading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#073f37] px-5 py-3 font-bold text-white disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={18} /> : <Database size={18} />} Load participants</button></div>
 
       {participants.length > 0 && <>
         <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
@@ -171,6 +176,12 @@ export default function ParticipantQrPage() {
           </label>
           <label className="flex items-center gap-2 text-sm font-bold text-sky-900"><Search size={17} /> Search by registration ID, name, or email</label>
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Enter registration ID…" className="mt-2 w-full rounded-xl border border-sky-200 bg-white px-4 py-3 outline-none focus:border-sky-600" />
+          <fieldset className="mt-4">
+            <legend className="text-sm font-bold text-sky-900">QR code to view</legend>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {([["kit", "Kit only"], ["lunch", "Lunch only"], ["both", "Both"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setQrDisplay(value)} aria-pressed={qrDisplay === value} className={`rounded-xl border px-3 py-2 text-sm font-bold transition ${qrDisplay === value ? "border-sky-700 bg-sky-700 text-white" : "border-sky-200 bg-white text-sky-900 hover:border-sky-400"}`}>{label}</button>)}
+            </div>
+          </fieldset>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
             <label className="inline-flex items-center gap-2 font-bold text-sky-900"><input type="checkbox" checked={slotParticipants.length > 0 && selectedRecipients.length === slotParticipants.length} ref={(input) => { if (input) input.indeterminate = selectedRecipients.length > 0 && selectedRecipients.length < slotParticipants.length; }} onChange={(event) => setSelectedEmails((current) => event.target.checked ? Array.from(new Set([...current, ...slotParticipants.map((participant) => participant.normalized_email)])) : current.filter((email) => !slotParticipants.some((participant) => participant.normalized_email === email)))} className="h-5 w-5 accent-sky-700" /> Select all in this slot</label>
             <span className="font-bold text-sky-800">{selectedRecipients.length} of {slotParticipants.length} selected</span>
@@ -193,7 +204,7 @@ export default function ParticipantQrPage() {
       </>}
 
       {generating && <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 p-8 font-bold text-emerald-800"><Loader2 className="animate-spin" /> Generating QR codes…</div>}
-      {preview && selectedParticipant && <div className="mt-7"><h2 className="text-xl font-extrabold text-[#073f37]">Registration {selectedParticipant.registration_id} — {selectedParticipant.name}</h2><div className="mt-4 grid gap-5 sm:grid-cols-2">{([['kitQr', 'Kit Collection'], ['lunchQr', 'Lunch Collection']] as const).map(([key, label]) => <article key={key} className="rounded-2xl border border-slate-200 p-5 text-center"><h3 className="text-lg font-extrabold">{label}</h3><img src={preview[key]} alt={`${label} QR code`} className="mx-auto mt-3 w-full max-w-64" /><p className="mt-2 text-base font-extrabold text-slate-800">Registration ID: {selectedParticipant.registration_id}</p><a href={preview[key]} download={`${selectedParticipant.registration_id}-${key === 'kitQr' ? 'kit' : 'lunch'}-qr.png`} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-white"><Download size={16} /> Download</a></article>)}</div></div>}
+      {preview && selectedParticipant && <div className="mt-7"><h2 className="text-xl font-extrabold text-[#073f37]">Registration {selectedParticipant.registration_id} — {selectedParticipant.name}</h2><div className={`mt-4 grid gap-5 ${qrDisplay === "both" ? "sm:grid-cols-2" : "mx-auto max-w-md"}`}>{([['kitQr', 'Kit Collection'], ['lunchQr', 'Lunch Collection']] as const).filter(([key]) => qrDisplay === "both" || (qrDisplay === "kit" ? key === "kitQr" : key === "lunchQr")).map(([key, label]) => <article key={key} className="rounded-2xl border border-slate-200 p-5 text-center"><h3 className="text-lg font-extrabold">{label}</h3><img src={preview[key]} alt={`${label} QR code`} className="mx-auto mt-3 w-full max-w-64" /><p className="mt-2 text-base font-extrabold text-slate-800">Registration ID: {selectedParticipant.registration_id}</p><a href={preview[key]} download={`${selectedParticipant.registration_id}-${key === 'kitQr' ? 'kit' : 'lunch'}-qr.png`} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-white"><Download size={16} /> Download</a></article>)}</div></div>}
       {storageWarning && <p className="mt-4 text-sm text-amber-800">{storageWarning}</p>}
       {status && <p className="mt-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">{status}</p>}
     </section>
