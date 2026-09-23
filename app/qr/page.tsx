@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, Download, Loader2, Mail, QrCode, Search, Send } from "lucide-react";
+import { Database, Download, Eye, Loader2, Mail, QrCode, Search, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
 
@@ -30,6 +30,8 @@ export default function ParticipantQrPage() {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [preview, setPreview] = useState<QrPreview | null>(null);
+  const [emailPreview, setEmailPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [previewingEmail, setPreviewingEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
@@ -114,6 +116,18 @@ export default function ParticipantQrPage() {
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to generate QR codes.");
     } finally { setGenerating(false); }
+  };
+
+  const previewEmail = async () => {
+    if (!selectedParticipant || !adminPassword || previewingEmail) return;
+    setPreviewingEmail(true); setStatus("Generating email preview...");
+    try {
+      const response = await fetch("/api/participant-qr", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: adminPassword, action: "preview-email", registrationId: selectedParticipant.registration_id, email: selectedParticipant.normalized_email }) });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.message || "Unable to preview the email.");
+      setEmailPreview({ subject: result.subject, html: result.html }); setStatus("Email preview generated. No email was sent.");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to preview the email."); }
+    finally { setPreviewingEmail(false); }
   };
 
   const sendToParticipants = async (recipients: Participant[]) => {
@@ -207,9 +221,11 @@ export default function ParticipantQrPage() {
         <div className="mt-5 flex flex-wrap gap-3">
           <button type="button" onClick={() => sendToParticipants(remainingRecipients)} disabled={!remainingRecipients.length || sending || !adminPassword} className="rounded-xl bg-emerald-800 px-5 py-3 font-bold text-white disabled:opacity-50">Send remaining only ({remainingRecipients.length} selected)</button>
           <button type="button" onClick={() => sendToParticipants(selectedRecipients)} disabled={!selectedRecipients.length || sending} className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white disabled:opacity-50">{sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} Email selected {selectedRecipients.length}</button>
-          <button type="button" onClick={() => selectedParticipant && sendToParticipants([selectedParticipant])} disabled={!selectedParticipant || sending} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 font-bold text-white disabled:opacity-50"><Mail size={18} /> Email previewed participant</button>
+          <button type="button" onClick={previewEmail} disabled={!selectedParticipant || previewingEmail} className="inline-flex items-center gap-2 rounded-xl border border-sky-700 bg-white px-5 py-3 font-bold text-sky-800 disabled:opacity-50">{previewingEmail ? <Loader2 className="animate-spin" size={18} /> : <Eye size={18} />} Preview email</button><button type="button" onClick={() => selectedParticipant && sendToParticipants([selectedParticipant])} disabled={!selectedParticipant || sending} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 font-bold text-white disabled:opacity-50"><Mail size={18} /> Email previewed participant</button>
         </div>
       </>}
+
+      {emailPreview && <section className="mt-7 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-lg"><div className="flex flex-col gap-3 border-b bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[.18em] text-emerald-700">Email preview - not sent</p><p className="mt-1 text-sm font-bold text-slate-800">{emailPreview.subject}</p></div><button type="button" onClick={() => setEmailPreview(null)} className="w-fit rounded-lg border px-4 py-2 text-sm font-bold">Close preview</button></div><div className="bg-[#dfe9e6] p-3 sm:p-6"><div className="overflow-hidden rounded-lg" dangerouslySetInnerHTML={{ __html: emailPreview.html }} /></div></section>}
 
       {generating && <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 p-8 font-bold text-emerald-800"><Loader2 className="animate-spin" /> Generating QR codes…</div>}
       {preview && selectedParticipant && <div className="mt-7"><h2 className="text-xl font-extrabold text-[#073f37]">Registration {selectedParticipant.registration_id} — {selectedParticipant.name}</h2><div className={`mt-4 grid gap-5 ${qrDisplay === "both" ? "sm:grid-cols-2" : "mx-auto max-w-md"}`}>{([['kitQr', 'Kit Collection'], ['lunchQr', 'Lunch Collection']] as const).filter(([key]) => qrDisplay === "both" || (qrDisplay === "kit" ? key === "kitQr" : key === "lunchQr")).map(([key, label]) => <article key={key} className="rounded-2xl border border-slate-200 p-5 text-center"><h3 className="text-lg font-extrabold">{label}</h3><img src={preview[key]} alt={`${label} QR code`} className="mx-auto mt-3 w-full max-w-64" />{!preview.isAmbassador&&<><p className="mt-2 text-base font-extrabold text-slate-800">Registration ID: {selectedParticipant.registration_id}</p><p className="mt-1 text-xs font-semibold text-slate-500">Email ID: {selectedParticipant.email}</p></>}<a href={preview[key]} download={`${selectedParticipant.registration_id}-${key === 'kitQr' ? 'kit' : 'lunch'}-qr.png`} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-white"><Download size={16} /> Download</a></article>)}</div></div>}

@@ -7,6 +7,7 @@ import { ambassadors } from "@/lib/ambassadors";
 import { sql } from "@vercel/postgres";
 import { formatParticipantName } from "@/lib/participantName";
 import { createParticipantQrToken, type QrPurpose } from "@/lib/participantQr";
+import { participantQrEmailHtml, participantQrEmailSubject, participantQrEmailText } from "@/lib/participantQrEmail";
 
 function authorized(password: unknown, request: Request) {
   const hostname = new URL(request.url).hostname;
@@ -32,6 +33,7 @@ async function individualParticipants() {
   return sql`
     WITH paid_people AS (
       SELECT single_data.registration_id, single_data.name, single_data.email,
+        COALESCE(single_data.phonenumber, '') AS phonenumber,
         LOWER(REGEXP_REPLACE(TRIM(single_data.email), '\s+', '', 'g')) AS normalized_email,
         single_data.created_at
       FROM singleRegistrationData AS single_data
@@ -39,6 +41,7 @@ async function individualParticipants() {
       WHERE master.ispaid = TRUE AND TRIM(single_data.email) <> ''
       UNION ALL
       SELECT team_data.registration_id, member->>'name', member->>'email',
+        COALESCE(member->>'phoneNumber', '') AS phonenumber,
         LOWER(REGEXP_REPLACE(TRIM(member->>'email'), '\s+', '', 'g')),
         team_data.created_at
       FROM teamRegistrationData AS team_data
@@ -49,7 +52,8 @@ async function individualParticipants() {
     SELECT normalized_email,
       (ARRAY_AGG(registration_id ORDER BY created_at DESC, registration_id DESC))[1] AS registration_id,
       (ARRAY_AGG(name ORDER BY created_at DESC, registration_id DESC))[1] AS name,
-      (ARRAY_AGG(email ORDER BY created_at DESC, registration_id DESC))[1] AS email
+      (ARRAY_AGG(email ORDER BY created_at DESC, registration_id DESC))[1] AS email,
+      (ARRAY_AGG(phonenumber ORDER BY created_at DESC, registration_id DESC))[1] AS phonenumber
     FROM paid_people
     GROUP BY normalized_email
     ORDER BY registration_id
@@ -104,7 +108,7 @@ export async function POST(request: Request) {
     const registrationId: number | string = ambassadorRecord ? ambassadorRecord.code : Number(body.registrationId);
     const participants = await individualParticipants();
     const participant = ambassadorRecord
-      ? { registration_id: ambassadorRecord.code, name: ambassadorRecord.name, email: ambassadorRecord.email, normalized_email: normalizeEmail(ambassadorRecord.email) }
+      ? { registration_id: ambassadorRecord.code, name: ambassadorRecord.name, email: ambassadorRecord.email, phonenumber: "", normalized_email: normalizeEmail(ambassadorRecord.email) }
       : participants.rows.find((row) =>
           Number(row.registration_id) === registrationId
           && (!body.email || row.normalized_email === normalizeEmail(body.email)));
@@ -119,6 +123,12 @@ export async function POST(request: Request) {
       qrPng(kitToken, registrationId, "kit", ambassador),
       qrPng(lunchToken, registrationId, "lunch", ambassador),
     ]);
+
+    const name = formatParticipantName(String(participant.name || "Participant"));
+    const emailData = { name, registrationId, email: String(participant.email), phone: String(participant.phonenumber || "Not provided"), ambassador };
+    if (body.action === "preview-email") {
+      return NextResponse.json({ success: true, subject: participantQrEmailSubject, html: participantQrEmailHtml(emailData) }, { headers: { "Cache-Control": "no-store" } });
+    }
 
     if (body.action === "generate") {
       return NextResponse.json({
@@ -138,7 +148,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Email service is not configured." }, { status: 503 });
     }
 
-    const name = formatParticipantName(String(participant.name || "Participant"));
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       connectionTimeout: 10_000,
@@ -149,9 +159,9 @@ export async function POST(request: Request) {
     await transporter.sendMail({
       from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
       to: participant.email,
-      subject: "Your Kit Collection and Lunch QR Codes — Construct Carnival 2.0",
-      text: `Dear ${name},\n\nYour unique QR codes for kit collection and lunch are attached. Please present the correct code at each collection point. Each code is intended only for registration ID ${registrationId}${ambassador ? " (Campus Ambassador)" : ""}. Email ID: ${participant.email}. Do not share, forward, or allow anyone else to use these codes. Each code works only once, and sharing it may prevent you from collecting your own kit or lunch.\n\nBest regards,\nConstruct Carnival 2.0`,
-      html: `<div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;line-height:1.7"><p><strong>Dear ${name},</strong></p><p>Your unique QR codes for <strong>kit collection</strong> and <strong>lunch</strong> are attached. Please present the correct code at each collection point.</p><p><strong>Registration ID:</strong> ${registrationId}${ambassador ? ' <span style="display:inline-block;margin-left:6px;padding:3px 8px;border-radius:999px;background:#d1fae5;color:#065f46;font-size:12px;font-weight:700">Campus Ambassador</span>' : ""}</p><p><strong>Email ID:</strong> ${participant.email}</p><p style="padding:12px;border-radius:8px;background:#fff3cd;color:#7c4a03"><strong>Important:</strong> Do not share or forward these QR codes to anyone. Each code works only once. If another person uses your code first, you may not be able to collect your own kit or lunch.</p><p><strong>Best regards,</strong><br>Construct Carnival 2.0<br>Department of BECM, RUET</p></div>`,
+      subject: participantQrEmailSubject,
+      text: participantQrEmailText(emailData),
+      html: participantQrEmailHtml(emailData),
       attachments: [
         { filename: `${registrationId}-kit-qr.png`, content: kitBuffer, contentType: "image/png" },
         { filename: `${registrationId}-lunch-qr.png`, content: lunchBuffer, contentType: "image/png" },
