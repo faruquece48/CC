@@ -21,6 +21,7 @@ import samakal from "@/public/logo/samakal.png";
 import akij from "@/public/logo/Akij.jpeg";
 import crownCement from "@/public/logo/Crown Cement.jpeg";
 import bergerFosroc from "@/public/logo/Berger Fosroc Logo.png";
+import poles from "@/public/logo/Poles.jpeg";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
 
@@ -138,10 +139,28 @@ export default function SponsorsPage() {
         </div>
 
         <div className="mt-14 md:mt-16">
+          <SectionTitle text="GOLD SPONSOR" />
+        </div>
+
+        <Link
+          href="https://www.bsrm.com/"
+          isExternal
+          aria-label="Visit BSRM website"
+          className="mx-auto mt-6 flex min-h-[190px] max-w-[460px] items-center justify-center rounded-2xl border border-amber-300 bg-white p-7 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+        >
+          <NextImage
+            src={bsrm}
+            alt="BSRM logo"
+            className="h-auto max-h-[135px] w-auto max-w-full object-contain"
+            sizes="(max-width: 640px) 80vw, 420px"
+          />
+        </Link>
+
+        <div className="mt-14 md:mt-16">
           <SectionTitle text="SILVER SPONSORS" />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Link
             href="https://crowncement.com/"
             isExternal
@@ -158,6 +177,15 @@ export default function SponsorsPage() {
             className="flex min-h-[170px] items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
           >
             <NextImage src={bergerFosroc} alt="Berger Fosroc logo" className="h-auto max-h-[120px] w-auto max-w-full object-contain" sizes="(max-width: 640px) 80vw, 360px" />
+          </Link>
+
+          <Link
+            href="https://pclbd.org/"
+            isExternal
+            aria-label="Visit PCL website"
+            className="flex min-h-[170px] items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+          >
+            <NextImage src={poles} alt="PCL logo" className="h-auto max-h-[120px] w-auto max-w-full object-contain" sizes="(max-width: 640px) 80vw, 280px" />
           </Link>
         </div>
         <div className="mt-12">

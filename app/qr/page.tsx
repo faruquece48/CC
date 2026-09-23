@@ -5,13 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
 
 type Participant = {
-  registration_id: number;
+  registration_id: number | string;
   name: string;
   email: string;
   normalized_email: string;
+  is_ambassador: boolean;
+  recipient_group: "participant" | "ambassador";
 };
 
-type QrPreview = { kitQr: string; lunchQr: string };
+type QrPreview = { kitQr: string; lunchQr: string; isAmbassador: boolean };
 type QrDisplay = "kit" | "lunch" | "both";
 type SendRecord = { status: "sent" | "failed" | "pending"; updatedAt: string; error?: string };
 type SendHistory = Record<string, SendRecord>;
@@ -24,7 +26,7 @@ export default function ParticipantQrPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [search, setSearch] = useState("");
   const [qrDisplay, setQrDisplay] = useState<QrDisplay>("both");
-  const [slotIndex, setSlotIndex] = useState(0);
+  const [slotIndex, setSlotIndex] = useState<number | "ambassadors">(0);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [preview, setPreview] = useState<QrPreview | null>(null);
@@ -52,7 +54,11 @@ export default function ParticipantQrPage() {
     catch { setStorageWarning("Sending progress is available for this session only; browser storage is unavailable."); }
   };
 
-  const slotParticipants = useMemo(() => participants.slice(slotIndex * 100, (slotIndex + 1) * 100), [participants, slotIndex]);
+  const registeredParticipants = useMemo(() => participants.filter((participant) => participant.recipient_group === "participant"), [participants]);
+  const ambassadorParticipants = useMemo(() => participants.filter((participant) => participant.recipient_group === "ambassador"), [participants]);
+  const slotParticipants = useMemo(() => slotIndex === "ambassadors"
+    ? ambassadorParticipants
+    : registeredParticipants.slice(slotIndex * 100, (slotIndex + 1) * 100), [registeredParticipants, ambassadorParticipants, slotIndex]);
   const selectedParticipant = participants.find((participant) => participant.normalized_email === selectedEmail);
   const visibleParticipants = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -80,11 +86,12 @@ export default function ParticipantQrPage() {
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new Error(result?.message || "Unable to load participants.");
       const loaded = (result.participants || []).map((participant: Participant) => ({ ...participant, name: formatParticipantName(participant.name) }));
-      loaded.sort((a: Participant, b: Participant) => Number(a.registration_id) - Number(b.registration_id) || a.normalized_email.localeCompare(b.normalized_email));
+      loaded.sort((a: Participant, b: Participant) => String(a.registration_id).localeCompare(String(b.registration_id), undefined, { numeric: true }) || a.normalized_email.localeCompare(b.normalized_email));
       setSlotIndex(0);
       setParticipants(loaded);
       setSelectedEmails(loaded.map((participant: Participant) => participant.normalized_email));
-      setStatus(`${loaded.length} unique paid participants loaded and selected.`);
+      const ambassadorOnly = loaded.filter((participant: Participant) => participant.recipient_group === "ambassador").length;
+      setStatus(`${loaded.length - ambassadorOnly} unique paid participants and ${ambassadorOnly} unregistered campus ambassadors loaded.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load participants.");
     } finally { setLoading(false); }
@@ -102,7 +109,7 @@ export default function ParticipantQrPage() {
       });
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new Error(result?.message || "Unable to generate QR codes.");
-      setPreview({ kitQr: result.kitQr, lunchQr: result.lunchQr });
+      setPreview({ kitQr: result.kitQr, lunchQr: result.lunchQr, isAmbassador: Boolean(result.isAmbassador) });
       setStatus(`QR codes generated for registration ${participant.registration_id}.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to generate QR codes.");
@@ -170,8 +177,9 @@ export default function ParticipantQrPage() {
         </div>
         <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-4">
           <label className="mb-4 block text-sm font-bold text-sky-900">Recipient slot
-            <select value={slotIndex} disabled={sending} onChange={(event) => { setSlotIndex(Number(event.target.value)); setSelectedEmail(null); setPreview(null); }} className="mt-2 block w-full rounded-xl border border-sky-200 bg-white px-4 py-3">
-              {Array.from({ length: Math.ceil(participants.length / 100) }, (_, index) => <option key={index} value={index}>Slot {index + 1}: participants {index * 100 + 1}?{Math.min((index + 1) * 100, participants.length)}</option>)}
+            <select value={slotIndex} disabled={sending} onChange={(event) => { const value=event.target.value; setSlotIndex(value === "ambassadors" ? "ambassadors" : Number(value)); setSelectedEmail(null); setPreview(null); }} className="mt-2 block w-full rounded-xl border border-sky-200 bg-white px-4 py-3">
+              {Array.from({ length: Math.ceil(registeredParticipants.length / 100) }, (_, index) => <option key={index} value={index}>Slot {index + 1}: participants {index * 100 + 1}-{Math.min((index + 1) * 100, registeredParticipants.length)}</option>)}
+              <option value="ambassadors">Campus Ambassador: {ambassadorParticipants.length} not registered in events</option>
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm font-bold text-sky-900"><Search size={17} /> Search by registration ID, name, or email</label>
@@ -190,7 +198,7 @@ export default function ParticipantQrPage() {
             const checked = selectedEmails.includes(participant.normalized_email);
             return <div key={`${participant.registration_id}-${participant.normalized_email}`} className={`flex items-center gap-3 border-b border-sky-100 px-4 py-3 last:border-0 ${selectedEmail === participant.normalized_email ? "bg-sky-100" : ""}`}>
               <input type="checkbox" checked={checked} onChange={() => setSelectedEmails((current) => checked ? current.filter((email) => email !== participant.normalized_email) : [...current, participant.normalized_email])} aria-label={`Select registration ${participant.registration_id}`} className="h-5 w-5 shrink-0 accent-sky-700" />
-              <button type="button" onClick={() => selectParticipant(participant)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-bold">ID {participant.registration_id}</span><span className="min-w-0"><span className="block font-bold">{participant.name}</span><span className="block truncate text-xs text-slate-500">{participant.email}</span></span></button>
+              <button type="button" onClick={() => selectParticipant(participant)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-bold">ID {participant.registration_id}</span><span className="min-w-0"><span className="block font-bold">{participant.name}{participant.is_ambassador&&<span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-800">Campus Ambassador</span>}</span><span className="block truncate text-xs text-slate-500">{participant.email}</span></span></button>
               <span title={sendHistory[participantKey(participant)]?.error || sendHistory[participantKey(participant)]?.updatedAt} className="text-xs font-semibold text-slate-600">{sendHistory[participantKey(participant)]?.status === "sent" ? "Sent" : sendHistory[participantKey(participant)]?.status === "failed" ? "Failed" : sendHistory[participantKey(participant)]?.status === "pending" ? "Unconfirmed" : "Not tracked"}</span>
             </div>;
           }) : <p className="p-4 text-sm text-slate-500">No paid participant found.</p>}</div>
@@ -204,7 +212,7 @@ export default function ParticipantQrPage() {
       </>}
 
       {generating && <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 p-8 font-bold text-emerald-800"><Loader2 className="animate-spin" /> Generating QR codes…</div>}
-      {preview && selectedParticipant && <div className="mt-7"><h2 className="text-xl font-extrabold text-[#073f37]">Registration {selectedParticipant.registration_id} — {selectedParticipant.name}</h2><div className={`mt-4 grid gap-5 ${qrDisplay === "both" ? "sm:grid-cols-2" : "mx-auto max-w-md"}`}>{([['kitQr', 'Kit Collection'], ['lunchQr', 'Lunch Collection']] as const).filter(([key]) => qrDisplay === "both" || (qrDisplay === "kit" ? key === "kitQr" : key === "lunchQr")).map(([key, label]) => <article key={key} className="rounded-2xl border border-slate-200 p-5 text-center"><h3 className="text-lg font-extrabold">{label}</h3><img src={preview[key]} alt={`${label} QR code`} className="mx-auto mt-3 w-full max-w-64" /><p className="mt-2 text-base font-extrabold text-slate-800">Registration ID: {selectedParticipant.registration_id}</p><a href={preview[key]} download={`${selectedParticipant.registration_id}-${key === 'kitQr' ? 'kit' : 'lunch'}-qr.png`} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-white"><Download size={16} /> Download</a></article>)}</div></div>}
+      {preview && selectedParticipant && <div className="mt-7"><h2 className="text-xl font-extrabold text-[#073f37]">Registration {selectedParticipant.registration_id} — {selectedParticipant.name}</h2><div className={`mt-4 grid gap-5 ${qrDisplay === "both" ? "sm:grid-cols-2" : "mx-auto max-w-md"}`}>{([['kitQr', 'Kit Collection'], ['lunchQr', 'Lunch Collection']] as const).filter(([key]) => qrDisplay === "both" || (qrDisplay === "kit" ? key === "kitQr" : key === "lunchQr")).map(([key, label]) => <article key={key} className="rounded-2xl border border-slate-200 p-5 text-center"><h3 className="text-lg font-extrabold">{label}</h3><img src={preview[key]} alt={`${label} QR code`} className="mx-auto mt-3 w-full max-w-64" />{!preview.isAmbassador&&<><p className="mt-2 text-base font-extrabold text-slate-800">Registration ID: {selectedParticipant.registration_id}</p><p className="mt-1 text-xs font-semibold text-slate-500">Email ID: {selectedParticipant.email}</p></>}<a href={preview[key]} download={`${selectedParticipant.registration_id}-${key === 'kitQr' ? 'kit' : 'lunch'}-qr.png`} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-white"><Download size={16} /> Download</a></article>)}</div></div>}
       {storageWarning && <p className="mt-4 text-sm text-amber-800">{storageWarning}</p>}
       {status && <p className="mt-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">{status}</p>}
     </section>

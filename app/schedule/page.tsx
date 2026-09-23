@@ -5,7 +5,7 @@ const morning = [
   { time: "9:00 AM — 9:30 AM", title: "Inauguration Ceremony", place: "RUET Auditorium", icon: Sparkles, color: "from-amber-500 to-orange-400" },
   { time: "9:30 AM — 11:00 AM", title: "Technical Workshop Session", place: "RUET Auditorium", icon: Wrench, color: "from-violet-500 to-fuchsia-400" },
   { time: "11:00 AM — 12:30 PM", title: "Sponsor Talk & Industry Insights", place: "RUET Auditorium", icon: Presentation, color: "from-emerald-500 to-teal-400" },
-  { time: "12:30 PM — 2:00 PM", title: "Lunch Collection & Midday Break", place: "RUET Auditorium", icon: UtensilsCrossed, color: "from-rose-500 to-pink-400" },
+  { time: "12:30 PM — 2:00 PM", title: "Lunch Collection & Midday Break", place: "BECM Department", icon: UtensilsCrossed, color: "from-rose-500 to-pink-400" },
 ];
 
 const competitions = [

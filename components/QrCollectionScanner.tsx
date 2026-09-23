@@ -4,7 +4,7 @@ import { Camera, CheckCircle2, Loader2, PackageCheck, RefreshCw, ScanLine, Soup,
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Purpose = "kit" | "lunch";
-type ScanResult = { success: boolean; message: string; registrationId?: number; participantName?: string };
+type ScanResult = { success: boolean; message: string; registrationId?: number | string; participantName?: string };
 type BarcodeDetectorInstance = { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>> };
 type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance;
 
@@ -16,7 +16,7 @@ function extractToken(value: string) {
 export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
   const isKit = purpose === "kit";
   const [count, setCount] = useState(0);
-  const [scannedIds, setScannedIds] = useState<number[]>([]);
+  const [scannedIds, setScannedIds] = useState<Array<number | string>>([]);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -139,7 +139,7 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
   const recentScannedIds = scannedIds.slice(0, 10);
-  const allScannedIds = [...scannedIds].sort((left, right) => left - right);
+  const allScannedIds = [...scannedIds].sort((left, right) => String(left).localeCompare(String(right), undefined, { numeric: true }));
   const Icon = isKit ? PackageCheck : Soup;
 
   return <main className="min-h-screen bg-white px-4 py-6 text-slate-800">

@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { verifyParticipantQrToken } from "@/lib/participantQr";
+import { ambassadors } from "@/lib/ambassadors";
 
 export async function GET(request: Request) {
   try {
     const token = new URL(request.url).searchParams.get("token") || "";
     const payload = verifyParticipantQrToken(token);
     if (!payload) return NextResponse.json({ valid: false, message: "Invalid QR code." }, { status: 400 });
+    if (typeof payload.registrationId === "string") {
+      const normalizedEmail = payload.email.trim().toLowerCase().replace(/\s+/g, "");
+      const ambassador = ambassadors.find((item) => item.code === payload.registrationId
+        && item.email.trim().toLowerCase().replace(/\s+/g, "") === normalizedEmail);
+      if (!ambassador) return NextResponse.json({ valid: false, message: "Campus ambassador not found." }, { status: 404 });
+      return NextResponse.json({ valid: true, purpose: payload.purpose, registrationId: ambassador.code, participantName: ambassador.name, isAmbassador: true }, { headers: { "Cache-Control": "no-store" } });
+    }
     const result = await sql`
       WITH paid_people AS (
         SELECT single_data.registration_id,

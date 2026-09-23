@@ -8,7 +8,9 @@ type Verification = {
   valid: boolean;
   message?: string;
   purpose?: "kit" | "lunch";
-  registrationId?: number;
+  registrationId?: number | string;
+  participantName?: string;
+  isAmbassador?: boolean;
 };
 
 export default function QrVerificationPage() {
@@ -28,7 +30,7 @@ export default function QrVerificationPage() {
         <CheckCircle2 className="mx-auto text-emerald-600" size={56} />
         <p className="mt-4 text-sm font-extrabold uppercase tracking-[0.2em] text-emerald-700">Valid {result.purpose} code</p>
         <h1 className="mt-2 text-3xl font-extrabold text-slate-900">{result.purpose === "kit" ? "Kit Collection" : "Lunch Collection"}</h1>
-        <p className="mt-6 rounded-2xl bg-emerald-50 p-5 text-xl font-bold">Registration ID: {result.registrationId}</p>
+        <p className="mt-6 rounded-2xl bg-emerald-50 p-5 text-xl font-bold">Registration ID: {result.registrationId}{result.isAmbassador ? " � Campus Ambassador" : ""}</p>
       </> : <>
         <XCircle className="mx-auto text-red-600" size={56} />
         <h1 className="mt-4 text-3xl font-extrabold text-red-800">Invalid QR Code</h1>

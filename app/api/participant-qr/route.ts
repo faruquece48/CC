@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import QRCode from "qrcode";
+import sharp from "sharp";
+import { ambassadors } from "@/lib/ambassadors";
 import { sql } from "@vercel/postgres";
 import { formatParticipantName } from "@/lib/participantName";
 import { createParticipantQrToken, type QrPurpose } from "@/lib/participantQr";
@@ -22,6 +24,9 @@ function authorized(password: unknown, request: Request) {
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, "") : "";
 }
+
+const ambassadorEmails = new Set(ambassadors.map((ambassador) => normalizeEmail(ambassador.email)));
+const isCampusAmbassador = (email: unknown) => ambassadorEmails.has(normalizeEmail(email));
 
 async function individualParticipants() {
   return sql`
@@ -51,12 +56,19 @@ async function individualParticipants() {
   `;
 }
 
-function qrValue(registrationId: number, email: string, purpose: QrPurpose) {
+function qrValue(registrationId: number | string, email: string, purpose: QrPurpose) {
   return createParticipantQrToken({ registrationId, email, purpose });
 }
 
-async function qrPng(value: string) {
-  return QRCode.toBuffer(value, { width: 360, margin: 4, errorCorrectionLevel: "M" });
+async function qrPng(value: string, registrationId: number | string, purpose: QrPurpose, ambassador: boolean) {
+  const qr = await QRCode.toBuffer(value, { width: 360, margin: 4, errorCorrectionLevel: "M" });
+  if (!ambassador) return qr;
+  const purposeLabel = purpose === "kit" ? "KIT COLLECTION" : "LUNCH COLLECTION";
+  const label = Buffer.from(`<svg width="420" height="82" xmlns="http://www.w3.org/2000/svg"><rect width="420" height="82" rx="10" fill="#073f37"/><text x="210" y="25" text-anchor="middle" fill="#f5d77a" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.5">${purposeLabel}</text><text x="210" y="53" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Registration ${registrationId} | Campus Ambassador</text><text x="210" y="72" text-anchor="middle" fill="#d1fae5" font-family="Arial, sans-serif" font-size="10">Construct Carnival 2.0</text></svg>`);
+  return sharp({ create: { width: 420, height: 480, channels: 4, background: "#ffffff" } })
+    .composite([{ input: qr, left: 30, top: 8 }, { input: label, left: 0, top: 390 }])
+    .png()
+    .toBuffer();
 }
 
 export async function POST(request: Request) {
@@ -68,23 +80,45 @@ export async function POST(request: Request) {
 
     if (body.action === "list") {
       const result = await individualParticipants();
-      return NextResponse.json({ success: true, participants: result.rows }, {
+      const registeredEmails = new Set(result.rows.map((row) => normalizeEmail(row.email)));
+      const registered = result.rows.map((row) => ({ ...row, is_ambassador: isCampusAmbassador(row.email), recipient_group: "participant" }));
+      const unregisteredAmbassadors = ambassadors
+        .filter((ambassador) => !registeredEmails.has(normalizeEmail(ambassador.email)))
+        .map((ambassador) => ({
+          registration_id: ambassador.code,
+          name: ambassador.name,
+          email: ambassador.email,
+          normalized_email: normalizeEmail(ambassador.email),
+          is_ambassador: true,
+          recipient_group: "ambassador",
+        }));
+      return NextResponse.json({ success: true, participants: [...registered, ...unregisteredAmbassadors] }, {
         headers: { "Cache-Control": "no-store" },
       });
     }
 
-    const registrationId = Number(body.registrationId);
+    const rawRegistrationId = String(body.registrationId || "").trim().toUpperCase();
+    const ambassadorRecord = /^CC\d{2}$/.test(rawRegistrationId)
+      ? ambassadors.find((item) => item.code === rawRegistrationId && normalizeEmail(item.email) === normalizeEmail(body.email))
+      : undefined;
+    const registrationId: number | string = ambassadorRecord ? ambassadorRecord.code : Number(body.registrationId);
     const participants = await individualParticipants();
-    const participant = participants.rows.find((row) =>
-      Number(row.registration_id) === registrationId
-      && (!body.email || row.normalized_email === normalizeEmail(body.email)));
+    const participant = ambassadorRecord
+      ? { registration_id: ambassadorRecord.code, name: ambassadorRecord.name, email: ambassadorRecord.email, normalized_email: normalizeEmail(ambassadorRecord.email) }
+      : participants.rows.find((row) =>
+          Number(row.registration_id) === registrationId
+          && (!body.email || row.normalized_email === normalizeEmail(body.email)));
     if (!participant) {
       return NextResponse.json({ success: false, message: "Paid participant not found." }, { status: 404 });
     }
 
+    const ambassador = Boolean(ambassadorRecord) || isCampusAmbassador(participant.email);
     const kitToken = qrValue(registrationId, participant.normalized_email, "kit");
     const lunchToken = qrValue(registrationId, participant.normalized_email, "lunch");
-    const [kitBuffer, lunchBuffer] = await Promise.all([qrPng(kitToken), qrPng(lunchToken)]);
+    const [kitBuffer, lunchBuffer] = await Promise.all([
+      qrPng(kitToken, registrationId, "kit", ambassador),
+      qrPng(lunchToken, registrationId, "lunch", ambassador),
+    ]);
 
     if (body.action === "generate") {
       return NextResponse.json({
@@ -93,6 +127,7 @@ export async function POST(request: Request) {
         lunchQr: `data:image/png;base64,${lunchBuffer.toString("base64")}`,
         kitToken,
         lunchToken,
+        isAmbassador: ambassador,
       }, { headers: { "Cache-Control": "no-store" } });
     }
 
@@ -115,8 +150,8 @@ export async function POST(request: Request) {
       from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
       to: participant.email,
       subject: "Your Kit Collection and Lunch QR Codes — Construct Carnival 2.0",
-      text: `Dear ${name},\n\nYour unique QR codes for kit collection and lunch are attached. Please present the correct code at each collection point. Each code is intended only for registration ID ${registrationId}. Do not share, forward, or allow anyone else to use these codes. Each code works only once, and sharing it may prevent you from collecting your own kit or lunch.\n\nBest regards,\nConstruct Carnival 2.0`,
-      html: `<div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;line-height:1.7"><p><strong>Dear ${name},</strong></p><p>Your unique QR codes for <strong>kit collection</strong> and <strong>lunch</strong> are attached. Please present the correct code at each collection point.</p><p><strong>Registration ID:</strong> ${registrationId}</p><p style="padding:12px;border-radius:8px;background:#fff3cd;color:#7c4a03"><strong>Important:</strong> Do not share or forward these QR codes to anyone. Each code works only once. If another person uses your code first, you may not be able to collect your own kit or lunch.</p><p><strong>Best regards,</strong><br>Construct Carnival 2.0<br>Department of BECM, RUET</p></div>`,
+      text: `Dear ${name},\n\nYour unique QR codes for kit collection and lunch are attached. Please present the correct code at each collection point. Each code is intended only for registration ID ${registrationId}${ambassador ? " (Campus Ambassador)" : ""}. Email ID: ${participant.email}. Do not share, forward, or allow anyone else to use these codes. Each code works only once, and sharing it may prevent you from collecting your own kit or lunch.\n\nBest regards,\nConstruct Carnival 2.0`,
+      html: `<div style="margin:0 auto;max-width:640px;font-family:Arial,sans-serif;color:#1f2937;line-height:1.7"><p><strong>Dear ${name},</strong></p><p>Your unique QR codes for <strong>kit collection</strong> and <strong>lunch</strong> are attached. Please present the correct code at each collection point.</p><p><strong>Registration ID:</strong> ${registrationId}${ambassador ? ' <span style="display:inline-block;margin-left:6px;padding:3px 8px;border-radius:999px;background:#d1fae5;color:#065f46;font-size:12px;font-weight:700">Campus Ambassador</span>' : ""}</p><p><strong>Email ID:</strong> ${participant.email}</p><p style="padding:12px;border-radius:8px;background:#fff3cd;color:#7c4a03"><strong>Important:</strong> Do not share or forward these QR codes to anyone. Each code works only once. If another person uses your code first, you may not be able to collect your own kit or lunch.</p><p><strong>Best regards,</strong><br>Construct Carnival 2.0<br>Department of BECM, RUET</p></div>`,
       attachments: [
         { filename: `${registrationId}-kit-qr.png`, content: kitBuffer, contentType: "image/png" },
         { filename: `${registrationId}-lunch-qr.png`, content: lunchBuffer, contentType: "image/png" },

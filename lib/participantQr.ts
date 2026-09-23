@@ -3,8 +3,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export type QrPurpose = "kit" | "lunch";
 
 type ParticipantQrPayload = {
-  version: 1;
-  registrationId: number;
+  version: 1 | 2;
+  registrationId: number | string;
   email: string;
   purpose: QrPurpose;
 };
@@ -22,7 +22,7 @@ function signature(encodedPayload: string) {
 }
 
 export function createParticipantQrToken(payload: Omit<ParticipantQrPayload, "version">) {
-  const compactPayload = { v: 1, r: payload.registrationId, e: payload.email, p: payload.purpose };
+  const compactPayload = { v: typeof payload.registrationId === "string" ? 2 : 1, r: payload.registrationId, e: payload.email, p: payload.purpose };
   const encodedPayload = Buffer.from(JSON.stringify(compactPayload)).toString("base64url");
   return `${encodedPayload}.${signature(encodedPayload)}`;
 }
@@ -36,11 +36,13 @@ export function verifyParticipantQrToken(token: string): ParticipantQrPayload | 
   if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) return null;
   try {
     const decoded = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
-    const payload = decoded.v === 1
-      ? { version: 1, registrationId: decoded.r, email: decoded.e, purpose: decoded.p }
+    const payload = decoded.v === 1 || decoded.v === 2
+      ? { version: decoded.v, registrationId: decoded.r, email: decoded.e, purpose: decoded.p }
       : decoded;
-    if (payload.version !== 1
-      || !Number.isInteger(payload.registrationId)
+    const validId = Number.isInteger(payload.registrationId)
+      || (typeof payload.registrationId === "string" && /^CC\d{2}$/.test(payload.registrationId));
+    if ((payload.version !== 1 && payload.version !== 2)
+      || !validId
       || typeof payload.email !== "string"
       || (payload.purpose !== "kit" && payload.purpose !== "lunch")) return null;
     return payload as ParticipantQrPayload;
