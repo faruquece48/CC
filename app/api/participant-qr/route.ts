@@ -121,7 +121,7 @@ export async function POST(request: Request) {
           qr_email_error: logs.get(normalizeEmail(ambassador.email))?.error_message || null,
           recipient_group: "ambassador",
         }));
-      return NextResponse.json({ success: true, participants: [...registered, ...unregisteredAmbassadors] }, {
+      return NextResponse.json({ success: true, syncedSentRecords: localSentRecords.length, participants: [...registered, ...unregisteredAmbassadors] }, {
         headers: { "Cache-Control": "no-store" },
       });
     }

@@ -11,8 +11,12 @@ export const certificateEventNames: Record<string, string> = {
   poster: "Poster Presentation",
 };
 
-export function formatCertificateEvents(_events: string[]) {
-  return "Construct Carnival 2.0";
+export function formatCertificateEvents(events: string[]) {
+  const names = Array.from(new Set(events.map((event) => {
+    const normalized = String(event).trim().toLowerCase();
+    return certificateEventNames[normalized] || String(event).trim();
+  }).filter(Boolean)));
+  return names.join(" & ") || "Construct Carnival 2.0";
 }
 
 export function createCertificateId(name: string, email: string) {

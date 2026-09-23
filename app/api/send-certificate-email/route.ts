@@ -15,13 +15,17 @@ function authorized(password: unknown, request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { password, email, forceResend } = await request.json();
+  const { password, email, event, forceResend } = await request.json();
   if (!authorized(password, request)) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase().replace(/\s+/g, "") : "";
   if (!normalizedEmail) {
     return NextResponse.json({ success: false, message: "Select a participant." }, { status: 400 });
+  }
+  const normalizedEvent = typeof event === "string" ? event.trim().toLowerCase() : "";
+  if (!normalizedEvent) {
+    return NextResponse.json({ success: false, message: "Select an event for this certificate." }, { status: 400 });
   }
 
   const result = await sql`
@@ -52,20 +56,24 @@ export async function POST(request: Request) {
   if (!participant) {
     return NextResponse.json({ success: false, message: "Participant not found." }, { status: 404 });
   }
+  const participantEvents = (participant.events as string[]).map((value) => String(value).trim().toLowerCase());
+  if (!participantEvents.includes(normalizedEvent)) {
+    return NextResponse.json({ success: false, message: "This participant is not registered for the selected event." }, { status: 400 });
+  }
 
   try {
     const delivery = await sendParticipationCertificate({
       registrationId: Number(participant.registration_id),
       name: String(participant.name),
       email: String(participant.email),
-      events: participant.events as string[],
+      events: [normalizedEvent],
     }, { forceResend: forceResend === true });
     return NextResponse.json({
       success: delivery.sent || delivery.alreadySent,
       alreadySent: delivery.alreadySent,
       message: delivery.alreadySent
-        ? "This participant already received a certificate."
-        : `Certificate accepted for delivery to ${participant.email}.`,
+        ? "This participant already received a certificate for this event."
+        : `Event certificate accepted for delivery to ${participant.email}.`,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error: any) {
     const message = error?.code === "ECONFIG"

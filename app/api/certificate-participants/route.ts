@@ -16,9 +16,17 @@ function authorized(password: unknown, request: Request) {
 export async function POST(request: Request) {
   try {
     const { password } = await request.json();
+
     if (!authorized(password, request)) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
+
+    await sql`CREATE TABLE IF NOT EXISTS eventCertificateEmailLog (
+      normalized_email TEXT NOT NULL, event TEXT NOT NULL, registration_id BIGINT NOT NULL,
+      participant_name TEXT NOT NULL, recipient TEXT NOT NULL, certificate_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'sending', sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (normalized_email, event)
+    )`;
 
   const result = await sql`
     WITH participant_events AS (
@@ -50,10 +58,10 @@ export async function POST(request: Request) {
       GROUP BY normalized_email
     )
     SELECT unique_people.*,
-      (log.status = 'sent') AS certificate_sent,
-      log.sent_at AS certificate_sent_at
+      EXISTS(SELECT 1 FROM eventCertificateEmailLog AS sent_log WHERE sent_log.normalized_email = unique_people.normalized_email AND sent_log.status = 'sent') AS certificate_sent,
+      (SELECT MAX(sent_log.sent_at) FROM eventCertificateEmailLog AS sent_log WHERE sent_log.normalized_email = unique_people.normalized_email AND sent_log.status = 'sent') AS certificate_sent_at,
+      COALESCE((SELECT ARRAY_AGG(event_log.event ORDER BY event_log.event) FROM eventCertificateEmailLog AS event_log WHERE event_log.normalized_email = unique_people.normalized_email AND event_log.status = 'sent'), ARRAY[]::TEXT[]) AS certificate_sent_events
     FROM unique_people
-    LEFT JOIN certificateEmailLog AS log ON log.normalized_email = unique_people.normalized_email
     ORDER BY unique_people.name, unique_people.email
   `.catch(async (error) => {
     if (!String(error).includes("certificateemaillog")) throw error;
@@ -80,7 +88,7 @@ export async function POST(request: Request) {
         (ARRAY_AGG(name ORDER BY created_at DESC, registration_id DESC))[1] AS name,
         (ARRAY_AGG(email ORDER BY created_at DESC, registration_id DESC))[1] AS email,
         normalized_email, ARRAY_AGG(DISTINCT event ORDER BY event) AS events,
-        FALSE AS certificate_sent, NULL::TIMESTAMPTZ AS certificate_sent_at
+        FALSE AS certificate_sent, NULL::TIMESTAMPTZ AS certificate_sent_at, ARRAY[]::TEXT[] AS certificate_sent_events
       FROM participant_events
       WHERE normalized_email IS NOT NULL AND normalized_email <> ''
       GROUP BY normalized_email

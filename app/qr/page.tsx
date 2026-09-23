@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, Download, Eye, Loader2, Mail, QrCode, Search, Send } from "lucide-react";
+import { Database, Download, Eye, Loader2, Mail, QrCode, Search, Send, Upload } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
 
@@ -81,11 +81,12 @@ export default function ParticipantQrPage() {
   const remainingRecipients = selectedRecipients.filter((participant) => sendHistory[participantKey(participant)]?.status !== "sent");
   const sentCount = participants.filter((participant) => sendHistory[participantKey(participant)]?.status === "sent").length;
 
-  const loadParticipants = async () => {
+  const loadParticipants = async (importedRecords?: Array<{registrationId:string;email:string}>) => {
     setLoading(true);
     setStatus("");
     try {
-      const sentRecords = Object.entries(sendHistory).filter(([,record])=>record.status==="sent").map(([key])=>{const separator=key.indexOf(":");return {registrationId:key.slice(0,separator),email:key.slice(separator+1)}}).filter(record=>record.registrationId&&record.email);
+      const localSentRecords = Object.entries(sendHistory).filter(([,record])=>record.status==="sent").map(([key])=>{const separator=key.indexOf(":");return {registrationId:key.slice(0,separator),email:key.slice(separator+1)}}).filter(record=>record.registrationId&&record.email);
+      const sentRecords = importedRecords?.length ? importedRecords : localSentRecords;
       const response = await fetch("/api/participant-qr", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: adminPassword, action: "list", sentRecords }),
@@ -101,10 +102,20 @@ export default function ParticipantQrPage() {
       setParticipants(loaded);
       setSelectedEmails(loaded.map((participant: Participant) => participant.normalized_email));
       const ambassadorOnly = loaded.filter((participant: Participant) => participant.recipient_group === "ambassador").length;
-      setStatus(`${loaded.length - ambassadorOnly} unique paid participants and ${ambassadorOnly} unregistered campus ambassadors loaded.`);
+      setStatus(`${loaded.length - ambassadorOnly} unique paid participants and ${ambassadorOnly} unregistered campus ambassadors loaded.${result.syncedSentRecords ? ` ${result.syncedSentRecords} sent records synchronized.` : ""}`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load participants.");
     } finally { setLoading(false); }
+  };
+
+  const exportSentHistory = () => {
+    const records=Object.entries(sendHistory).filter(([,record])=>record.status==="sent").map(([key])=>{const separator=key.indexOf(":");return {registrationId:key.slice(0,separator),email:key.slice(separator+1)}}).filter(record=>record.registrationId&&record.email);
+    const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),records},null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="qr-sent-history.json";link.click();URL.revokeObjectURL(url);setStatus(`${records.length} sent records exported.`);
+  };
+  const importSentHistory = async (file:File) => {
+    try { const parsed=JSON.parse(await file.text());const records=(Array.isArray(parsed)?parsed:parsed?.records).filter?.((record:any)=>record&&record.registrationId&&record.email)||[];if(!records.length)throw new Error("The selected file has no sent records.");await loadParticipants(records.map((record:any)=>({registrationId:String(record.registrationId),email:String(record.email)}))); }
+    catch(error){setStatus(error instanceof Error?error.message:"Unable to import sent history.");}
   };
 
   const selectParticipant = async (participant: Participant) => {
@@ -190,12 +201,13 @@ export default function ParticipantQrPage() {
     <section className="mx-auto max-w-5xl rounded-3xl border border-emerald-200 bg-white p-6 shadow-xl sm:p-8">
       <div className="flex items-start gap-4"><div className="rounded-2xl bg-[#073f37] p-3 text-amber-300"><QrCode size={28} /></div><div><p className="text-xs font-extrabold uppercase tracking-[.22em] text-emerald-700">All unique paid participants</p><h1 className="mt-1 text-3xl font-extrabold text-[#073f37]">Kit & Lunch QR Codes</h1><p className="mt-2 text-sm text-slate-600">Generate and email a distinct signed code for each collection purpose.</p></div></div>
       <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900"><strong>Participant notice:</strong> Do not share or forward QR codes. Each kit and lunch code is personal and can be accepted only once.</div>
-      <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]"><input type="password" value={adminPassword} onChange={(event) => { const value = event.target.value; setAdminPassword(value); try { localStorage.setItem(passwordKey, value); } catch { setStorageWarning("The admin password could not be saved in this browser."); } }} placeholder="Admin password" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-600" /><button type="button" onClick={loadParticipants} disabled={!adminPassword || loading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#073f37] px-5 py-3 font-bold text-white disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={18} /> : <Database size={18} />} Load participants</button></div>
+      <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]"><input type="password" value={adminPassword} onChange={(event) => { const value = event.target.value; setAdminPassword(value); try { localStorage.setItem(passwordKey, value); } catch { setStorageWarning("The admin password could not be saved in this browser."); } }} placeholder="Admin password" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-600" /><button type="button" onClick={()=>loadParticipants()} disabled={!adminPassword || loading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#073f37] px-5 py-3 font-bold text-white disabled:opacity-50">{loading ? <Loader2 className="animate-spin" size={18} /> : <Database size={18} />} Load participants</button></div>
 
       {participants.length > 0 && <>
         <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
           <p className="font-bold">{sentCount} sent · {participants.length - sentCount} without a confirmed send</p>
           <p className="mt-1">Sent status is synchronized through the shared database and is visible from both local and live websites. It records mail-server acceptance, not inbox delivery.</p>
+          <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={exportSentHistory} className="inline-flex items-center gap-2 rounded-lg border border-emerald-700 bg-white px-3 py-2 text-xs font-bold text-emerald-800"><Download size={15}/> Export sent history</button><label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-800 px-3 py-2 text-xs font-bold text-white"><Upload size={15}/> Import & sync sent history<input type="file" accept="application/json" className="hidden" onChange={event=>{const file=event.target.files?.[0];if(file)void importSentHistory(file);event.currentTarget.value=""}}/></label></div>
         </div>
         <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-4">
           <label className="mb-4 block text-sm font-bold text-sky-900">Recipient slot
