@@ -41,7 +41,8 @@ export default function CertificatePage() {
   const [participants, setParticipants] = useState<DatabaseParticipant[]>([]);
   const [selectedEmail, setSelectedEmail] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState("");
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
+  const [selectedPreviewEvent, setSelectedPreviewEvent] = useState("");
   const [registrationIdSearch, setRegistrationIdSearch] = useState("");
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [sendingCertificate, setSendingCertificate] = useState(false);
@@ -53,24 +54,39 @@ export default function CertificatePage() {
   const [loadingPdfPreview, setLoadingPdfPreview] = useState(false);
   const [downloadingCertificates, setDownloadingCertificates] = useState(false);
   const [pdfPreviewRevision, setPdfPreviewRevision] = useState(0);
-  const eventGroups = useMemo(() => Array.from(new Set(participants.flatMap((participant) => participant.events || []))).sort().map((event) => ({
+  const participantSlots = useMemo(() => {
+    const registrationIds = Array.from(new Set(participants.map((participant) => Number(participant.registration_id))))
+      .filter(Number.isFinite)
+      .sort((left, right) => left - right);
+    return Array.from({ length: Math.ceil(registrationIds.length / 50) }, (_, slotIndex) => {
+      const ids = registrationIds.slice(slotIndex * 50, (slotIndex + 1) * 50);
+      const idSet = new Set(ids);
+      return {
+        startId: ids[0],
+        endId: ids[ids.length - 1],
+        participants: participants.filter((participant) => idSet.has(Number(participant.registration_id)))
+          .sort((left, right) => Number(left.registration_id) - Number(right.registration_id)),
+      };
+    });
+  }, [participants]);
+  const selectedSlot = participantSlots[selectedSlotIndex];
+  const slotEventGroups = useMemo(() => Array.from(new Set((selectedSlot?.participants || []).flatMap((participant) => participant.events || []))).sort().map((event) => ({
     event,
     label: eventLabels[event] || event,
-    participants: participants.filter((participant) => participant.events?.includes(event)).sort((left,right) => Number(left.registration_id)-Number(right.registration_id)),
-  })), [participants]);
-  const selectedEventGroup = eventGroups.find((group) => group.event === selectedEvent) || eventGroups[0];
+    participants: (selectedSlot?.participants || []).filter((participant) => participant.events.includes(event)),
+  })), [selectedSlot]);
   const certificateTotal = participants.reduce((total, participant) => total + participant.events.length, 0);
   const sentTotal = participants.reduce((total, participant) => total + (participant.certificate_sent_events?.length || 0), 0);
   const remainingTotal = Math.max(0, certificateTotal - sentTotal);
-  const selectedParticipant = participants.find(
-    (participant) => participant.normalized_email === selectedEmail,
-  );
-  const visibleEventParticipants = useMemo(() => {
-    const eventParticipants = selectedEventGroup?.participants || [];
-    const query = registrationIdSearch.trim().toLowerCase();
-    if (!query) return eventParticipants;
-    return eventParticipants.filter((participant) => String(participant.registration_id).includes(query) || participant.name.toLowerCase().includes(query) || participant.email.toLowerCase().includes(query));
-  }, [selectedEventGroup, registrationIdSearch]);
+  const selectedParticipant = participants.find((participant) => participant.normalized_email === selectedEmail);
+  const query = registrationIdSearch.trim().toLowerCase();
+  const matchesSearch = (participant: DatabaseParticipant) => !query
+    || String(participant.registration_id).includes(query)
+    || participant.name.toLowerCase().includes(query)
+    || participant.email.toLowerCase().includes(query);
+  const absentEntries = slotEventGroups.flatMap((group) => group.participants
+    .filter((participant) => matchesSearch(participant) && !selectedEmails.includes(certificateKey(group.event, participant.normalized_email)))
+    .map((participant) => ({ participant, event: group.event, label: group.label })));
 
   useEffect(() => {
     const previewParticipant = participants.find(
@@ -95,7 +111,7 @@ export default function CertificatePage() {
           registrationId: Number(previewParticipant.registration_id),
           name: previewParticipant.name,
           email: previewParticipant.email,
-          events: [selectedEventGroup?.event || previewParticipant.events[0]],
+          events: [selectedPreviewEvent || previewParticipant.events[0]],
         }],
       }),
     })
@@ -122,7 +138,7 @@ export default function CertificatePage() {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [adminPassword, participants, pdfPreviewRevision, selectedEmail, selectedEventGroup?.event]);
+  }, [adminPassword, participants, pdfPreviewRevision, selectedEmail, selectedPreviewEvent]);
 
   const loadParticipants = async () => {
     setLoadingParticipants(true);
@@ -152,17 +168,20 @@ export default function CertificatePage() {
         name: formatParticipantName(participant.name),
       }));
       setParticipants(loadedParticipants);
-      setSelectedEmails([]);
-      const firstEvent=Array.from(new Set(loadedParticipants.flatMap((participant)=>participant.events||[]))).sort()[0]||"";
-      setSelectedEvent(firstEvent);
+      setSelectedSlotIndex(0);
+      const registrationIds = Array.from(new Set(loadedParticipants.map((participant) => Number(participant.registration_id)))).sort((left, right) => left - right);
+      const firstIdSet = new Set(registrationIds.slice(0, 50));
+      const firstSlotParticipants = loadedParticipants.filter((participant) => firstIdSet.has(Number(participant.registration_id)));
+      setSelectedEmails(firstSlotParticipants.flatMap((participant) => participant.events.map((event) => certificateKey(event, participant.normalized_email))));
       if (loadedParticipants[0]) {
         const first = loadedParticipants[0];
         setSelectedEmail(first.normalized_email);
         setParticipantName(first.name);
         setParticipantEmail(first.email);
-        setEventName(first.events.map((event) => eventLabels[event] || event).join(", "));
+        setSelectedPreviewEvent(first.events[0] || "");
+        setEventName(eventLabels[first.events[0]] || first.events[0] || "Construct Carnival 2.0");
       }
-      setDeliveryStatus(`${loadedParticipants.length} unique participants loaded. Select an event, then manually tick only attendees.`);
+      setDeliveryStatus(`${loadedParticipants.length} unique participants loaded. Each ID segment starts selected. Untick absent participants before downloading or sending certificates.`);
     } catch (error) {
       setDeliveryStatus(error instanceof Error ? error.message : "Unable to load participants.");
     } finally {
@@ -170,12 +189,21 @@ export default function CertificatePage() {
     }
   };
 
+  const selectSlot = (slotIndex: number) => {
+    setSelectedSlotIndex(slotIndex);
+    setRegistrationIdSearch("");
+    const slot = participantSlots[slotIndex];
+    setSelectedEmails((slot?.participants || []).flatMap((participant) =>
+      participant.events.map((event) => certificateKey(event, participant.normalized_email)),
+    ));
+  };
   const chooseParticipant = (email: string, event: string) => {
     setSelectedEmail(email);
     const participant = participants.find((item) => item.normalized_email === email);
     if (!participant) return;
     setParticipantName(participant.name);
     setParticipantEmail(participant.email);
+    setSelectedPreviewEvent(event);
     setEventName(eventLabels[event] || event);
     setDeliveryStatus(participant.certificate_sent_events?.includes(event) ? "This participant has already received a certificate for this event." : "");
   };
@@ -347,32 +375,51 @@ export default function CertificatePage() {
         </div>
         {participants.length > 0 && <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-xs font-bold uppercase text-emerald-700">Total sent</p><p className="mt-1 text-3xl font-black text-emerald-800">{sentTotal}</p></div><div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="text-xs font-bold uppercase text-red-700">Failed</p><p className="mt-1 text-3xl font-black text-red-800">{failedEmails.length}</p></div><div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="text-xs font-bold uppercase text-slate-600">Remaining</p><p className="mt-1 text-3xl font-black text-slate-800">{remainingTotal}</p></div></div>}
         {failedEmails.length > 0 && <button type="button" onClick={() => sendCertificate(failedEmails)} disabled={sendingCertificate} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-3 font-bold text-white disabled:opacity-50">{sendingCertificate ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />} Retry failed emails ({failedEmails.length})</button>}
-        {participants.length > 0 && selectedEventGroup && (
+        {participants.length > 0 && selectedSlot && (
           <div className="mt-4 space-y-4">
             <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-              <select value={selectedEventGroup.event} onChange={(event) => setSelectedEvent(event.target.value)} className="rounded-xl border border-emerald-200 bg-white px-4 py-3 outline-none focus:border-emerald-600">
-                {eventGroups.map((group) => <option key={group.event} value={group.event}>{group.label} ({group.participants.length} registered)</option>)}
+              <select value={selectedSlotIndex} onChange={(event) => selectSlot(Number(event.target.value))} className="rounded-xl border border-emerald-200 bg-white px-4 py-3 outline-none focus:border-emerald-600">
+                {participantSlots.map((slot, index) => <option key={`${slot.startId}-${slot.endId}`} value={index}>Registration IDs {slot.startId}-{slot.endId} ({slot.participants.length} participants)</option>)}
               </select>
-              <button type="button" onClick={() => sendCertificate()} disabled={!selectedEmails.length || sendingCertificate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white disabled:opacity-50">{sendingCertificate ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />} Email selected certificates ({selectedEmails.length})</button>
-              <button type="button" onClick={downloadSelectedCertificates} disabled={!selectedEmails.length || downloadingCertificates} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-5 py-3 font-bold text-white disabled:opacity-50">{downloadingCertificates ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />} Download selected certificates ({selectedEmails.length})</button>
+              <button type="button" onClick={() => sendCertificate()} disabled={!selectedEmails.length || sendingCertificate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 font-bold text-white disabled:opacity-50">{sendingCertificate ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />} Email present ({selectedEmails.length})</button>
+              <button type="button" onClick={downloadSelectedCertificates} disabled={!selectedEmails.length || downloadingCertificates} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-5 py-3 font-bold text-white disabled:opacity-50">{downloadingCertificates ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />} Download present ({selectedEmails.length})</button>
             </div>
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Attendance shortlist:</strong> Everyone starts unticked. Select only participants who attended the program. Switching events keeps your existing selections.</div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Attendance:</strong> All registered events in this segment start selected. Untick a participant under an event to mark them absent from that event. A participant absent from every registered event will receive no certificate.</div>
             <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-              <input type="search" value={registrationIdSearch} onChange={(event) => setRegistrationIdSearch(event.target.value)} placeholder="Search this event by ID, name, or email" className="rounded-xl border border-emerald-200 bg-white px-4 py-3 outline-none focus:border-emerald-600"/>
-              <button type="button" onClick={() => setSelectedEmails(current => Array.from(new Set([...current, ...visibleEventParticipants.map(participant => certificateKey(selectedEventGroup.event, participant.normalized_email))])))} className="rounded-xl bg-emerald-100 px-4 py-3 text-sm font-bold text-emerald-900">Select visible</button>
-              <button type="button" onClick={() => setSelectedEmails(current => current.filter(key => !visibleEventParticipants.some(participant => certificateKey(selectedEventGroup.event, participant.normalized_email) === key)))} className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700">Clear visible</button>
+              <input type="search" value={registrationIdSearch} onChange={(event) => setRegistrationIdSearch(event.target.value)} placeholder="Search this segment by ID, name, or email" className="rounded-xl border border-emerald-200 bg-white px-4 py-3 outline-none focus:border-emerald-600"/>
+              <button type="button" onClick={() => setSelectedEmails(selectedSlot.participants.flatMap((participant) => participant.events.map((event) => certificateKey(event, participant.normalized_email))))} className="rounded-xl bg-emerald-100 px-4 py-3 text-sm font-bold text-emerald-900">Mark all present</button>
+              <button type="button" onClick={() => setSelectedEmails([])} className="rounded-xl bg-red-100 px-4 py-3 text-sm font-bold text-red-800">Mark all absent</button>
             </div>
-            <p className="text-sm font-semibold text-slate-600">{selectedEventGroup.label}: {visibleEventParticipants.length} shown · {selectedEmails.length} event certificates selected across all events</p>
-            <div className="max-h-96 overflow-y-auto rounded-xl border border-emerald-200 bg-white">
-              {visibleEventParticipants.map((participant) => { const key=certificateKey(selectedEventGroup.event, participant.normalized_email); const checked=selectedEmails.includes(key); return (
-                <div key={participant.normalized_email} className={`flex items-center gap-3 border-b border-emerald-100 px-4 py-3 last:border-0 ${selectedEmail === participant.normalized_email ? "bg-emerald-50" : ""}`}>
-                  <input type="checkbox" checked={checked} onChange={() => setSelectedEmails(current => checked ? current.filter(item => item !== key) : [...current, key])} className="h-5 w-5 shrink-0 accent-emerald-700"/>
-                  <button type="button" onClick={() => chooseParticipant(participant.normalized_email, selectedEventGroup.event)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">ID {participant.registration_id}</span><span className="min-w-0"><span className="block font-bold text-slate-800">{participant.name}</span><span className="block truncate text-xs text-slate-500">{participant.email}</span></span></button>
-                  {participant.certificate_sent_events?.includes(selectedEventGroup.event) && <span className="shrink-0 text-xs font-bold text-emerald-700">Sent</span>}
-                </div>
-              )})}
-              {!visibleEventParticipants.length && <p className="p-6 text-center text-sm text-slate-500">No participant found in this event.</p>}
-            </div>
+
+            {slotEventGroups.map((group) => {
+              const eventParticipants = group.participants.filter(matchesSearch);
+              return (
+                <section key={group.event} className="overflow-hidden rounded-xl border border-emerald-200 bg-white">
+                  <div className="flex items-center justify-between bg-[#164b40] px-4 py-3 text-white">
+                    <h3 className="font-extrabold">{group.label}</h3>
+                    <span className="text-xs font-bold">{eventParticipants.length} registered</span>
+                  </div>
+                  {eventParticipants.map((participant) => {
+                    const key = certificateKey(group.event, participant.normalized_email);
+                    const checked = selectedEmails.includes(key);
+                    return (
+                      <div key={participant.normalized_email} className={`flex items-center gap-3 border-b border-emerald-100 px-4 py-3 last:border-0 ${checked ? "" : "bg-red-50"}`}>
+                        <input type="checkbox" checked={checked} onChange={() => setSelectedEmails((current) => checked ? current.filter((item) => item !== key) : [...current, key])} className="h-5 w-5 shrink-0 accent-emerald-700" aria-label={`Mark ${participant.name} present for ${group.label}`}/>
+                        <button type="button" onClick={() => chooseParticipant(participant.normalized_email, group.event)} className="flex min-w-0 flex-1 items-center gap-3 text-left"><span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">ID {participant.registration_id}</span><span className="min-w-0"><span className="block font-bold text-slate-800">{participant.name}</span><span className="block truncate text-xs text-slate-500">{participant.email}</span></span></button>
+                        {!checked && <span className="shrink-0 text-xs font-black uppercase text-red-700">Absent</span>}
+                        {participant.certificate_sent_events?.includes(group.event) && <span className="shrink-0 text-xs font-bold text-emerald-700">Sent</span>}
+                      </div>
+                    );
+                  })}
+                  {!eventParticipants.length && <p className="p-5 text-center text-sm text-slate-500">No participant found for this event.</p>}
+                </section>
+              );
+            })}
+
+            <section className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <div className="flex items-center justify-between gap-3"><h3 className="font-extrabold text-red-900">Absent participants in this segment</h3><span className="rounded-full bg-red-200 px-3 py-1 text-xs font-black text-red-900">{absentEntries.length}</span></div>
+              {absentEntries.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{absentEntries.map(({ participant, event, label }) => <div key={`${event}-${participant.normalized_email}`} className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm"><span className="font-bold text-slate-800">ID {participant.registration_id} — {participant.name}</span><span className="block text-xs font-semibold text-red-700">Absent: {label}</span></div>)}</div> : <p className="mt-2 text-sm text-red-700">No participant is marked absent in this segment.</p>}
+            </section>
             <label className="flex items-center gap-2 text-sm font-semibold text-amber-900"><input type="checkbox" checked={forceResend} onChange={(event) => setForceResend(event.target.checked)} className="h-4 w-4 accent-amber-600"/> Resend certificates already marked as delivered</label>
           </div>
         )}        {deliveryStatus && <p className="mt-3 text-sm font-semibold text-[#174f42]">{deliveryStatus}</p>}
@@ -448,7 +495,7 @@ export default function CertificatePage() {
               </p>
 
               <p className="mt-[23px] max-w-3xl text-justify text-[17px] leading-8 text-[#52615e]">
-                in recognition of their enthusiastic participation in <strong className="font-bold text-[#174f42]">{eventName}</strong>,
+                in recognition of their enthusiastic participation in <strong className="font-bold text-[#174f42]">Construct Carnival 2.0</strong>,
                 organized by the Department of Building Engineering &amp; Construction Management at Rajshahi University of Engineering &amp; Technology.
               </p>
             </div>

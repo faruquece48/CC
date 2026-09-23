@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
-import { createCertificateId, formatCertificateEvents } from "@/lib/participationCertificate";
+import { createCertificateId } from "@/lib/participationCertificate";
 import { formatParticipantName } from "@/lib/participantName";
 import { createParticipationCertificateToken } from "@/lib/participationCertificateVerification";
 
@@ -25,7 +25,7 @@ export async function createParticipationCertificatePdf(
   const verificationUrl = `${origin}/certificatte/verify?token=${encodeURIComponent(token)}`;
   const verificationQr = await QRCode.toBuffer(verificationUrl, { width: 512, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
   return new Promise((resolve, reject) => {
-    const events = formatCertificateEvents(participant.events);
+    const events = "Construct Carnival 2.0";
     const participantName = formatParticipantName(participant.name);
     const document = new PDFDocument({
       size: "A4",

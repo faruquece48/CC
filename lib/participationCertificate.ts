@@ -50,7 +50,7 @@ export async function createParticipationCertificateImage(participant: {
     readFile(join(process.cwd(), "node_modules", "next", "dist", "compiled", "@vercel", "og", "noto-sans-v27-latin-regular.ttf")),
   ]);
   const name = escapeXml(formatParticipantName(participant.name));
-  const eventName = escapeXml(formatCertificateEvents(participant.events));
+  const eventName = escapeXml("Construct Carnival 2.0");
   const certificateId = escapeXml(createCertificateId(participant.name, participant.email));
   const logoUrl = asDataUrl(brandLogo, "image/svg+xml");
   const sealUrl = asDataUrl(seal, "image/png");
