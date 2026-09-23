@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, CheckCircle2, Database, Download, Loader2, Mail } from "lucide-react";
+import { CheckCircle2, Database, Download, Loader2, Mail } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatParticipantName } from "@/lib/participantName";
 import coordinatorSignature from "@/public/images/Signature_1.png";
@@ -23,17 +23,6 @@ const eventLabels: Record<string, string> = {
   truss: "Truss Combat",
   poster: "Poster Presentation",
 };
-
-function makeCertificateId(name: string, identity: string) {
-  const source = `${name.trim().toLowerCase()}-${identity.trim().toLowerCase()}`;
-  let hash = 0;
-
-  for (let index = 0; index < source.length; index += 1) {
-    hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
-  }
-
-  return `CC2-P-${hash.toString(36).toUpperCase().padStart(7, "0").slice(-7)}`;
-}
 
 export default function CertificatePage() {
   const [participantName, setParticipantName] = useState("Participant Name");
@@ -88,10 +77,6 @@ export default function CertificatePage() {
   useEffect(() => {
     setSelectedEmails(selectedSlot?.participants.map((participant) => participant.normalized_email) || []);
   }, [selectedSlot]);
-  const certificateId = useMemo(
-    () => makeCertificateId(participantName || "Participant Name", participantEmail || eventName),
-    [participantEmail, participantName, eventName],
-  );
 
   useEffect(() => {
     const previewParticipant = participants.find(
@@ -113,6 +98,7 @@ export default function CertificatePage() {
       body: JSON.stringify({
         password: adminPassword,
         participants: [{
+          registrationId: Number(previewParticipant.registration_id),
           name: previewParticipant.name,
           email: previewParticipant.email,
           events: previewParticipant.events,
@@ -214,6 +200,7 @@ export default function CertificatePage() {
           password: adminPassword,
           mode: "bulk",
           participants: selectedParticipants.map((participant) => ({
+            registrationId: Number(participant.registration_id),
             name: participant.name,
             email: participant.email,
             events: participant.events,
@@ -484,10 +471,6 @@ export default function CertificatePage() {
           </svg>
 
           <div className="relative z-10 flex h-full flex-col items-center px-32 pb-20 pt-10 text-center">
-            <div className="ml-auto mr-5 mt-5 flex items-center gap-2 text-[15px] font-normal tracking-wide text-[#52645f]">
-              <Award size={17} className="text-[#b58228]" /> Certificate ID: {certificateId}
-            </div>
-
             <div className="absolute left-1/2 top-[60px] flex w-full -translate-x-1/2 flex-col items-center px-28 text-center">
               <div className="mb-7 flex items-center justify-center gap-3 text-center">
                 <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border-2 border-[#d5ad5f] bg-white p-1.5 shadow-md">

@@ -1,22 +1,30 @@
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
 import { existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { createCertificateId, formatCertificateEvents } from "@/lib/participationCertificate";
 import { formatParticipantName } from "@/lib/participantName";
+import { createParticipationCertificateToken } from "@/lib/participationCertificateVerification";
 
 type CertificateParticipant = {
+  registrationId: number;
   name: string;
   email: string;
   events: string[];
 };
 
-export function createParticipationCertificatePdf(
+export async function createParticipationCertificatePdf(
   participant: CertificateParticipant,
   options: { protect?: boolean } = {},
 ): Promise<Buffer> {
+  const certificateId = createCertificateId(participant.name, participant.email);
+  const token = createParticipationCertificateToken(participant.registrationId, certificateId);
+  const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const origin = (/^https?:\/\//i.test(configuredOrigin || "") ? configuredOrigin! : "https://constructcarnival.com").replace(/\/$/, "");
+  const verificationUrl = `${origin}/certificatte/verify?token=${encodeURIComponent(token)}`;
+  const verificationQr = await QRCode.toBuffer(verificationUrl, { width: 512, margin: 4, errorCorrectionLevel: "M", color: { dark: "#000000", light: "#ffffff" } });
   return new Promise((resolve, reject) => {
-    const certificateId = createCertificateId(participant.name, participant.email);
     const events = formatCertificateEvents(participant.events);
     const participantName = formatParticipantName(participant.name);
     const document = new PDFDocument({
@@ -38,7 +46,7 @@ export function createParticipationCertificatePdf(
       info: {
         Title: `Certificate of Participation - ${participantName}`,
         Author: "Construct Carnival 2.0",
-        Subject: `Certificate ID: ${certificateId}`,
+        Subject: "Official participant certificate with QR verification",
       },
     });
     const chunks: Buffer[] = [];
@@ -99,18 +107,12 @@ export function createParticipationCertificatePdf(
     document.save().translate(0, height).scale(1, -1); drawFrameCorner(); document.restore();
     document.save().translate(width, height).scale(-1, -1); drawFrameCorner(); document.restore();
 
-    const certificateIdText = `Certificate ID: ${certificateId}`;
-    document.font("Certificate Inter").fontSize(10);
-    const certificateIdRight = width - 60;
-    const certificateIdWidth = document.widthOfString(certificateIdText);
-    const awardX = certificateIdRight - certificateIdWidth - 11;
-    document.save().lineWidth(1).strokeColor("#b58228").fillColor("#fffdf7")
-      .circle(awardX, 58, 3.2).fillAndStroke()
-      .moveTo(awardX - 2, 61).lineTo(awardX - 2.8, 67).lineTo(awardX, 65.3)
-      .lineTo(awardX + 2.8, 67).lineTo(awardX + 2, 61).stroke()
-      .restore();
-    document.font("Certificate Inter").fontSize(10).fillColor(muted)
-      .text(certificateIdText, width - 250, 54, { width: 190, align: "right" });
+    const qrSize = 72;
+    const qrX = width - 123;
+    const qrY = 54;
+    document.save().roundedRect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6, 3)
+      .fillAndStroke("#ffffff", "#d5ad5f").restore();
+    document.image(verificationQr, qrX, qrY, { width: qrSize, height: qrSize });
 
     document.save().lineWidth(1.4).fillColor("#ffffff").strokeColor("#d5ad5f")
       .circle(width / 2 - 70, 76, 22).fillAndStroke()

@@ -11,9 +11,10 @@ export type AmbassadorCertificatePerson = { code: string; name: string; email: s
 
 export async function createAmbassadorCertificatePdf(person: AmbassadorCertificatePerson, options: { protect?: boolean } = {}): Promise<Buffer> {
   const token=createAmbassadorCertificateToken(person.code);
-  const origin=(process.env.NEXT_PUBLIC_SITE_URL||"https://www.constructcarnival.com").replace(/\/$/,"");
+  const configuredOrigin=process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const origin=(/^https?:\/\//i.test(configuredOrigin||"")?configuredOrigin!:"https://constructcarnival.com").replace(/\/$/,"");
   const verificationUrl=`${origin}/certificatteamb/verify?token=${encodeURIComponent(token)}`;
-  const verificationQr=await QRCode.toBuffer(verificationUrl,{width:512,margin:4,errorCorrectionLevel:"H",color:{dark:"#000000",light:"#ffffff"}});
+  const verificationQr=await QRCode.toBuffer(verificationUrl,{width:512,margin:4,errorCorrectionLevel:"M",color:{dark:"#000000",light:"#ffffff"}});
   const signaturePath1=join(process.cwd(),"public","images","Signature_1.png");
   const signaturePath2=join(process.cwd(),"public","images","signature.png");
   const signatureImage1=existsSync(signaturePath1)?await sharp(signaturePath1).trim().png().toBuffer():null;
@@ -65,7 +66,7 @@ export async function createAmbassadorCertificatePdf(person: AmbassadorCertifica
     document.font("Inter Bold").fontSize(12).fillColor("#07989c").text("C O N S T R U C T",width/2-22,59,{width:180,align:"left"});
     document.fillColor("#f05a28").text("C A R N I V A L  ",width/2-22,77,{width:180,align:"left",continued:true});
     document.fillColor("#9c3fe4").text("2 . 0");
-    const qrSize=88,qrX=width-139,qrY=35;
+    const qrSize=72,qrX=width-123,qrY=54;
     document.save().roundedRect(qrX-3,qrY-3,qrSize+6,qrSize+6,3).fillAndStroke("#ffffff","#d5ad5f").restore();
     document.image(verificationQr,qrX,qrY,{width:qrSize,height:qrSize});
 

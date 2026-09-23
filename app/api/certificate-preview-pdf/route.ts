@@ -26,7 +26,9 @@ export async function POST(request: Request) {
       ? participants
       : [{ name, email, events }];
     const validParticipants = requestedParticipants.filter((participant) =>
-      typeof participant?.name === "string"
+      Number.isInteger(Number(participant?.registrationId))
+      && Number(participant.registrationId) > 0
+      && typeof participant?.name === "string"
       && typeof participant?.email === "string"
       && Array.isArray(participant?.events));
     const isBulkDownload = mode === "bulk";
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
     for (let index = 0; index < validParticipants.length; index += 1) {
       const participant = validParticipants[index];
       const certificatePdf = await createParticipationCertificatePdf({
+        registrationId: Number(participant.registrationId),
         name: participant.name.trim() || "Participant Name",
         email: participant.email.trim(),
         events: participant.events.map(String),
