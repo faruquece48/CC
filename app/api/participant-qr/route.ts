@@ -82,10 +82,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
+    await sql`CREATE TABLE IF NOT EXISTS participantQrEmailLog (
+      normalized_email TEXT PRIMARY KEY, registration_id TEXT NOT NULL, recipient TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'sending', sent_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), error_message TEXT
+    )`;
+
     if (body.action === "list") {
+      const localSentRecords = (Array.isArray(body.sentRecords) ? body.sentRecords.slice(0, 1000) : [])
+        .map((record: any) => ({ email: normalizeEmail(record?.email), registration_id: String(record?.registrationId || "").trim() }))
+        .filter((record: { email: string; registration_id: string }) => record.email && record.registration_id);
+      if (localSentRecords.length) {
+        const recordsJson = JSON.stringify(localSentRecords);
+        await sql`WITH records AS (
+          SELECT email AS normalized_email, registration_id
+          FROM JSONB_TO_RECORDSET(${recordsJson}::jsonb) AS record(email TEXT, registration_id TEXT)
+        )
+        INSERT INTO participantQrEmailLog (normalized_email,registration_id,recipient,status,sent_at,updated_at)
+        SELECT normalized_email,registration_id,normalized_email,'sent',NOW(),NOW() FROM records
+        ON CONFLICT (normalized_email) DO UPDATE SET registration_id=EXCLUDED.registration_id,status='sent',sent_at=COALESCE(participantQrEmailLog.sent_at,NOW()),updated_at=NOW()
+        WHERE participantQrEmailLog.status<>'sent'`;
+      }
       const result = await individualParticipants();
+      const logResult = await sql`SELECT normalized_email,status,sent_at,updated_at,error_message FROM participantQrEmailLog`;
+      const logs = new Map(logResult.rows.map(row => [String(row.normalized_email), row]));
       const registeredEmails = new Set(result.rows.map((row) => normalizeEmail(row.email)));
-      const registered = result.rows.map((row) => ({ ...row, is_ambassador: isCampusAmbassador(row.email), recipient_group: "participant" }));
+      const registered = result.rows.map((row) => ({ ...row, is_ambassador: isCampusAmbassador(row.email), recipient_group: "participant", qr_email_status: logs.get(normalizeEmail(row.email))?.status || "not_sent", qr_email_sent_at: logs.get(normalizeEmail(row.email))?.sent_at || null, qr_email_updated_at: logs.get(normalizeEmail(row.email))?.updated_at || null, qr_email_error: logs.get(normalizeEmail(row.email))?.error_message || null }));
       const unregisteredAmbassadors = ambassadors
         .filter((ambassador) => !registeredEmails.has(normalizeEmail(ambassador.email)))
         .map((ambassador) => ({
@@ -94,6 +115,10 @@ export async function POST(request: Request) {
           email: ambassador.email,
           normalized_email: normalizeEmail(ambassador.email),
           is_ambassador: true,
+          qr_email_status: logs.get(normalizeEmail(ambassador.email))?.status || "not_sent",
+          qr_email_sent_at: logs.get(normalizeEmail(ambassador.email))?.sent_at || null,
+          qr_email_updated_at: logs.get(normalizeEmail(ambassador.email))?.updated_at || null,
+          qr_email_error: logs.get(normalizeEmail(ambassador.email))?.error_message || null,
           recipient_group: "ambassador",
         }));
       return NextResponse.json({ success: true, participants: [...registered, ...unregisteredAmbassadors] }, {
@@ -149,25 +174,28 @@ export async function POST(request: Request) {
     }
 
 
+    const trackedEmail = normalizeEmail(participant.email);
+    await sql`INSERT INTO participantQrEmailLog (normalized_email,registration_id,recipient,status,updated_at,error_message) VALUES (${trackedEmail},${String(registrationId)},${String(participant.email)},'sending',NOW(),NULL) ON CONFLICT (normalized_email) DO UPDATE SET registration_id=EXCLUDED.registration_id,recipient=EXCLUDED.recipient,status='sending',updated_at=NOW(),error_message=NULL`;
     const transporter = nodemailer.createTransport({
-      service: "gmail",
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 20_000,
+      service: "gmail", connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000,
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
     });
-    await transporter.sendMail({
-      from: `"Construct Carnival" <${process.env.GMAIL_USER}>`,
-      to: participant.email,
-      subject: participantQrEmailSubject,
-      text: participantQrEmailText(emailData),
-      html: participantQrEmailHtml(emailData),
-      attachments: [
-        { filename: `${registrationId}-kit-qr.png`, content: kitBuffer, contentType: "image/png" },
-        { filename: `${registrationId}-lunch-qr.png`, content: lunchBuffer, contentType: "image/png" },
-      ],
-    });
-    return NextResponse.json({ success: true, message: `QR codes sent to ${participant.email}.` });
+    try {
+      await transporter.sendMail({
+        from: `"Construct Carnival" <${process.env.GMAIL_USER}>`, to: participant.email, subject: participantQrEmailSubject,
+        text: participantQrEmailText(emailData), html: participantQrEmailHtml(emailData),
+        attachments: [
+          { filename: `${registrationId}-kit-qr.png`, content: kitBuffer, contentType: "image/png" },
+          { filename: `${registrationId}-lunch-qr.png`, content: lunchBuffer, contentType: "image/png" },
+        ],
+      });
+      await sql`UPDATE participantQrEmailLog SET status='sent',sent_at=NOW(),updated_at=NOW(),error_message=NULL WHERE normalized_email=${trackedEmail}`;
+      return NextResponse.json({ success: true, message: `QR codes sent to ${participant.email}.` });
+    } catch (sendError) {
+      const errorMessage = sendError instanceof Error ? sendError.message.slice(0,300) : "Delivery failed";
+      await sql`UPDATE participantQrEmailLog SET status='failed',updated_at=NOW(),error_message=${errorMessage} WHERE normalized_email=${trackedEmail}`;
+      throw sendError;
+    }
   } catch (error) {
     console.error("PARTICIPANT QR ERROR:", error);
     return NextResponse.json({

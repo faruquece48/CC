@@ -11,6 +11,10 @@ type Participant = {
   normalized_email: string;
   is_ambassador: boolean;
   recipient_group: "participant" | "ambassador";
+  qr_email_status?: "not_sent" | "sending" | "sent" | "failed";
+  qr_email_sent_at?: string | null;
+  qr_email_updated_at?: string | null;
+  qr_email_error?: string | null;
 };
 
 type QrPreview = { kitQr: string; lunchQr: string; isAmbassador: boolean };
@@ -81,14 +85,18 @@ export default function ParticipantQrPage() {
     setLoading(true);
     setStatus("");
     try {
+      const sentRecords = Object.entries(sendHistory).filter(([,record])=>record.status==="sent").map(([key])=>{const separator=key.indexOf(":");return {registrationId:key.slice(0,separator),email:key.slice(separator+1)}}).filter(record=>record.registrationId&&record.email);
       const response = await fetch("/api/participant-qr", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: adminPassword, action: "list" }),
+        body: JSON.stringify({ password: adminPassword, action: "list", sentRecords }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new Error(result?.message || "Unable to load participants.");
       const loaded = (result.participants || []).map((participant: Participant) => ({ ...participant, name: formatParticipantName(participant.name) }));
       loaded.sort((a: Participant, b: Participant) => String(a.registration_id).localeCompare(String(b.registration_id), undefined, { numeric: true }) || a.normalized_email.localeCompare(b.normalized_email));
+      const mergedHistory:SendHistory={...sendHistory};
+      loaded.forEach((participant:Participant)=>{if(participant.qr_email_status==="sent"||participant.qr_email_status==="failed"){mergedHistory[participantKey(participant)]={status:participant.qr_email_status,updatedAt:participant.qr_email_sent_at||participant.qr_email_updated_at||new Date().toISOString(),...(participant.qr_email_error?{error:participant.qr_email_error}:{})}}});
+      saveHistory(mergedHistory);
       setSlotIndex(0);
       setParticipants(loaded);
       setSelectedEmails(loaded.map((participant: Participant) => participant.normalized_email));
@@ -187,7 +195,7 @@ export default function ParticipantQrPage() {
       {participants.length > 0 && <>
         <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
           <p className="font-bold">{sentCount} sent · {participants.length - sentCount} without a confirmed send</p>
-          <p className="mt-1">History is saved in this browser and tracks mail-server acceptance, not inbox delivery. Emails sent before tracking was added are not included.</p>
+          <p className="mt-1">Sent status is synchronized through the shared database and is visible from both local and live websites. It records mail-server acceptance, not inbox delivery.</p>
         </div>
         <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-4">
           <label className="mb-4 block text-sm font-bold text-sky-900">Recipient slot

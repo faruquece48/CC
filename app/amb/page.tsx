@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CalendarDays, CheckCircle2, Database, Loader2, Mail, MapPin, RefreshCw, Search, Send, ShieldCheck, XCircle } from "lucide-react";
 
 type Person = { code:string; name:string; email:string; university:string; department:string; invitation_status:"not_sent"|"sending"|"sent"|"failed"; invitation_sent_at:string|null };
@@ -8,6 +8,7 @@ const passwordKey = "construct-carnival-amb-invitation-password";
 
 export default function AmbassadorInvitationPage() {
   const [password,setPassword]=useState(()=>typeof window==="undefined"?"":localStorage.getItem(passwordKey)||"");
+  const passwordInputRef=useRef<HTMLInputElement>(null);
   const [people,setPeople]=useState<Person[]>([]);
   const [checked,setChecked]=useState<string[]>([]);
   const [selectedCode,setSelectedCode]=useState("");
@@ -24,10 +25,12 @@ export default function AmbassadorInvitationPage() {
   const remainingTotal=people.length-sentTotal;
 
   async function load() {
-    setLoading(true);setStatus("");
+    const currentPassword=passwordInputRef.current?.value||password;
+    if(!currentPassword){setStatus("Enter the admin password first.");return;}
+    setPassword(currentPassword);setLoading(true);setStatus("");
     try {
-      localStorage.setItem(passwordKey,password);
-      const response=await fetch("/api/ambassador-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,action:"list"})});
+      localStorage.setItem(passwordKey,currentPassword);
+      const response=await fetch("/api/ambassador-email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:currentPassword,action:"list"})});
       const data=await response.json();
       if(!response.ok)throw new Error(data.message||"Unable to load campus ambassadors.");
       const loaded:Person[]=data.ambassadors||[];
@@ -68,7 +71,7 @@ export default function AmbassadorInvitationPage() {
       </section>
 
       <section className="mt-6 rounded-3xl border border-white/70 bg-white/90 p-5 shadow-xl backdrop-blur md:p-7">
-        <div className="grid gap-3 md:grid-cols-[1fr_auto]"><input type="password" value={password} onChange={event=>setPassword(event.target.value)} onKeyDown={event=>event.key==="Enter"&&load()} placeholder="Admin password" className="rounded-xl border border-slate-200 px-4 py-3 outline-none ring-emerald-600 focus:ring-2"/><button onClick={load} disabled={!password||loading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#073f37] px-6 py-3 font-bold text-white disabled:opacity-50">{loading?<Loader2 className="animate-spin" size={18}/>:<Database size={18}/>} Load ambassadors</button></div>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]"><input ref={passwordInputRef} type="password" value={password} onChange={event=>setPassword(event.target.value)} onKeyDown={event=>event.key==="Enter"&&load()} placeholder="Admin password" className="rounded-xl border border-slate-200 px-4 py-3 outline-none ring-emerald-600 focus:ring-2"/><button onClick={load} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#073f37] px-6 py-3 font-bold text-white disabled:opacity-50">{loading?<Loader2 className="animate-spin" size={18}/>:<Database size={18}/>} Load ambassadors</button></div>
         {status&&<p className="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">{status}</p>}
         {people.length>0&&<><div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-xs font-extrabold uppercase text-emerald-700">Total sent</p><p className="mt-1 text-3xl font-black text-emerald-900">{sentTotal}</p></div>
@@ -100,7 +103,7 @@ export default function AmbassadorInvitationPage() {
               <div className="p-6 sm:p-9"><p className="font-serif text-xl font-bold text-[#073f37]">Dear {selected.name},</p><p className="mt-4 text-sm leading-7 text-slate-600">You are cordially invited to join Construct Carnival 2.0 as our valued <strong className="text-[#073f37]">Campus Ambassador</strong>. Your leadership helped connect this celebration with students across the country.</p>
                 <div className="mt-6 grid bg-[#073f37] text-white sm:grid-cols-2"><div className="border-b border-amber-300/40 p-6 text-center sm:border-b-0 sm:border-r"><CalendarDays className="mx-auto mb-3 text-amber-300" size={24}/><p className="text-[10px] font-bold uppercase tracking-widest text-amber-300">Date & Time</p><p className="mt-1 font-serif text-lg">03 October 2026</p><p className="text-xs text-white/70">Saturday, from 8:00 AM</p></div><div className="p-6 text-center"><MapPin className="mx-auto mb-3 text-amber-300" size={20}/><p className="text-[10px] font-bold uppercase tracking-widest text-amber-300">Venue</p><p className="mt-1 font-serif text-lg">RUET Auditorium</p><p className="text-xs text-white/70">& Department of BECM</p></div></div>
                 <div className="mx-auto mt-6 flex w-fit items-center border border-[#d6bd80] bg-[#faf5e8] px-5 py-3"><span className="mr-4 text-[10px] font-bold uppercase tracking-widest text-[#75633e]">Ambassador Code</span><strong className="font-serif text-2xl text-[#073f37]">{selected.code}</strong></div>
-                <div className="mt-6 border-l-4 border-amber-500 bg-[#f7f2e6] p-4 text-sm leading-6 text-slate-600"><strong className="text-[#073f37]">Your presence matters.</strong> Please bring your ambassador QR codes for kit and lunch collection.</div>
+                <div className="mt-6 border-l-4 border-amber-500 bg-[#f7f2e6] p-4 text-justify text-sm leading-6 text-slate-600">Please keep your personal Ambassador QR codes ready for kit and lunch collection.</div>
               </div><footer className="bg-[#073f37] px-5 py-4 text-center text-[10px] uppercase tracking-[.2em] text-emerald-50">We look forward to welcoming you</footer>
             </article>
           </div>}
