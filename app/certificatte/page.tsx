@@ -51,6 +51,7 @@ export default function CertificatePage() {
   const [sendingCertificate, setSendingCertificate] = useState(false);
   const [forceResend, setForceResend] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState("");
+  const [failedEmails, setFailedEmails] = useState<string[]>([]);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
   const [pdfPreviewError, setPdfPreviewError] = useState("");
   const [loadingPdfPreview, setLoadingPdfPreview] = useState(false);
@@ -74,6 +75,8 @@ export default function CertificatePage() {
     });
   }, [participants]);
   const selectedSlot = participantSlots[selectedSlotIndex];
+  const sentTotal = participants.filter((participant) => participant.certificate_sent).length;
+  const remainingTotal = Math.max(0, participants.length - sentTotal);
   const selectedParticipant = participants.find(
     (participant) => participant.normalized_email === selectedEmail,
   );
@@ -246,6 +249,7 @@ export default function CertificatePage() {
     let alreadySent = 0;
     let failed = 0;
     const failureMessages = new Set<string>();
+    const nextFailed = new Set(failedEmails.filter((email) => !recipientEmails.includes(email)));
 
     for (let index = 0; index < recipientEmails.length; index += 1) {
       const email = recipientEmails[index];
@@ -267,6 +271,7 @@ export default function CertificatePage() {
         if (!response.ok) throw new Error(result.message || "Unable to send certificate.");
         if (result.alreadySent) alreadySent += 1;
         else sent += 1;
+        nextFailed.delete(email);
         setParticipants((current) => current.map((participant) =>
           participant.normalized_email === email
             ? { ...participant, certificate_sent: true, certificate_sent_at: new Date().toISOString() }
@@ -275,9 +280,11 @@ export default function CertificatePage() {
       } catch (error) {
         failed += 1;
         failureMessages.add(error instanceof Error ? error.message : "Unknown delivery error.");
+        nextFailed.add(email);
       }
     }
 
+    setFailedEmails(Array.from(nextFailed));
     const failureDetail = failureMessages.size > 0
       ? ` ${Array.from(failureMessages).join(" ")}`
       : "";
@@ -352,6 +359,8 @@ export default function CertificatePage() {
             Load participants
           </button>
         </div>
+        {participants.length > 0 && <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-xs font-bold uppercase text-emerald-700">Total sent</p><p className="mt-1 text-3xl font-black text-emerald-800">{sentTotal}</p></div><div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="text-xs font-bold uppercase text-red-700">Failed</p><p className="mt-1 text-3xl font-black text-red-800">{failedEmails.length}</p></div><div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="text-xs font-bold uppercase text-slate-600">Remaining</p><p className="mt-1 text-3xl font-black text-slate-800">{remainingTotal}</p></div></div>}
+        {failedEmails.length > 0 && <button type="button" onClick={() => sendCertificate(failedEmails)} disabled={sendingCertificate} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-red-700 px-5 py-3 font-bold text-white disabled:opacity-50">{sendingCertificate ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />} Retry failed emails ({failedEmails.length})</button>}
         {participants.length > 0 && selectedSlot && (
           <div className="mt-4 space-y-4">
             <div className="grid gap-3 md:grid-cols-[1fr_auto]">
