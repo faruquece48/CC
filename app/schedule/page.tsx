@@ -1,3 +1,4 @@
+import { examSchedule } from "@/config/competitionSchedule";
 import { Award, CalendarDays, Cpu, MapPin, PackageCheck, Presentation, ShieldCheck, Sparkles, Trophy, UtensilsCrossed, Users, Wrench } from "lucide-react";
 
 const morning = [
@@ -10,9 +11,9 @@ const morning = [
 
 const competitions = [
   { time: "2:00 PM — 6:00 PM", title: "Truss Combat", icon: Wrench },
-  { time: "2:00 PM — 2:40 PM", title: "CAD Expert", icon: Cpu },
-  { time: "3:00 PM — 3:40 PM", title: "Mechamind", icon: Sparkles },
-  { time: "4:00 PM — 4:40 PM", title: "Management Maestro", icon: Users },
+  { ...examSchedule[0], icon: Cpu },
+  { ...examSchedule[1], icon: Sparkles },
+  { ...examSchedule[2], icon: Users },
 ];
 
 export default function SchedulePage() {
