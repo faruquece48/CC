@@ -1,3 +1,4 @@
+import { ambassadorQrLabel } from "@/lib/qrLabel";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
@@ -67,8 +68,7 @@ function qrValue(registrationId: number | string, email: string, purpose: QrPurp
 async function qrPng(value: string, registrationId: number | string, purpose: QrPurpose, ambassador: boolean) {
   const qr = await QRCode.toBuffer(value, { width: 360, margin: 4, errorCorrectionLevel: "M" });
   if (!ambassador) return qr;
-  const purposeLabel = purpose === "kit" ? "KIT COLLECTION" : "LUNCH COLLECTION";
-  const label = Buffer.from(`<svg width="420" height="82" xmlns="http://www.w3.org/2000/svg"><rect width="420" height="82" rx="10" fill="#073f37"/><text x="210" y="25" text-anchor="middle" fill="#f5d77a" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.5">${purposeLabel}</text><text x="210" y="53" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Registration ${registrationId} | Campus Ambassador</text><text x="210" y="72" text-anchor="middle" fill="#d1fae5" font-family="Arial, sans-serif" font-size="10">Construct Carnival 2.0</text></svg>`);
+  const label = ambassadorQrLabel(registrationId, purpose);
   return sharp({ create: { width: 420, height: 480, channels: 4, background: "#ffffff" } })
     .composite([{ input: qr, left: 30, top: 8 }, { input: label, left: 0, top: 390 }])
     .png()
