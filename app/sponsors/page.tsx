@@ -22,6 +22,8 @@ import akij from "@/public/logo/Akij.jpeg";
 import crownCement from "@/public/logo/Crown Cement.jpeg";
 import bergerFosroc from "@/public/logo/Berger Fosroc Logo.png";
 import poles from "@/public/logo/Poles.jpeg";
+import freshCement from "@/public/logo/Fresh_Cement.jpeg";
+import channel24 from "@/public/logo/Channel_24.png";
 
 import AdsterraBanner from "@/components/AdsterraBanner";
 
@@ -187,6 +189,14 @@ export default function SponsorsPage() {
           >
             <NextImage src={poles} alt="PCL logo" className="h-auto max-h-[120px] w-auto max-w-full object-contain" sizes="(max-width: 640px) 80vw, 280px" />
           </Link>
+          <Link
+            href="https://www.mgi.org/businessverticals/cement"
+            isExternal
+            aria-label="Visit Fresh Cement website"
+            className="flex min-h-[170px] items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl lg:col-start-2"
+          >
+            <NextImage src={freshCement} alt="Fresh Cement logo" className="h-auto max-h-[120px] w-auto max-w-full object-contain" sizes="(max-width: 640px) 80vw, 280px" />
+          </Link>
         </div>
         <div className="mt-12">
           <SectionTitle text="ASSOCIATING SPONSOR" />
@@ -210,17 +220,33 @@ export default function SponsorsPage() {
       <section className="mx-auto max-w-4xl px-4 pb-10 md:px-8 md:pb-12">
         <SectionTitle text="MEDIA PARTNER" />
 
-        <Link
-          href="https://samakal.com/"
-          isExternal
-          className="mx-auto mt-6 flex h-[170px] max-w-[360px] items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-        >
-          <Image
-            src={samakal.src}
-            alt="Samakal"
-            className="max-h-[110px] max-w-full scale-[2.25] object-contain"
-          />
-        </Link>
+        <div className="mx-auto mt-6 grid max-w-[744px] grid-cols-1 gap-6 sm:grid-cols-2">
+          <Link
+            href="https://samakal.com/"
+            isExternal
+            className="flex h-[170px] items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+          >
+            <Image
+              src={samakal.src}
+              alt="Samakal"
+              className="max-h-[110px] max-w-full scale-[2.25] object-contain"
+            />
+          </Link>
+
+          <Link
+            href="https://www.channel24bd.tv/"
+            isExternal
+            aria-label="Visit Channel 24 website"
+            className="flex h-[170px] items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+          >
+            <NextImage
+              src={channel24}
+              alt="Channel 24"
+              className="h-auto max-h-[120px] w-auto max-w-full object-contain"
+              sizes="(max-width: 640px) 80vw, 320px"
+            />
+          </Link>
+        </div>
       </section>
       {/* PREVIOUS SPONSOR LIST — preserved for future use */}
       <section
