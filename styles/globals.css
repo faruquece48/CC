@@ -205,3 +205,15 @@ body {
 @media (max-width: 640px) {
   .loading-balloon { margin-left: -18%; }
 }
+
+.loading-number-input::-webkit-inner-spin-button,
+.loading-number-input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.loading-number-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
