@@ -435,27 +435,8 @@ export default function CertificatePage() {
           className="relative mx-auto aspect-[1.414/1] min-w-[900px] overflow-hidden bg-[#fffdf7] shadow-2xl shadow-slate-900/20"
           aria-label={`Certificate of participation for ${participantName || "Participant Name"}`}
         >
-          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 900 636" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <pattern id="certificate-security-grid" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(7)">
-                <path d="M0 0V12M6 0V12" stroke="#17708b" strokeWidth="0.35" opacity="0.12" />
-              </pattern>
-              <pattern id="certificate-security-cross" width="18" height="18" patternUnits="userSpaceOnUse">
-                <path d="M0 9H18M9 0V18" stroke="#17708b" strokeWidth="0.25" opacity="0.07" />
-              </pattern>
-            </defs>
-            <rect x="17" y="17" width="866" height="602" fill="url(#certificate-security-grid)" />
-            <rect x="17" y="17" width="866" height="602" fill="url(#certificate-security-cross)" />
-            <rect x="17" y="17" width="866" height="602" fill="none" stroke="#176f8f" strokeWidth="2" />
-            <rect x="29" y="29" width="842" height="578" fill="none" stroke="#176f8f" strokeWidth="1" />
-            <g fill="none" stroke="#176f8f" strokeWidth="2">
-              <path d="M17 57V17H57M29 69V29H69M43 17V43H17" />
-              <path d="M843 17H883V57M831 29H871V69M883 43H857V17" />
-              <path d="M17 579V619H57M29 567V607H69M43 619V593H17" />
-              <path d="M843 619H883V579M831 607H871V567M883 593H857V619" />
-            </g>
-          </svg>
-
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/certificate/Certificate_Template.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
           <div className="relative z-10 flex h-full flex-col items-center px-32 pb-20 pt-10 text-center">
             <div className="absolute left-1/2 top-[60px] flex w-full -translate-x-1/2 flex-col items-center px-28 text-center">
               <div className="mb-7 flex items-center justify-center gap-3 text-center">

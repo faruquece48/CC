@@ -61,6 +61,7 @@ export async function createParticipationCertificatePdf(
     const muted = "#52615e";
     const sealPath = join(process.cwd(), "public", "logo", "certificate_logo.png");
     const brandPath = join(process.cwd(), "public", "logo", "blue-main_x1024.png");
+    const templatePath = join(process.cwd(), "public", "certificate", "Certificate_Template.png");
     const coordinatorSignaturePath = join(process.cwd(), "public", "images", "Signature_1.png");
     const headSignaturePath = join(process.cwd(), "public", "images", "signature.png");
     const fontPath = (...parts: string[]) => join(process.cwd(), "node_modules", "@fontsource", ...parts);
@@ -76,39 +77,10 @@ export async function createParticipationCertificatePdf(
         : fontPath("great-vibes", "files", "great-vibes-latin-400-normal.woff"),
     );
 
-    const frameBlue = "#176f8f";
-    document.rect(0, 0, width, height).fill("#fffdf7");
-    const frameOuter = 16;
-    const frameInner = 27;
-    document.save().opacity(0.035).strokeColor(frameBlue).lineWidth(0.28);
-    for (let x = frameOuter - 70; x <= width - frameOuter; x += 5.6) {
-      document.moveTo(x, frameOuter).lineTo(x + 70, height - frameOuter).stroke();
-    }
-    document.restore();
-    document.save().opacity(0.025).strokeColor(frameBlue).lineWidth(0.2);
-    for (let x = frameOuter; x <= width - frameOuter; x += 16.8) {
-      document.moveTo(x, frameOuter).lineTo(x, height - frameOuter).stroke();
-    }
-    for (let y = frameOuter; y <= height - frameOuter; y += 16.8) {
-      document.moveTo(frameOuter, y).lineTo(width - frameOuter, y).stroke();
-    }
-    document.restore();
-    document.rect(frameOuter, frameOuter, width - frameOuter * 2, height - frameOuter * 2).lineWidth(1.9).stroke(frameBlue);
-    document.rect(frameInner, frameInner, width - frameInner * 2, height - frameInner * 2).lineWidth(0.9).stroke(frameBlue);
-
-    const drawFrameCorner = () => {
-      document.moveTo(16, 53).lineTo(16, 16).lineTo(53, 16)
-        .moveTo(27, 64).lineTo(27, 27).lineTo(64, 27)
-        .moveTo(40, 16).lineTo(40, 40).lineTo(16, 40)
-        .lineWidth(1.9).stroke(frameBlue);
-    };
-    drawFrameCorner();
-    document.save().translate(width, 0).scale(-1, 1); drawFrameCorner(); document.restore();
-    document.save().translate(0, height).scale(1, -1); drawFrameCorner(); document.restore();
-    document.save().translate(width, height).scale(-1, -1); drawFrameCorner(); document.restore();
+    document.image(templatePath, 0, 0, { width, height });
 
     const qrSize = 72;
-    const qrX = width - 123;
+    const qrX = width - 153;
     const qrY = 54;
     document.save().roundedRect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6, 3)
       .fillAndStroke("#ffffff", "#d5ad5f").restore();

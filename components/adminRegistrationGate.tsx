@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdminRegistrationGate() {
+export default function AdminRegistrationGate({ title = "Test Registration", buttonLabel = "Open Test Registration" }: { title?: string; buttonLabel?: string }) {
     const router = useRouter();
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -38,7 +38,7 @@ export default function AdminRegistrationGate() {
     return (
         <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
             <form onSubmit={submit} className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-lg">
-                <h1 className="text-xl font-bold text-gray-900">Test Registration</h1>
+                <h1 className="text-xl font-bold text-gray-900">{title}</h1>
                 <label htmlFor="test-registration-password" className="mb-2 mt-5 block text-sm font-semibold text-gray-700">
                     Admin password
                 </label>
@@ -57,7 +57,7 @@ export default function AdminRegistrationGate() {
                     disabled={loading}
                     className="mt-5 w-full rounded-md bg-emerald-700 px-4 py-2 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
                 >
-                    {loading ? "Checking..." : "Open Test Registration"}
+                    {loading ? "Checking..." : buttonLabel}
                 </button>
             </form>
         </main>

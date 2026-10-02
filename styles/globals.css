@@ -157,3 +157,51 @@ body {
     margin-inline: -14px;
   }
 }
+
+
+@keyframes loading-balloon-bouquet {
+  0% { transform: translateY(0) translateX(0) rotate(-4deg) scale(.72); opacity: 0; }
+  8% { opacity: .98; }
+  38% { transform: translateY(-56vh) translateX(0) rotate(2deg) scale(1); opacity: .98; }
+  48% { transform: translateY(-58vh) translateX(0) rotate(-2deg) scale(1.02); opacity: .98; }
+  72% { transform: translateY(-84vh) translateX(var(--balloon-mid)) rotate(4deg) scale(1.04); opacity: .98; }
+  92% { transform: translateY(-115vh) translateX(var(--balloon-drift)) rotate(-5deg) scale(1.06); opacity: .98; }
+  100% { transform: translateY(-135vh) translateX(var(--balloon-drift)) rotate(8deg) scale(1.08); opacity: 0; }
+}
+
+.loading-festival-glow {
+  background: radial-gradient(circle at 78% 38%, rgba(83, 213, 241, .27), transparent 34%), linear-gradient(110deg, rgba(74, 199, 231, .08), rgba(255,255,255,.02) 50%, rgba(51, 192, 224, .18));
+  animation: loading-festival-glow 6.5s ease-out forwards;
+}
+
+@keyframes loading-festival-glow {
+  0%, 100% { opacity: 0; }
+  12%, 78% { opacity: 1; }
+}
+
+.loading-balloon {
+  position: absolute; bottom: -170px;
+  border-radius: 52% 48% 47% 53% / 58% 57% 43% 42%;
+  box-shadow: inset -12px -10px 0 rgba(0,0,0,.11), inset 12px 9px 0 rgba(255,255,255,.3), 0 10px 22px rgba(26,71,83,.16);
+  animation: loading-balloon-bouquet 5.8s cubic-bezier(.19,.72,.32,1) forwards;
+}
+
+.loading-balloon::before {
+  content: ""; position: absolute; left: 19%; top: 14%; width: 22%; height: 30%;
+  border-radius: 50%; background: rgba(255,255,255,.48); filter: blur(1px); transform: rotate(18deg);
+}
+
+.loading-balloon::after {
+  content: ""; position: absolute; left: calc(50% - 6px); bottom: -9px;
+  border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 10px solid currentColor;
+}
+
+.loading-balloon i {
+  position: absolute; left: 50%; top: 100%; width: 1.5px; height: 145px;
+  background: rgba(54,75,82,.58); transform-origin: top; transform: rotate(-4deg);
+  box-shadow: 8px 35px 0 -0.25px rgba(54,75,82,.35);
+}
+
+@media (max-width: 640px) {
+  .loading-balloon { margin-left: -18%; }
+}
