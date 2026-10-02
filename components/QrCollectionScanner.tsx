@@ -1,10 +1,13 @@
 "use client";
 
-import { Camera, CheckCircle2, Loader2, PackageCheck, RefreshCw, ScanLine, Soup, XCircle } from "lucide-react";
+import { Camera, CheckCircle2, Loader2, PackageCheck, RefreshCw, ScanLine, Search, Soup, XCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Purpose = "kit" | "lunch";
 type ScanResult = { success: boolean; message: string; registrationId?: number | string; participantName?: string };
+type CollectionState = { collected: boolean; scannedAt: string | null };
+type LookupParticipant = { name: string; email: string; kit: CollectionState; lunch: CollectionState };
+type LookupResult = { registrationId: number | string; participants: LookupParticipant[] };
 type BarcodeDetectorInstance = { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>> };
 type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance;
 
@@ -23,6 +26,10 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
   const [awaitingNext, setAwaitingNext] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [status, setStatus] = useState("");
+  const [lookupId, setLookupId] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState("");
+  const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetectorInstance | null>(null);
@@ -47,6 +54,25 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
   }, [applySummary]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
+
+  const lookupRegistration = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const registrationId = lookupId.trim();
+    if (!registrationId) { setLookupError("Enter a registration ID."); setLookupResult(null); return; }
+    setLookupLoading(true);
+    setLookupError("");
+    setLookupResult(null);
+    try {
+      const response = await fetch("/api/qrcheck", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "lookup", registrationId }) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message || "Unable to check this registration ID.");
+      setLookupResult({ registrationId: data.registrationId, participants: data.participants || [] });
+    } catch (error) {
+      setLookupError(error instanceof Error ? error.message : "Unable to check this registration ID.");
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   const redeem = useCallback(async (rawValue: string) => {
     if (processingRef.current || awaitingNextRef.current) return;
@@ -147,6 +173,17 @@ export default function QrCollectionScanner({ purpose }: { purpose: Purpose }) {
       <div className="text-center"><Icon className={isKit ? "mx-auto text-emerald-600" : "mx-auto text-amber-600"} size={42} /><p className={isKit ? "mt-3 text-xs font-extrabold uppercase tracking-[.25em] text-emerald-700" : "mt-3 text-xs font-extrabold uppercase tracking-[.25em] text-amber-700"}>One-time collection scanner</p><h1 className="mt-2 text-3xl font-extrabold">{isKit ? "Kit Collection" : "Lunch Collection"}</h1><p className="mt-2 text-sm text-slate-600">Each valid participant code can be accepted only once on this page.</p></div>
 
       <div className={`mt-5 rounded-2xl border p-5 text-center ${isKit ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}><p className="text-sm font-bold uppercase tracking-wider text-slate-600">Total scanned</p><p className={`mt-1 text-5xl font-black ${isKit ? "text-emerald-700" : "text-amber-700"}`}>{count}</p></div>
+
+      <div className={`mt-5 rounded-2xl border p-5 ${isKit ? "border-emerald-200 bg-emerald-50/60" : "border-amber-200 bg-amber-50/60"}`}>
+        <h2 className="text-lg font-extrabold">Check collection status</h2>
+        <p className="mt-1 text-sm text-slate-600">Search a registration ID to investigate {isKit ? "kit" : "lunch"} collection.</p>
+        <form onSubmit={lookupRegistration} className="mt-4 flex gap-2">
+          <input value={lookupId} onChange={(event) => setLookupId(event.target.value)} placeholder="Registration ID" aria-label="Registration ID" className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-slate-600" />
+          <button type="submit" disabled={lookupLoading} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold text-white disabled:opacity-50 ${isKit ? "bg-emerald-700" : "bg-amber-700"}`}>{lookupLoading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Check</button>
+        </form>
+        {lookupError && <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{lookupError}</p>}
+        {lookupResult && <div className="mt-4 space-y-3"><p className="text-sm font-extrabold text-slate-700">Registration {lookupResult.registrationId} · {lookupResult.participants.length} participant{lookupResult.participants.length === 1 ? "" : "s"}</p>{lookupResult.participants.map((participant) => <article key={participant.email} className="rounded-xl border border-slate-200 bg-white p-4"><p className="font-extrabold">{participant.name}</p><p className="mt-0.5 break-all text-xs text-slate-500">{participant.email}</p><div className="mt-3">{([purpose] as const).map((item) => { const collection = participant[item]; return <div key={item} className={`rounded-lg border p-3 ${collection.collected ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}><p className="text-xs font-extrabold uppercase tracking-wider">{item}</p><p className={`mt-1 font-bold ${collection.collected ? "text-emerald-700" : "text-red-700"}`}>{collection.collected ? "Received" : "Not received"}</p>{collection.scannedAt && <p className="mt-1 text-[11px] text-slate-500">{new Date(collection.scannedAt).toLocaleString("en-BD")}</p>}</div>; })}</div></article>)}</div>}
+      </div>
 
       <div className="relative mx-auto mt-5 aspect-square w-full max-w-sm overflow-hidden rounded-3xl border border-slate-300 bg-black">
         <video ref={videoRef} playsInline muted className="h-full w-full object-cover object-center" />

@@ -50,6 +50,51 @@ export async function POST(request: Request) {
         headers: { "Cache-Control": "no-store" },
       });
     }
+    if (body.action === "lookup") {
+      const rawRegistrationId = String(body.registrationId || "").trim().toUpperCase();
+      if (!rawRegistrationId) return NextResponse.json({ success: false, message: "Enter a registration ID." }, { status: 400 });
+
+      const ambassador = ambassadors.find((item) => item.code === rawRegistrationId);
+      if (ambassador) {
+        const logs = await sql`SELECT purpose, scanned_at FROM ambassadorQrCollectionLog WHERE ambassador_code = ${ambassador.code}`;
+        const status = (purpose: QrPurpose) => {
+          const log = logs.rows.find((row) => row.purpose === purpose);
+          return { collected: Boolean(log), scannedAt: log?.scanned_at || null };
+        };
+        return NextResponse.json({ success: true, registrationId: ambassador.code, participants: [{ name: ambassador.name, email: ambassador.email, kit: status("kit"), lunch: status("lunch") }] }, { headers: { "Cache-Control": "no-store" } });
+      }
+
+      const registrationId = Number(rawRegistrationId);
+      if (!Number.isInteger(registrationId) || registrationId <= 0) return NextResponse.json({ success: false, message: "Enter a valid registration ID." }, { status: 400 });
+      const result = await sql`
+        WITH registration_people AS (
+          SELECT single_data.name, single_data.email,
+            LOWER(REGEXP_REPLACE(TRIM(single_data.email), '\s+', '', 'g')) AS normalized_email
+          FROM singleRegistrationData AS single_data
+          JOIN registrationData AS master ON master.id = single_data.registration_id
+          WHERE single_data.registration_id = ${registrationId} AND master.ispaid = TRUE
+          UNION ALL
+          SELECT member->>'name', member->>'email',
+            LOWER(REGEXP_REPLACE(TRIM(member->>'email'), '\s+', '', 'g'))
+          FROM teamRegistrationData AS team_data
+          JOIN registrationData AS master ON master.id = team_data.registration_id
+          CROSS JOIN LATERAL JSONB_ARRAY_ELEMENTS(team_data.members) AS member
+          WHERE team_data.registration_id = ${registrationId} AND master.ispaid = TRUE
+        ), unique_people AS (
+          SELECT normalized_email, MAX(name) AS name, MAX(email) AS email
+          FROM registration_people WHERE normalized_email <> '' GROUP BY normalized_email
+        )
+        SELECT people.name, people.email,
+          kit.scanned_at AS kit_scanned_at, lunch.scanned_at AS lunch_scanned_at
+        FROM unique_people AS people
+        LEFT JOIN qrCollectionLog AS kit ON kit.normalized_email = people.normalized_email AND kit.purpose = 'kit'
+        LEFT JOIN qrCollectionLog AS lunch ON lunch.normalized_email = people.normalized_email AND lunch.purpose = 'lunch'
+        ORDER BY people.name
+      `;
+      if (!result.rowCount) return NextResponse.json({ success: false, message: "No active paid participants found for this registration ID." }, { status: 404 });
+      return NextResponse.json({ success: true, registrationId, participants: result.rows.map((row) => ({ name: row.name, email: row.email, kit: { collected: Boolean(row.kit_scanned_at), scannedAt: row.kit_scanned_at }, lunch: { collected: Boolean(row.lunch_scanned_at), scannedAt: row.lunch_scanned_at } })) }, { headers: { "Cache-Control": "no-store" } });
+    }
+
     if (body.action !== "redeem") {
       return NextResponse.json({ success: false, message: "Invalid action." }, { status: 400 });
     }
