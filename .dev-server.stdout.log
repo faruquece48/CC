@@ -1,49 +1,23 @@
 
 > next-app-template@0.0.1 dev
-> next dev -p 3000
+> next dev
 
    ▲ Next.js 14.1.4
    - Local:        http://localhost:3000
    - Environments: .env.local
 
- ✓ Ready in 2.8s
+ ✓ Ready in 23.2s
  ○ Compiling / ...
- ✓ Compiled / in 23.9s (2997 modules)
- ✓ Compiled in 2.9s (1510 modules)
- ○ Compiling /important_dates ...
- ✓ Compiled /important_dates in 3.3s (2994 modules)
+ ✓ Compiled / in 53s (3153 modules)
+ ✓ Compiled in 7.2s (3003 modules)
  ○ Compiling /api/visitors ...
- ✓ Compiled /api/visitors in 790ms (1528 modules)
- ○ Compiling /ss ...
- ✓ Compiled /ss in 753ms (3057 modules)
+ ✓ Compiled /api/visitors in 4.5s (1531 modules)
+ ✓ Compiled in 935ms (3037 modules)
  ○ Compiling /api/visitors-leave ...
- ✓ Compiled /api/visitors-leave in 1023ms (1482 modules)
- ○ Compiling /not-found ...
- ✓ Compiled /not-found in 3.7s (2971 modules)
- ✓ Compiled in 1602ms (2971 modules)
- ○ Compiling /ss ...
- ✓ Compiled /ss in 6.7s (3009 modules)
- ✓ Compiled in 1788ms (3002 modules)
- ✓ Compiled in 1364ms (3002 modules)
- ✓ Compiled in 1731ms (3002 modules)
- ○ Compiling /schedule ...
- ✓ Compiled /schedule in 1705ms (2991 modules)
- ✓ Compiled in 1016ms (3005 modules)
- ✓ Compiled in 1580ms (3005 modules)
- ✓ Compiled in 1576ms (3005 modules)
- ✓ Compiled in 1320ms (3005 modules)
- ✓ Compiled in 1392ms (3005 modules)
- ✓ Compiled in 1301ms (3005 modules)
- ✓ Compiled in 902ms (3005 modules)
- ✓ Compiled in 2.1s (3005 modules)
- ○ Compiling / ...
- ✓ Compiled / in 1671ms (1554 modules)
+ ✓ Compiled /api/visitors-leave in 582ms (1533 modules)
+ ○ Compiling /registration_data ...
+ ✓ Compiled /registration_data in 10.6s (3184 modules)
+ ○ Compiling /api/fetchRegData ...
+ ✓ Compiled /api/fetchRegData in 2.1s (1654 modules)
  ○ Compiling /api/visitors-leave ...
- ✓ Compiled /api/visitors-leave in 1182ms (1492 modules)
- ✓ Compiled in 1946ms (3008 modules)
- ○ Compiling / ...
- ✓ Compiled / in 2.1s (1521 modules)
- ○ Compiling /api/visitors ...
- ✓ Compiled /api/visitors in 810ms (1555 modules)
- ✓ Compiled /api/visitors-leave in 507ms (1557 modules)
-[?25h
+ ✓ Compiled /api/visitors-leave in 1014ms (1656 modules)
