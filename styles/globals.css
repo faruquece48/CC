@@ -217,3 +217,33 @@ body {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+@page { size: A4 portrait; margin: 0; }
+
+@media print {
+  nav, footer:not(.memo-footer), .bill-controls { display: none !important; }
+  html, body { background: white !important; }
+  main { margin: 0 !important; padding: 0 !important; }
+  .bill-page {
+    width: 210mm !important; height: 297mm !important; min-height: 297mm !important;
+    max-width: none !important; box-shadow: none !important; overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bill-page, .bill-page *, .bill-page *::before, .bill-page *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+.memo-footer::after {
+  content: "";
+  position: absolute;
+  right: -35px;
+  top: -22px;
+  width: 360px;
+  height: 92px;
+  background: linear-gradient(135deg, #1769aa, #08a0ad);
+  transform: skewX(-25deg);
+  opacity: .96;
+}

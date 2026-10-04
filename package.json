@@ -40,6 +40,7 @@
     "eslint": "8.48.0",
     "eslint-config-next": "14.0.2",
     "file-saver": "^2.0.5",
+    "fontkit": "^2.0.4",
     "framer-motion": "^10.16.4",
     "generate-unique-id": "^2.0.3",
     "intl-messageformat": "^10.5.0",
@@ -68,8 +69,7 @@
     "tailwindcss": "3.3.5",
     "typescript": "5.0.4",
     "ws": "^8.17.0",
-    "xlsx": "^0.18.5",
-    "fontkit": "^2.0.4"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/nodemailer": "^8.0.0",
