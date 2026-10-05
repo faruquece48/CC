@@ -47,7 +47,7 @@ export default function AboutPage() {
 
           <div className="space-y-5 text-gray-600 text-justify leading-8">
             <p>
-              Construct Carnival 1.0 is a nationwide festival for students
+              Construct Carnival is a nationwide festival for students
               studying Civil Engineering, Building Engineering & Construction
               Management, Urban & Regional Planning, and Architecture. The
               festival is organized by the Department of Building Engineering &
