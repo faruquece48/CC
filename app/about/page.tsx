@@ -1,6 +1,5 @@
 import { title } from "@/components/primitives";
 import Image from "next/image";
-import { galleryAsset } from "@/config/assets";
 
 export default function AboutPage() {
   return (
@@ -28,7 +27,7 @@ export default function AboutPage() {
       {/* Main Image */}
       <div className="w-full overflow-hidden rounded-[30px] shadow-lg mb-10">
         <Image
-          src={galleryAsset("image_11.JPG")}
+          src="https://images.constructcarnival.com/CC%202.0/slider/I2_01.JPEG"
           unoptimized
           alt="Construct Carnival"
           width={1600}

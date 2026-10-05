@@ -1,5 +1,4 @@
 import { title } from "@/components/primitives";
-import { galleryAsset } from "@/config/assets";
 
 export default function EventsExperiencePage() {
   return (
@@ -63,7 +62,7 @@ export default function EventsExperiencePage() {
           "
         >
           <img
-            src={galleryAsset("image_18.JPG")}
+            src="https://images.constructcarnival.com/CC%202.0/slider/I2_06.JPEG"
             alt="Events Experience"
             className="w-full h-full object-cover"
           />

@@ -1,5 +1,4 @@
 import { title } from "@/components/primitives";
-import { galleryAsset } from "@/config/assets";
 
 export default function WorkshopHighlightsPage() {
   return (
@@ -63,7 +62,7 @@ export default function WorkshopHighlightsPage() {
           "
         >
           <img
-            src={galleryAsset("image_17.JPG")}
+            src="https://images.constructcarnival.com/CC%202.0/slider/I2_03.JPEG"
             alt="Workshop Highlights"
             className="w-full h-full object-cover"
           />
