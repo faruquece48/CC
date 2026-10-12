@@ -11,7 +11,50 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { archiveAsset, galleryAsset } from "@/config/assets";
+import { archiveAsset, carnivalTwoArchiveAsset, galleryAsset } from "@/config/assets";
+
+const carnivalTwoPhotoNames = [
+  "IMG_1167.jpg",
+  "IMG_1181.jpg",
+  "IMG_1185.jpg",
+  "IMG_1279.jpg",
+  "IMG_1286.jpg",
+  "IMG_1288.jpg",
+  "IMG_1290.jpg",
+  "IMG_1313.jpg",
+  "IMG_1339.jpg",
+  "IMG_1581.jpg",
+  "IMG_1582.jpg",
+  "IMG_1595.jpg",
+  "IMG_1596.jpg",
+  "IMG_1655.jpg",
+  "IMG_1714(1).jpg",
+  "IMG_1718.jpg",
+  "IMG_1744.jpg",
+  "IMG_1747(1).jpg",
+  "IMG_1896.jpg",
+  "IMG_1897(1).jpg",
+  "IMG_1898(1).jpg",
+  "IMG_1899.jpg",
+  "IMG_1901(1).jpg",
+  "IMG_1901.jpg",
+  "IMG_1902(1).jpg",
+  "IMG_1903.jpg",
+  "IMG_1904(1).jpg",
+  "IMG_1917.jpg",
+  "IMG_1919(1).jpg",
+  "IMG_1924(1).jpg",
+  "IMG_2040.jpg",
+  "IMG_2041.jpg",
+  "IMG_2042.jpg",
+  "IMG_2068.jpg",
+  "IMG_2189.jpg",
+  "IMG_2190.jpg",
+  "IMG_2207.jpg",
+  "IMG_2208.jpg",
+  "IMG_2215.jpg",
+  "IMG_2216.jpg",
+];
 
 const archiveEvents = [
   {
@@ -20,6 +63,7 @@ const archiveEvents = [
     year: "2024",
     description:
       "Relive the competitions, celebrations and people who shaped the first chapter of Construct Carnival.",
+    magazineSrc: galleryAsset("magazine.pdf"),
     photos: Array.from({ length: 41 }, (_, index) => ({
       memoryNumber: index + 1,
       imageNumber: index + 11,
@@ -35,13 +79,23 @@ const archiveEvents = [
     shortName: "Carnival 2.0",
     year: "2026",
     description:
-      "A new chapter is being created. Photographs and highlights from Construct Carnival 2.0 will appear here soon.",
-    photos: [],
+      "Relive the competitions, celebrations and memorable moments from Construct Carnival 2.0.",
+    magazineSrc: carnivalTwoArchiveAsset("CC_2.0.pdf"),
+    photos: [
+      ...carnivalTwoPhotoNames.map((fileName, index) => ({
+        memoryNumber: index + 1,
+        src: carnivalTwoArchiveAsset(fileName),
+      })),
+      {
+        memoryNumber: carnivalTwoPhotoNames.length + 1,
+        src: "/archive/CC_2.0-cover.jpg",
+      },
+    ],
   },
 ];
 
 export default function ArchivePage() {
-  const [selectedEventIndex, setSelectedEventIndex] = useState(0);
+  const [selectedEventIndex, setSelectedEventIndex] = useState(1);
   const [activePhoto, setActivePhoto] = useState<number | null>(null);
   const [isMagazineOpen, setIsMagazineOpen] = useState(false);
   const selectedEvent = archiveEvents[selectedEventIndex];
@@ -100,9 +154,9 @@ export default function ArchivePage() {
           </div>
 
           <div className="relative hidden h-[360px] lg:block">
-            <img src={archiveAsset("image_12.webp")} alt="Archive highlight" className="absolute left-0 top-8 h-64 w-48 rotate-[-6deg] rounded-3xl border-4 border-white/80 object-cover shadow-2xl" />
-            <img src={archiveAsset("image_35.webp")} alt="Archive highlight" className="absolute left-40 top-0 z-10 h-72 w-52 rotate-3 rounded-3xl border-4 border-white object-cover shadow-2xl" />
-            <img src={archiveAsset("image_51.webp")} alt="Archive highlight" className="absolute bottom-0 right-0 h-60 w-48 rotate-6 rounded-3xl border-4 border-orange-200 bg-white object-contain shadow-2xl" />
+            <img src={selectedEventIndex === 0 ? archiveAsset("image_12.webp") : carnivalTwoArchiveAsset("IMG_1167.jpg")} alt={`${selectedEvent.name} highlight`} className="absolute left-0 top-8 h-64 w-48 rotate-[-6deg] rounded-3xl border-4 border-white/80 object-cover shadow-2xl" />
+            <img src={selectedEventIndex === 0 ? archiveAsset("image_35.webp") : carnivalTwoArchiveAsset("IMG_1901(1).jpg")} alt={`${selectedEvent.name} highlight`} className="absolute left-40 top-0 z-10 h-72 w-52 rotate-3 rounded-3xl border-4 border-white object-cover shadow-2xl" />
+            <img src={selectedEventIndex === 0 ? archiveAsset("image_51.webp") : "/archive/CC_2.0-cover.jpg"} alt={`${selectedEvent.name} highlight`} className={`absolute bottom-0 right-0 h-60 w-48 rotate-6 rounded-3xl border-4 border-orange-200 bg-white shadow-2xl ${selectedEventIndex === 0 ? "object-contain" : "object-cover"}`} />
           </div>
         </div>
       </section>
@@ -170,19 +224,21 @@ export default function ArchivePage() {
               })}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsMagazineOpen(true)}
-              className="mt-10 flex w-full flex-col justify-between gap-5 rounded-3xl bg-orange-400 p-7 text-left text-[#173d36] shadow-lg transition hover:-translate-y-1 hover:shadow-xl sm:flex-row sm:items-center"
-              aria-haspopup="dialog"
-            >
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[3px]">Official Publication</p>
-                <h3 className="mt-1 text-2xl font-black">Carnival Magazine</h3>
-                <p className="mt-2 text-sm font-semibold text-[#173d36]/75">Click to read in A4 page view.</p>
-              </div>
-              <span className="flex items-center gap-2 font-bold">Read Magazine <ArrowUpRight size={20} /></span>
-            </button>
+            {selectedEvent.magazineSrc && (
+              <button
+                type="button"
+                onClick={() => setIsMagazineOpen(true)}
+                className="mt-10 flex w-full flex-col justify-between gap-5 rounded-3xl bg-orange-400 p-7 text-left text-[#173d36] shadow-lg transition hover:-translate-y-1 hover:shadow-xl sm:flex-row sm:items-center"
+                aria-haspopup="dialog"
+              >
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[3px]">Official Publication</p>
+                  <h3 className="mt-1 text-2xl font-black">Carnival Magazine</h3>
+                  <p className="mt-2 text-sm font-semibold text-[#173d36]/75">Click to read in A4 page view.</p>
+                </div>
+                <span className="flex items-center gap-2 font-bold">Read Magazine <ArrowUpRight size={20} /></span>
+              </button>
+            )}
           </>
         ) : (
           <div className="relative mt-10 overflow-hidden rounded-[36px] bg-[#06483d] px-6 py-20 text-center text-white shadow-xl md:px-12">
@@ -199,8 +255,8 @@ export default function ArchivePage() {
           <button type="button" onClick={() => setIsMagazineOpen(false)} className="absolute right-3 top-3 z-10 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20 md:right-5 md:top-5" aria-label="Close magazine"><X /></button>
           <div className="aspect-[210/297] h-[90vh] max-h-[90vh] max-w-[88vw] overflow-hidden bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <iframe
-              src={`${galleryAsset("magazine.pdf")}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&page=1`}
-              title="Construct Carnival magazine in A4 view"
+              src={`${selectedEvent.magazineSrc}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&page=1`}
+              title={`${selectedEvent.name} magazine in A4 view`}
               className="h-full w-full"
             />
           </div>

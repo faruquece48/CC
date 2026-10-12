@@ -15,6 +15,9 @@ export const mediaAssetBase =
 export const archiveAsset = (fileName: string) =>
   `${archiveAssetBase}/${fileName}`;
 
+export const carnivalTwoArchiveAsset = (fileName: string) =>
+  `${r2PublicBase}/CC%202.0/archive/${encodeURIComponent(fileName)}`;
+
 export const galleryAsset = (fileName: string) =>
   `${galleryAssetBase}/${fileName}`;
 

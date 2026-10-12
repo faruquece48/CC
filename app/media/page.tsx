@@ -12,8 +12,72 @@ const facebookUrl = "https://www.facebook.com/profile.php?id=61567513587222";
 const featuredVideoUrl = mediaAsset("CC.mp4");
 const samakalArticleUrl =
   "https://samakal.com/rajshahi/article/371302/%E0%A6%B0%E0%A7%81%E0%A7%9F%E0%A7%87%E0%A6%9F%E0%A7%87-%E0%A6%B6%E0%A7%81%E0%A6%B0%E0%A7%81-%E0%A6%B9%E0%A6%9A%E0%A7%8D%E0%A6%9B%E0%A7%87-%E2%80%98%E0%A6%95%E0%A6%A8%E0%A6%B8%E0%A7%8D%E0%A6%9F%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%95%E0%A7%8D%E0%A6%9F-%E0%A6%95%E0%A6%BE%E0%A6%B0%E0%A7%8D%E0%A6%A8%E0%A6%BF%E0%A6%AD%E0%A6%BE%E0%A6%B2-%E0%A7%A8-%E0%A7%A6%E2%80%99";
+const samakalEpaperUrl =
+  "https://epaper.samakal.com/nogor-edition/2026-10-05/2/1080/detail";
 
-const promotionPosts = [
+const additionalNewsArticles = [
+  {
+    title: "RUET Hosts Construct Carnival 2.0 With Five Competitions",
+    date: "October 4, 2026",
+    image: "/media/porbo24-construct-carnival.png",
+    publisher: "Porbo24",
+    href: "https://en.porbo24.com/news/ruet-hosts-construct-carnival-20-with-five-competitions",
+  },
+  {
+    title: "Construct Carnival held at RUET",
+    date: "October 4, 2026",
+    image: "/media/amader-shomoy-construct-carnival.webp",
+    publisher: "Dainik Amader Shomoy",
+    href: "https://www.dainikamadershomoy.com/details/01a10717be4e",
+  },
+  {
+    title: "Construct Carnival featured in Ittefaq's second edition",
+    date: "October 5, 2026",
+    image: "/media/facebook-post-26.jpg",
+    publisher: "The Daily Ittefaq",
+    href: "https://epaper.ittefaq.com.bd/edition/3024/2nd-edition/page/6",
+  },
+];
+
+const todayNewsArticles = [
+  {
+    title: "Construct Carnival 2.0 held at RUET",
+    date: "October 5, 2026",
+    image: "/media/samakal-epaper-2026-10-05.jpg",
+    publisher: "Samakal · City Edition",
+    href: samakalEpaperUrl,
+  },
+  ...additionalNewsArticles,
+];
+
+const previousNewsArticles = [
+  {
+    title: "রুয়েটে শুরু হচ্ছে ‘কনস্ট্রাক্ট কার্নিভাল ২.০’",
+    date: "September 2026",
+    image: "/media/samakal-article.jpg",
+    publisher: "Samakal · Rajshahi",
+    href: samakalArticleUrl,
+  },
+];
+
+const newsArticles = [...todayNewsArticles].reverse().concat(previousNewsArticles);
+
+const todayPromotionPosts = [
+  { title: "Construct Carnival 2.0 kit distribution begins", date: "October 2026", image: "/media/facebook-post-16.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid04w1WGQeGCsGgWzppymJ2oKj5Z6DTGt48BaVSiztrpNF2bXWcScDqHCmDw5L4dZXYl" },
+  { title: "Thank you for making Construct Carnival 2.0 possible", date: "October 2026", image: "/media/facebook-post-17.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02Y543j16hXMC1MwNHHf9fvVzzRK9eUWrU6cz4UmbnyPtPWX8tME2TLDcqzcTMS52pl" },
+  { title: "Channel 24 covers the two-day Construct Carnival at RUET", date: "October 2026", image: "/media/facebook-post-18.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/reel/1791897961950040" },
+  { title: "Meet the winners of Construct Carnival 2.0", date: "October 2026", image: "/media/facebook-post-19.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02cMj1oiGdG4iv9mDj3QPT6KgUWhobq9dDYHTmQmvf3hzaXAXRsTi7W6QWJBtyUeiUl" },
+  { title: "Construct Carnival 2.0 day highlights", date: "October 2026", image: "/media/facebook-post-20.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid021BF5V4oVc114cLGE57FHYqdRfkMD54NMnk1rt3nGSgFwaYQw9fVTDdSg6G6b4uSDl" },
+  { title: "Construct Carnival 2.0 participation statistics", date: "October 2026", image: "/media/facebook-post-21.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02aR28kZPDBgjMzTZCeL2fQn28sH7Ubbn1AVTA69XF6361Lpmt4ztxv9Ed4oTY54vVl" },
+  { title: "Thank you for participating in Construct Carnival 2.0", date: "October 2026", image: "/media/facebook-post-22.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid028XGjog2KAyRQ1MqtsqoL5XyCiqywhViQLQfHCjYUcPaAkjUtPXavYRyNhjcbsECxl" },
+  { title: "Participants share their Construct Carnival 2.0 experience", date: "October 2026", image: "/media/facebook-post-23.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02FsX4tgkgbhRpWXhn2XVwswkZCMmX71BiwbiRThcAFTYLWXBcbU5eURoJrnb3Akwvl" },
+  { title: "More memorable experiences from Construct Carnival 2.0", date: "October 2026", image: "/media/facebook-post-24.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0TtcDNJVByZ5hdLPfNDMnTM7JrGNdwa1A1HrfAtVzNjy6WrNkMK2tFp7hsb3JPoeZl" },
+  { title: "A heartfelt thank-you to our sponsors", date: "October 2026", image: "/media/facebook-post-25.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02X9yf7jwLB5ctnjp1E8Qkk558GdniW9VMzHEhpJe4dRQJdJG5fsVKdm2oUJccEzwol" },
+  { title: "Media and newspaper coverage of Construct Carnival 2.0", date: "October 2026", image: "/media/facebook-post-26.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02E51FYjUN9fnCTRCfxBRyznz3pLCs718DAJmzmGP5ESBPA23frTm3D1YkD6HAv44fl" },
+  { title: "The people, passion and memories of Construct Carnival 2.0", date: "October 2026", image: "/media/facebook-post-26.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/reel/978617045315881" },
+];
+
+const previousPromotionPosts = [
   { title: "Channel 24 joins as Media Partner of Construct Carnival 2.0", date: "September 2026", image: "/media/facebook-post-15.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0zr8Dy58RYeML5ZM7vE4bmrXbFjp9p7oTXZp6Bs4xXYG9CF7rRAJKYwLeXGMfR9anl" },
   { title: "Samakal joins as Media Partner of Construct Carnival 2.0", date: "September 2026", image: "/media/facebook-post-14.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0AA4Ub3oEzr4YiesSwqAxbAEcvBHXW3ysAYb1Fc46TEvwa72ffNSRPt3GcWVMLP8ql" },
   { title: "Fresh Cement joins as Silver Sponsor of Construct Carnival 2.0", date: "September 2026", image: "/media/facebook-post-13.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid083rXEGFS9hbaKbf9gGAhoEUmhPxSeK6eELk4VgMUUPf2opbCJ7mYrP9az9VQhexcl" },
@@ -30,6 +94,8 @@ const promotionPosts = [
   { title: "BECM Club RUET invites Campus Ambassadors", date: "September 2026", image: "/media/facebook-post-6.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid0D8pU15stAjWMRZXFd27MZh4QRxdoA1JxcKmcKza4LugutCJnoUNpu83Hh8CViW35l" },
   { title: "The biggest event of the year is knocking at the door", date: "September 2026", image: "/media/facebook-post-7.jpg", publisher: "BECM Club, RUET", href: "https://www.facebook.com/becmclubruet/posts/pfbid02iF6YSS9UiyKwLqWT1BqDudYrPE16eYB8kc7XjgCTHHETVytvMKo5krtqVUxk4nPel" },
 ];
+
+const promotionPosts = [...todayPromotionPosts].reverse().concat(previousPromotionPosts);
 export default function MediaPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f4f8fb] text-slate-900">
@@ -82,21 +148,24 @@ export default function MediaPage() {
           </h2>
         </div>
 
-        <Link
-          href={samakalArticleUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group grid gap-5 border-b border-slate-200 bg-white p-4 transition hover:bg-slate-50 sm:grid-cols-[220px_1fr] sm:items-center"
-        >
-          <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-            <Image src="/media/samakal-article.jpg" alt="Samakal article lead image" fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, 220px" />
-          </div>
-          <div className="py-1 sm:pr-5">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-600">Samakal · Rajshahi</p>
-            <h3 className="mt-2 text-xl font-bold leading-[1.45] text-[#083b66] md:text-2xl" lang="bn">রুয়েটে শুরু হচ্ছে ‘কনস্ট্রাক্ট কার্নিভাল ২.০’</h3>
-            <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><span aria-hidden="true">◷</span> September 2026</p>
-          </div>
-        </Link>
+        {newsArticles.map((article, index) => (
+          <Link
+            key={article.href}
+            href={article.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`group grid gap-5 border-b border-slate-200 bg-white p-4 transition hover:bg-slate-50 sm:grid-cols-[220px_1fr] sm:items-center ${index ? "mt-3" : ""}`}
+          >
+            <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+              <Image src={article.image} alt={`${article.publisher} coverage of Construct Carnival 2.0`} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, 220px" />
+            </div>
+            <div className="py-1 sm:pr-5">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-600">{article.publisher}</p>
+              <h3 className="mt-2 text-xl font-bold leading-[1.45] text-[#083b66] md:text-2xl">{article.title}</h3>
+              <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><span aria-hidden="true">◷</span> {article.date}</p>
+            </div>
+          </Link>
+        ))}
       </section>
 
       <section id="facebook" className="scroll-mt-24 border-y border-slate-200 bg-white/70 px-4 pt-8 pb-20 md:pt-10 md:pb-28">
@@ -142,17 +211,19 @@ export default function MediaPage() {
         </div>
       </section>
 
-      <section className="px-4 py-20">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-[#083b66] px-6 py-10 text-white shadow-2xl shadow-blue-950/20 md:px-12 md:py-14">
-          <div className="absolute -right-20 -top-28 h-64 w-64 rounded-full bg-cyan-300/15 blur-3xl" />
-          <div className="relative flex flex-col justify-between gap-8 md:flex-row md:items-center">
-            <div className="flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-orange-500">
-                <Megaphone size={23} />
+      <section className="px-4 py-12 md:py-14">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] border border-white/10 bg-gradient-to-r from-[#07365d] via-[#084a70] to-[#075f57] px-5 py-6 text-white shadow-[0_20px_55px_-30px_rgba(7,54,93,0.9)] md:px-8 md:py-7">
+          <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:32px_32px]" />
+          <div className="absolute -right-14 -top-24 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-orange-400/10 blur-3xl" />
+          <div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-orange-300/30 bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-950/20">
+                <Megaphone size={20} />
               </div>
               <div>
-                <h2 className="text-2xl font-extrabold md:text-3xl">Help amplify the event</h2>
-                <p className="mt-2 max-w-xl text-sm leading-7 text-blue-100">
+                <h2 className="text-xl font-extrabold tracking-tight md:text-2xl">Help amplify the event</h2>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-blue-100/85">
                   Follow, share, and invite your community to discover Construct Carnival 2.0.
                 </p>
               </div>
@@ -161,9 +232,9 @@ export default function MediaPage() {
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-[#083b66] transition hover:-translate-y-0.5 hover:bg-orange-50"
+              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/70 bg-white/95 px-5 py-2.5 text-sm font-extrabold text-[#083b66] shadow-lg shadow-blue-950/15 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl"
             >
-              Follow on Facebook <ArrowUpRight size={18} />
+              Follow on Facebook <ArrowUpRight size={17} className="transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
         </div>
